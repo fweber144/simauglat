@@ -1,0 +1,591 @@
+#_______________________________________________________________________________
+# Simulation study for comparing augmented-data and latent projection in
+# projpred
+#_______________________________________________________________________________
+
+# Setup -------------------------------------------------------------------
+
+## Installation (only required once) --------------------------------------
+
+# devtools::install_github("fweber144/brms", "projpred_latent")
+# devtools::install_github("fweber144/projpred", "augdat_latent")
+
+## Timestamp --------------------------------------------------------------
+
+cat("\n-----\n")
+cat("Timestamp at the beginning of the script:\n")
+print(Sys.time())
+cat("-----\n")
+
+## Global options ---------------------------------------------------------
+
+# For source()-ing this script:
+warn_orig_glob <- options(warn = 1)
+
+# options(projpred.warn_augdat_experimental = FALSE)
+
+## User options -----------------------------------------------------------
+
+only_init_fit <- F
+
+if (!only_init_fit) {
+  nsim <- 4 # The number of simulation iterations
+  # par_type <- "doSeq"
+  par_type <- "doParallel"
+  # par_type <- "doMPI"
+  if (par_type %in% c("doParallel")) {
+    # The number of CPU cores (more generally, "workers") for the simulation:
+    ncores <- 4 # parallel::detectCores(logical = FALSE)
+    if (nsim < ncores) {
+      warning("Increasing `nsim` to `ncores = ", ncores, "`.")
+      nsim <- ncores
+    }
+  }
+}
+
+npreds_tot <- 50L
+p0 <- as.integer(ceiling(npreds_tot * 0.10))
+seed_glob <- 856824715
+
+cat("-----\np0:\n")
+print(p0)
+cat("-----\n")
+
+## Prepare simulation -----------------------------------------------------
+
+if (!only_init_fit) {
+  library(foreach)
+  # library(iterators)
+  library(doRNG)
+  if (par_type %in% c("doParallel")) {
+    library(doParallel)
+    registerDoParallel(ncores)
+  } else if (par_type %in% c("doMPI")) {
+    library(doMPI)
+    cl_obj <- startMPIcluster()
+    registerDoMPI(cl_obj)
+  } else if (par_type %in% c("doSeq")) {
+    registerDoSEQ()
+  } else {
+    stop("Unknown `par_type`.")
+  }
+  cat("-----\nWorker information:\n")
+  print(getDoParName())
+  print(getDoParWorkers())
+  cat("-----\n")
+}
+
+set.seed(seed_glob)
+
+# Functions (part 1) ------------------------------------------------------
+
+# For generating regression coefficients according to the regularized horseshoe
+# (RH) prior (note: scale_global = tau_0):
+rhorseshoe <- function(
+    npreds_RH,
+    df_lambdas = 1,
+    df_global = 1, scale_global = par_ratio / sqrt(N), par_ratio, N,
+    df_slab = 4, scale_slab = 2
+) {
+  csq <- 1 / rgamma(1, shape = df_slab / 2, rate = scale_slab^2 * df_slab / 2)
+  tau <- abs(scale_global * rt(1, df = df_global) + 0)
+  lambdas <- abs(1 * rt(npreds_RH, df = df_lambdas) + 0)
+  lambdassq <- lambdas^2
+  lambdas_tilde <- sqrt(csq * lambdassq / (csq + tau^2 * lambdassq))
+  betas <- rnorm(npreds_RH, mean = 0, sd = tau * lambdas_tilde)
+  return(betas)
+}
+
+# For simulating data in a single simulation iteration:
+dataconstructor <- function() {
+
+  ## Definitions ------------------------------------------------------------
+
+  nobsv <- 100L
+
+  ncat <- 5L
+  yunq <- paste0("ycat", seq_len(ncat))
+  nthres <- ncat - 1L
+  # The intercepts at centered predictors ("Intercept"s in brms parlance, not
+  # "b_Intercept"s):
+  thres <- sort(rnorm(nthres))
+  # print(diff(c(0, pnorm(thres), 1)))
+
+  npreds_cont <- npreds_tot
+  coefs_cont <- rhorseshoe(npreds_cont,
+                           par_ratio = p0 / (npreds_cont - p0), N = nobsv)
+
+  npreds_grCP <- 0L # 1L
+  ngrCP <- integer() # c(3L)
+  stopifnot(identical(length(ngrCP), npreds_grCP))
+  if (npreds_grCP > 0) {
+    coefs_grCP <- list(
+      c(0, seq(-2, 2, length.out = ngrCP[1] - 1L))
+    )
+    stopifnot(identical(length(coefs_grCP), npreds_grCP))
+  }
+
+  npreds_grPP <- 0L # 1L
+  if (!exists("nobsv_per_grPP")) {
+    # Number of observations per group (only roughly; some groups might get a
+    # few observations more):
+    nobsv_per_grPP <- integer() # c(2L)
+  }
+  ngrPP <- c(nobsv %/% nobsv_per_grPP)
+  stopifnot(identical(length(ngrPP), npreds_grPP))
+  if (npreds_grPP > 0) {
+    coefs_grPP <- list(
+      list("icpt" = rnorm(ngrPP[1], sd = 1.5)) # , "Xcont1" = <...>
+    )
+    stopifnot(identical(length(coefs_grPP), npreds_grPP))
+  }
+
+  ## Continuous predictors --------------------------------------------------
+
+  dat_sim <- setNames(replicate(npreds_cont, {
+    rnorm(nobsv)
+  }, simplify = FALSE), paste0("Xcont", seq_len(npreds_cont)))
+  dat_sim <- as.data.frame(dat_sim)
+  # Start constructing the linear predictor:
+  eta <- drop(as.matrix(dat_sim) %*% coefs_cont)
+
+  ## Completely pooled (CP) categorical predictors --------------------------
+
+  if (npreds_grCP == 1) {
+    dat_sim$XgrCP1 <- sample(
+      gl(n = ngrCP[1], k = floor(nobsv / ngrCP[1]), length = nobsv,
+         labels = paste0("gr", seq_len(ngrCP[1])))
+    )
+    # Continue constructing the linear predictor:
+    eta <- eta + coefs_grCP[[1]][dat_sim$XgrCP1]
+  } else if (npreds_grCP > 1) {
+    stop("This value of `npreds_grCP` is currently not supported.")
+  }
+
+  ## Partially pooled (PP) categorical predictors ---------------------------
+
+  if (npreds_grPP == 1) {
+    dat_sim$XgrPP1 <- sample(
+      gl(n = ngrPP[1], k = floor(nobsv / ngrPP[1]), length = nobsv,
+         labels = paste0("gr", seq_len(ngrPP[1])))
+    )
+    # Continue constructing the linear predictor:
+    eta <- eta + coefs_grPP[[1]]$icpt[dat_sim$XgrPP1]
+    # + coefs_grPP[[1]]$Xcont1[dat_sim$XgrPP1] * dat_sim$Xcont1
+  } else if (npreds_grPP > 1) {
+    stop("This value of `npreds_grPP` is currently not supported.")
+  }
+
+  ## Construct "epred" ------------------------------------------------------
+
+  thres_eta <- sapply(thres, function(thres_k) {
+    thres_k - eta
+  })
+  # Shouldn't be necessary (just to be safe): Emulate a single posterior draw:
+  dim(thres_eta) <- c(1L, nobsv, nthres)
+  yprobs <- brms:::inv_link_cumulative(thres_eta, link = "logit")
+  # Because of emulating a single posterior draw above:
+  dim(yprobs) <- c(nobsv, ncat)
+
+  ## Response ---------------------------------------------------------------
+
+  dat_sim$Y <- factor(sapply(seq_len(nobsv), function(i) {
+    sample(yunq, size = 1, prob = yprobs[i, ])
+  }), ordered = TRUE)
+  # TODO: How to proceed with empty categories? Re-specify `prior` in update()?
+
+  ## Formula ----------------------------------------------------------------
+
+  voutc <- "Y"
+  vpreds <- grep("^Xcont|^XgrCP", names(dat_sim), value = TRUE)
+  vpreds_PP <- grep("^XgrPP", names(dat_sim), value = TRUE)
+  if (length(vpreds_PP) > 0L) {
+    if (!all(lengths(coefs_grPP) == 1)) {
+      stop("Group-level slopes are currently not supported.")
+    }
+    vpreds_PP <- paste0("(1 | ", vpreds_PP, ")")
+  }
+
+  fml_sim <- as.formula(paste(
+    voutc, "~", paste(c(vpreds, vpreds_PP), collapse = " + ")
+  ))
+
+  ## Output -----------------------------------------------------------------
+
+  return(list(true_coefs_cont = coefs_cont,
+              true_PPEs = if (npreds_grPP > 0) coefs_grPP[[1]]$icpt else NULL,
+              dat = dat_sim,
+              fml = fml_sim))
+}
+
+# Initial reference model fit ---------------------------------------------
+
+if (only_init_fit) {
+  # Fit the brms reference model once, so it only needs to be updated (and not
+  # recompiled) during the simulation. MCMC convergence diagnostics are only
+  # checked here, not during the simulation.
+  sim_dat_etc <- dataconstructor()
+  options(mc.cores = parallel::detectCores(logical = FALSE))
+  options(cmdstanr_write_stan_file_dir = getwd())
+  bfit <- brms::brm(
+    formula = sim_dat_etc$fml,
+    data = sim_dat_etc$dat,
+    family = brms::cumulative(link = "probit"),
+    prior = brms::prior(horseshoe(par_ratio = p0 / (npreds_tot - p0))) +
+      brms::prior(normal(0, 1), class = "Intercept"),
+    ### For backend = "rstan":
+    # control = list(adapt_delta = 0.99), # , max_treedepth = 15L
+    # init_r = 1,
+    ###
+    ### For backend = "cmdstanr":
+    backend = "cmdstanr",
+    adapt_delta = 0.99,
+    # max_treedepth = 15L,
+    init = 1,
+    ###
+    silent = 0,
+    file = "bfit",
+    file_refit = "on_change",
+    seed = sample.int(.Machine$integer.max, 1)
+  )
+  # Check MCMC diagnostics:
+  source("check_MCMC_diagn.R")
+  # debugonce(check_MCMC_diagn)
+  MCMC_diagn <- check_MCMC_diagn(
+    C_stanfit = bfit$fit,
+    # exclude_NAs = TRUE,
+    pars = "disc",
+    include = FALSE
+  )
+  cat("\n-----\n")
+  cat("Are all MCMC diagnostics OK?:\n")
+  print(MCMC_diagn$all_OK)
+  cat("-----\n")
+
+  ## Teardown
+
+  # Reset global options:
+  options(warn = warn_orig_glob$warn)
+
+  # Timestamp:
+  cat("\n-----\n")
+  cat("Timestamp at the end of the script:\n")
+  print(Sys.time())
+  cat("-----\n")
+
+  # Exit code:
+  cat("\nExit code: 0\n")
+  stop("Exiting cleanly (only throwing an error to stop source()-ing the ",
+       "script).")
+} else {
+  bfit <- readRDS("bfit.rds")
+}
+
+# Functions (part 2) ------------------------------------------------------
+
+# For fitting (updating) the reference model:
+fit_ref <- function(dat, fml) {
+  return(update(
+    bfit,
+    formula. = fml,
+    newdata = dat,
+    cores = 1,
+    silent = 2,
+    refresh = 0,
+    ### For backend = "rstan":
+    # init_r = 1,
+    ###
+    ### For backend = "cmdstanr":
+    adapt_delta = 0.99,
+    # max_treedepth = 15L,
+    init = 1,
+    ###
+    seed = sample.int(.Machine$integer.max, 1)
+  ))
+}
+
+# For running projpred's variable selection:
+run_projpred <- function(refm_fit, ...) {
+  # TODO:
+  # * Replace varsel() by cv_varsel() (and pick appropriate settings there).
+  #     --> No, take varsel(), but evaluate on independent test data (fix and
+  #         then use argument `d_test` for this?).
+  time_bef <- Sys.time()
+  vs <- projpred::varsel(refm_fit, method = "forward", ...)
+  time_aft <- Sys.time()
+  # Currently, we need to use the internal projpred function .tabulate_stats()
+  # to obtain the reference model's performance:
+  stats_man <- projpred:::.tabulate_stats(vs, stats = "mlpd")
+  return(list(
+    time_vs = as.numeric(time_aft - time_bef, units = "mins"),
+    refstat = stats_man$value[stats_man$size == Inf],
+    # plot_obj = plot(vs, deltas = TRUE, stats = "mlpd"),
+    sgg_size = projpred::suggest_size(vs, stat = "mlpd"),
+    smmry = summary(vs, deltas = TRUE, stats = "mlpd",
+                    type = c("mean", "se", "lower", "upper"))$selection,
+    soltrms = projpred::solution_terms(vs)
+  ))
+}
+
+# TODO: Handle errors and return `sit`.
+sim_runner <- function(...) {
+  foreach(
+    sit = seq_len(nsim), # Needs package "iterators": icount(nsim),
+    .inorder = FALSE,
+    # .packages = c("brms", "projpred"), # , "rstanarm"
+    .export = c("rhorseshoe", "dataconstructor", "fit_ref", "run_projpred",
+                "npreds_tot", "p0", "bfit"),
+    # .noexport = c("<object_name>"),
+    .options.snow = list(attachExportEnv = TRUE)
+  ) %dorng% {
+    cat("\nSimulation iteration: ", sit, "\n", sep = "")
+    sim_dat_etc <- dataconstructor()
+    refm_fit <- fit_ref(dat = sim_dat_etc$dat, fml = sim_dat_etc$fml)
+    seed_vs <- sample.int(.Machine$integer.max, 1)
+    return(list(
+      aug = run_projpred(refm_fit, seed = seed_vs, ...),
+      lat = run_projpred(refm_fit, seed = seed_vs, latent_proj = TRUE, ...),
+      true_coefs_cont = sim_dat_etc$true_coefs_cont,
+      true_PPEs = sim_dat_etc$true_PPEs
+    ))
+  }
+}
+
+# Run simulation ----------------------------------------------------------
+
+print(system.time({
+  simres <- sim_runner(
+    nclusters_pred = 50,
+    nterms_max = 5 # TODO: Do not cut off at all or only at a higher model size?
+  )
+}))
+saveRDS(simres, file = "simres.rds") # simres <- readRDS(file = "simres.rds")
+
+# Post-processing ---------------------------------------------------------
+
+## Regularized horseshoe prior draws --------------------------------------
+
+true_coefs_cont <- unlist(lapply(simres, "[[", "true_coefs_cont"))
+true_coefs_cont <- data.frame(coef = true_coefs_cont)
+print(ggplot2::ggplot(data = true_coefs_cont,
+                      mapping = ggplot2::aes(x = coef)) +
+        ggplot2::geom_histogram(bins = 40)) # + ggplot2::geom_density()
+
+## Timing -----------------------------------------------------------------
+
+mins_vs <- do.call(rbind, lapply(seq_along(simres), function(sim_idx) {
+  return(data.frame(sim_idx = sim_idx,
+                    t_aug = simres[[sim_idx]]$aug$time_vs,
+                    t_lat = simres[[sim_idx]]$lat$time_vs))
+}))
+mins_vs <- reshape(
+  mins_vs,
+  direction = "long",
+  v.names = "minutes",
+  varying = list("minutes" = grep("^t_", names(mins_vs), value = TRUE)),
+  timevar = "prj_meth",
+  times = c("aug", "lat"),
+  idvar = "sim_idx_ch",
+  sep = "_"
+)
+stopifnot(identical(mins_vs$sim_idx_ch, mins_vs$sim_idx))
+mins_vs$sim_idx_ch <- NULL
+print(ggplot2::ggplot(data = mins_vs,
+                      mapping = ggplot2::aes(x = prj_meth, y = minutes)) +
+        ggplot2::geom_boxplot()) # + ggplot2::geom_violin()
+
+## True partially pooled effects ------------------------------------------
+
+if (!all(sapply(lapply(simres, "[[", "true_PPEs"), is.null))) {
+  true_PPEs <- do.call(cbind, lapply(simres, "[[", "true_PPEs"))
+  dimnames(true_PPEs) <- list(
+    grp = paste0("grp", seq_len(nrow(true_PPEs))),
+    simiter = paste0("simiter", seq_len(ncol(true_PPEs)))
+  )
+  stopifnot(!all(lengths(apply(true_PPEs, 1, unique, simplify = FALSE)) == 1))
+  cat("\n-----\n")
+  cat("Quartiles of the true partially pooled effects (across",
+      "all simulation iterations):\n")
+  print(quantile(true_PPEs))
+  cat("-----\n")
+  if (nsim <= 10) {
+    cat("\n-----\n")
+    cat("Empirical SDs of the true partially pooled effects (for",
+        "all simulation iterations):\n")
+    print(apply(true_PPEs, 2, sd))
+    cat("-----\n")
+  } else {
+    cat("\n-----\n")
+    cat("Quartiles of the empirical SDs of the true partially pooled effects",
+        "(across all simulation iterations):\n")
+    print(quantile(apply(true_PPEs, 2, sd)))
+    cat("-----\n")
+  }
+}
+
+## Solution paths ---------------------------------------------------------
+
+same_solpths <- sapply(simres, function(simres_i) {
+  identical(simres_i$aug$soltrms,
+            simres_i$lat$soltrms)
+})
+cat("\n-----\n")
+cat("Differing solution paths:\n")
+for (sim_idx in seq_along(simres)[!same_solpths]) {
+  cat("\n---\n")
+  cat("Simulation iteration: ", sim_idx, "\n", sep = "")
+  cat("Solution path of the augmented-data variable selection:\n",
+      paste(simres[[sim_idx]]$aug$soltrms, collapse = ", "),
+      "\n", sep = "")
+  cat("Solution path of the latent variable selection:\n",
+      paste(simres[[sim_idx]]$lat$soltrms, collapse = ", "),
+      "\n", sep = "")
+  cat("---\n")
+}
+cat("-----\n")
+
+## Model size selection plots ---------------------------------------------
+
+plotter_single <- function(sim_idx, prj_meth) {
+  if (prj_meth == "aug") {
+    title_raw <- "Augmented-data"
+  } else if (prj_meth == "lat") {
+    title_raw <- "Latent"
+  }
+  title_pretty <- paste0(title_raw, "; simulation iteration ", sim_idx)
+  stopifnot(inherits(simres[[sim_idx]][[prj_meth]]$plot_obj, "ggplot"))
+  print(simres[[sim_idx]][[prj_meth]]$plot_obj +
+          ggplot2::labs(title = title_pretty))
+  return(invisible(TRUE))
+}
+plotter_sep <- function(sim_idx) {
+  aug_succ <- plotter_single(sim_idx = sim_idx, prj_meth = "aug")
+  lat_succ <- plotter_single(sim_idx = sim_idx, prj_meth = "lat")
+  return(invisible(aug_succ && lat_succ))
+}
+# sep_succs <- lapply(seq_along(simres), plotter_sep)
+# stopifnot(all(unlist(sep_succs)))
+plotter_ovrlay <- function(prj_meth) {
+  if (prj_meth == "aug") {
+    title_raw <- "Augmented-data"
+  } else if (prj_meth == "lat") {
+    title_raw <- "Latent"
+  }
+  y_chr <- setdiff(names(simres[[1L]][[prj_meth]]$smmry),
+                   c("solution_terms", "se", "lower", "upper", "size"))
+  plotdat_comm <- do.call(rbind, lapply(seq_along(simres), function(sim_idx) {
+    cbind(sim_idx = sim_idx,
+          simres[[sim_idx]][[prj_meth]]$smmry[, c("size", y_chr)])
+  }))
+  print(ggplot2::ggplot(data = plotdat_comm,
+                        mapping = ggplot2::aes_string(x = "size",
+                                                      y = y_chr,
+                                                      group = "sim_idx",
+                                                      alpha = I(0.4))) +
+          ggplot2::geom_hline(yintercept = 0,
+                              color = "firebrick",
+                              linetype = "dashed") +
+          ggplot2::geom_point() +
+          ggplot2::geom_line() +
+          ggplot2::labs(title = title_raw))
+  return(invisible(TRUE))
+}
+plotter_com <- function() {
+  aug_succ <- plotter_ovrlay(prj_meth = "aug")
+  lat_succ <- plotter_ovrlay(prj_meth = "lat")
+  return(invisible(aug_succ && lat_succ))
+}
+com_succs <- plotter_com()
+stopifnot(com_succs)
+
+## Suggested sizes --------------------------------------------------------
+
+sgger_size <- function(sim_idx) {
+  return(c(
+    sgg_size_aug = simres[[sim_idx]]$aug$sgg_size,
+    sgg_size_lat = simres[[sim_idx]]$lat$sgg_size
+  ))
+}
+sgg_sizes <- sapply(seq_along(simres), sgger_size)
+# print(sgg_sizes)
+if (!anyNA(sgg_sizes)) {
+  sgg_sizes_lat_minus_aug <- apply(sgg_sizes, 2, diff)
+  cat("\n-----\n")
+  cat("Differences of the suggested sizes (latent minus augmented-data):\n")
+  print(table(sgg_sizes_lat_minus_aug))
+  print(proportions(table(sgg_sizes_lat_minus_aug)))
+  cat("-----\n")
+  xlab_long <- "Difference of the suggested sizes (latent minus augmented-data)"
+  print(ggplot2::qplot(factor(sgg_sizes_lat_minus_aug),
+                       geom = "bar",
+                       xlab = xlab_long) +
+          ggplot2::scale_y_continuous(breaks = scales::breaks_pretty()))
+} else {
+  warning("Found suggested sizes which are `NA`.")
+}
+
+# doRNG -------------------------------------------------------------------
+
+# Information from package "doRNG" about the seeds used:
+simresrng <- attr(simres, "rng")
+saveRDS(simresrng, file = "simresrng.rds")
+stopifnot(identical(class(simresrng), "list"))
+stopifnot(length(simresrng) == nsim)
+# These are random seeds of length 7 each (see `?RNGkind`, sections "Details"
+# (subpart "L'Ecuyer-CMRG") and "Value"):
+stopifnot(identical(lengths(simresrng), rep(7L, nsim)))
+simresrngv <- attr(simres, "doRNG_version")
+saveRDS(simresrngv, file = "simresrngv.rds")
+
+# Teardown ----------------------------------------------------------------
+
+## Session info -----------------------------------------------------------
+
+# Needed to list these packages and their dependencies in the session info:
+suppressPackageStartupMessages(library(brms))
+suppressPackageStartupMessages(library(rstan))
+suppressPackageStartupMessages(library(StanHeaders))
+suppressPackageStartupMessages(library(cmdstanr))
+suppressPackageStartupMessages(library(rstanarm))
+suppressPackageStartupMessages(library(projpred))
+
+# sessioninfo::session_info(to_file = TRUE)
+sink(file = "session_info.txt")
+print(sessioninfo::session_info())
+cat("\n-----\n")
+cat("CmdStan version:\n")
+print(cmdstanr::cmdstan_version(error_on_NA = FALSE))
+cat("-----\n")
+sink()
+
+## Free resources ---------------------------------------------------------
+
+if (par_type %in% c("doParallel")) {
+  stopImplicitCluster()
+} else if (par_type %in% c("doMPI")) {
+  ### Ideally, the following code should be used (at least according to the
+  ### "doMPI" vignette). However, `closeCluster(cl_obj)` as well as `mpi.quit()`
+  ### (as well as simply `q("no")`) seem to cause the execution to get stuck (so
+  ### that the R session is not quit):
+  # closeCluster(cl_obj)
+  # mpi.quit()
+  ###
+  mpi.finalize()
+  stop("Quitting cleanly (this is just a dummy error since the R session ",
+       "somehow can't be quitted using `q(\"no\")` here).")
+}
+
+## Reset global options ---------------------------------------------------
+
+options(warn = warn_orig_glob$warn)
+
+## Timestamp --------------------------------------------------------------
+
+cat("\n-----\n")
+cat("Timestamp at the end of the script:\n")
+print(Sys.time())
+cat("-----\n")
+
+## Exit code --------------------------------------------------------------
+
+cat("\nExit code: 0\n")
