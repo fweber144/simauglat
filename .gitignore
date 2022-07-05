@@ -4,6 +4,7 @@
 *.rds
 *.tiff
 output
+.Rproj.user
 *.acn
 *.acr
 *.alg
