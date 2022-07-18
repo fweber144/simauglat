@@ -446,25 +446,28 @@ cat("-----\n")
 
 ## Model size selection plots ---------------------------------------------
 
-plotter_single <- function(sim_idx, prj_meth) {
-  if (prj_meth == "aug") {
-    title_raw <- "Augmented-data"
-  } else if (prj_meth == "lat") {
-    title_raw <- "Latent"
-  }
-  title_pretty <- paste0(title_raw, "; simulation iteration ", sim_idx)
-  stopifnot(inherits(simres[[sim_idx]][[prj_meth]]$plot_obj, "ggplot"))
-  print(simres[[sim_idx]][[prj_meth]]$plot_obj +
-          ggplot2::labs(title = title_pretty))
-  return(invisible(TRUE))
-}
-plotter_sep <- function(sim_idx) {
-  aug_succ <- plotter_single(sim_idx = sim_idx, prj_meth = "aug")
-  lat_succ <- plotter_single(sim_idx = sim_idx, prj_meth = "lat")
-  return(invisible(aug_succ && lat_succ))
-}
+### Currently can't be used since returning the output of plot.vsel() leads to
+### memory issues when running the simulation in parallel:
+# plotter_single <- function(sim_idx, prj_meth) {
+#   if (prj_meth == "aug") {
+#     title_raw <- "Augmented-data"
+#   } else if (prj_meth == "lat") {
+#     title_raw <- "Latent"
+#   }
+#   title_pretty <- paste0(title_raw, "; simulation iteration ", sim_idx)
+#   stopifnot(inherits(simres[[sim_idx]][[prj_meth]]$plot_obj, "ggplot"))
+#   print(simres[[sim_idx]][[prj_meth]]$plot_obj +
+#           ggplot2::labs(title = title_pretty))
+#   return(invisible(TRUE))
+# }
+# plotter_sep <- function(sim_idx) {
+#   aug_succ <- plotter_single(sim_idx = sim_idx, prj_meth = "aug")
+#   lat_succ <- plotter_single(sim_idx = sim_idx, prj_meth = "lat")
+#   return(invisible(aug_succ && lat_succ))
+# }
 # sep_succs <- lapply(seq_along(simres), plotter_sep)
 # stopifnot(all(unlist(sep_succs)))
+###
 plotter_ovrlay <- function(prj_meth) {
   if (prj_meth == "aug") {
     title_raw <- "Augmented-data"
