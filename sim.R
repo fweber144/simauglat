@@ -326,7 +326,6 @@ run_projpred <- function(refm_fit, ...) {
   ))
 }
 
-# TODO: Handle errors and return `sit`.
 sim_runner <- function(...) {
   foreach(
     sit = seq_len(nsim), # Needs package "iterators": icount(nsim),
@@ -341,9 +340,31 @@ sim_runner <- function(...) {
     sim_dat_etc <- dataconstructor()
     refm_fit <- fit_ref(dat = sim_dat_etc$dat, fml = sim_dat_etc$fml)
     seed_vs <- sample.int(.Machine$integer.max, 1)
+    projpred_aug <- try(
+      run_projpred(refm_fit, seed = seed_vs, ...),
+      silent = TRUE
+    )
+    projpred_lat <- try(
+      run_projpred(refm_fit, seed = seed_vs, latent_proj = TRUE, ...),
+      silent = TRUE
+    )
+    if (inherits(projpred_aug, "try-error")) {
+      save(sit, refm_fit, seed_vs, list(...), .Random.seed, file = "failed.rda")
+      stop("The augmented-data projpred run failed in simulation iteration ",
+           sit, ". Objects for replicating this failure were saved to ",
+           "\"failed.rda\". Use `load(\"failed.rda\")` to restore it ",
+           "(including `.Random.seed` and the value of RNGkind()).")
+    }
+    if (inherits(projpred_lat, "try-error")) {
+      save(sit, refm_fit, seed_vs, list(...), .Random.seed, file = "failed.rda")
+      stop("The latent projpred run failed in simulation iteration ",
+           sit, ". Objects for replicating this failure were saved to ",
+           "\"failed.rda\". Use `load(\"failed.rda\")` to restore it ",
+           "(including `.Random.seed` and the value of RNGkind()).")
+    }
     return(list(
-      aug = run_projpred(refm_fit, seed = seed_vs, ...),
-      lat = run_projpred(refm_fit, seed = seed_vs, latent_proj = TRUE, ...),
+      aug = projpred_aug,
+      lat = projpred_lat,
       true_coefs_cont = sim_dat_etc$true_coefs_cont,
       true_PPEs = sim_dat_etc$true_PPEs
     ))
