@@ -542,12 +542,16 @@ saveRDS(simresrngv, file = "simresrngv.rds")
 ## Session info -----------------------------------------------------------
 
 # Needed to list these packages and their dependencies in the session info:
-suppressPackageStartupMessages(library(brms))
-suppressPackageStartupMessages(library(rstan))
-suppressPackageStartupMessages(library(StanHeaders))
-suppressPackageStartupMessages(library(cmdstanr))
-suppressPackageStartupMessages(library(rstanarm))
-suppressPackageStartupMessages(library(projpred))
+suppressPackageStartupMessages({
+  library(brms)
+  library(rstan)
+  library(StanHeaders)
+  library(cmdstanr)
+  library(rstanarm)
+  library(projpred)
+})
+if (!isNamespaceLoaded("rmarkdown")) loadNamespace("rmarkdown")
+if (!isNamespaceLoaded("yaml")) loadNamespace("yaml")
 
 # sessioninfo::session_info(to_file = TRUE)
 sink(file = "session_info.txt")
