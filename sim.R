@@ -226,7 +226,7 @@ if (only_init_fit) {
   # checked here, not during the simulation.
   sim_dat_etc <- dataconstructor()
   options(mc.cores = parallel::detectCores(logical = FALSE))
-  options(cmdstanr_write_stan_file_dir = getwd())
+  # options(cmdstanr_write_stan_file_dir = getwd())
   bfit <- brms::brm(
     formula = sim_dat_etc$fml,
     data = sim_dat_etc$dat,
@@ -234,14 +234,14 @@ if (only_init_fit) {
     prior = brms::prior(horseshoe(par_ratio = p0 / (npreds_tot - p0))) +
       brms::prior(normal(0, 1), class = "Intercept"),
     ### For backend = "rstan":
-    # control = list(adapt_delta = 0.99), # , max_treedepth = 15L
-    # init_r = 1,
+    control = list(adapt_delta = 0.99), # , max_treedepth = 15L
+    init_r = 1,
     ###
     ### For backend = "cmdstanr":
-    backend = "cmdstanr",
-    adapt_delta = 0.99,
-    # max_treedepth = 15L,
-    init = 1,
+    # backend = "cmdstanr",
+    # adapt_delta = 0.99,
+    # # max_treedepth = 15L,
+    # init = 1,
     ###
     silent = 0,
     file = "bfit",
@@ -293,12 +293,12 @@ fit_ref <- function(dat, fml) {
     silent = 2,
     refresh = 0,
     ### For backend = "rstan":
-    # init_r = 1,
+    init_r = 1,
     ###
     ### For backend = "cmdstanr":
-    adapt_delta = 0.99,
-    # max_treedepth = 15L,
-    init = 1,
+    # adapt_delta = 0.99,
+    # # max_treedepth = 15L,
+    # init = 1,
     ###
     seed = sample.int(.Machine$integer.max, 1)
   ))
