@@ -30,8 +30,8 @@ only_init_fit <- F
 
 if (!only_init_fit) {
   nsim <- 4 # The number of simulation iterations
-  # par_type <- "doSeq"
-  par_type <- "doParallel"
+  par_type <- "doSeq"
+  # par_type <- "doParallel"
   # par_type <- "doMPI"
   if (par_type %in% c("doParallel")) {
     # The number of CPU cores (more generally, "workers") for the simulation:
@@ -289,7 +289,7 @@ fit_ref <- function(dat, fml) {
     bfit,
     formula. = fml,
     newdata = dat,
-    cores = 1,
+    # cores = 1,
     silent = 2,
     refresh = 0,
     ### For backend = "rstan":
@@ -353,6 +353,7 @@ sim_runner <- function(...) {
 
 # Run simulation ----------------------------------------------------------
 
+options(mc.cores = parallel::detectCores(logical = FALSE))
 print(system.time({
   simres <- sim_runner(
     nclusters_pred = 50,
