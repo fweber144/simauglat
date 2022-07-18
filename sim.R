@@ -44,6 +44,9 @@ if (!only_init_fit) {
 }
 
 nobsv <- 100L
+ncat <- 5L
+yunq <- paste0("ycat", seq_len(ncat))
+nthres <- ncat - 1L
 npreds_tot <- 50L
 p0 <- as.integer(ceiling(npreds_tot * 0.10))
 seed_glob <- 856824715
@@ -102,9 +105,6 @@ dataconstructor <- function() {
 
   ## Definitions ------------------------------------------------------------
 
-  ncat <- 5L
-  yunq <- paste0("ycat", seq_len(ncat))
-  nthres <- ncat - 1L
   # The intercepts at centered predictors ("Intercept"s in brms parlance, not
   # "b_Intercept"s):
   thres <- sort(rnorm(nthres))
@@ -224,6 +224,8 @@ if (only_init_fit) {
   # recompiled) during the simulation. MCMC convergence diagnostics are only
   # checked here, not during the simulation.
   sim_dat_etc <- dataconstructor()
+  # Check that all response categories are present in the initial model fit:
+  stopifnot(identical(levels(sim_dat_etc$Y), yunq))
   options(mc.cores = parallel::detectCores(logical = FALSE))
   # options(cmdstanr_write_stan_file_dir = getwd())
   bfit <- brms::brm(
@@ -332,7 +334,7 @@ sim_runner <- function(...) {
     .inorder = FALSE,
     # .packages = c("brms", "projpred"), # , "rstanarm"
     .export = c("rhorseshoe", "dataconstructor", "fit_ref", "run_projpred",
-                "nobsv", "npreds_tot", "p0", "bfit"),
+                "nobsv", "ncat", "yunq", "nthres", "npreds_tot", "p0", "bfit"),
     # .noexport = c("<object_name>"),
     .options.snow = list(attachExportEnv = TRUE)
   ) %dorng% {
