@@ -43,6 +43,7 @@ if (!only_init_fit) {
   }
 }
 
+nobsv <- 100L
 npreds_tot <- 50L
 p0 <- as.integer(ceiling(npreds_tot * 0.10))
 seed_glob <- 856824715
@@ -100,8 +101,6 @@ rhorseshoe <- function(
 dataconstructor <- function() {
 
   ## Definitions ------------------------------------------------------------
-
-  nobsv <- 100L
 
   ncat <- 5L
   yunq <- paste0("ycat", seq_len(ncat))
@@ -334,7 +333,7 @@ sim_runner <- function(...) {
     .inorder = FALSE,
     # .packages = c("brms", "projpred"), # , "rstanarm"
     .export = c("rhorseshoe", "dataconstructor", "fit_ref", "run_projpred",
-                "npreds_tot", "p0", "bfit"),
+                "nobsv", "npreds_tot", "p0", "bfit"),
     # .noexport = c("<object_name>"),
     .options.snow = list(attachExportEnv = TRUE)
   ) %dorng% {
