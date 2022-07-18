@@ -191,7 +191,6 @@ dataconstructor <- function() {
   dat_sim$Y <- factor(sapply(seq_len(nobsv), function(i) {
     sample(yunq, size = 1, prob = yprobs[i, ])
   }), ordered = TRUE)
-  # TODO: How to proceed with empty categories? Re-specify `prior` in update()?
 
   ## Formula ----------------------------------------------------------------
 
