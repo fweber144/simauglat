@@ -8,7 +8,7 @@
 ## Installation (only required once) --------------------------------------
 
 # devtools::install_github("fweber144/brms", "projpred_latent")
-# devtools::install_github("fweber144/projpred", "augdat_latent")
+# devtools::install_github("fweber144/projpred", "tmp_augdat_latent")
 
 ## Timestamp --------------------------------------------------------------
 
@@ -308,8 +308,8 @@ fit_ref <- function(dat, fml) {
 run_projpred <- function(refm_fit, ...) {
   # TODO:
   # * Replace varsel() by cv_varsel() (and pick appropriate settings there).
-  #     --> No, take varsel(), but evaluate on independent test data (fix and
-  #         then use argument `d_test` for this?).
+  #     --> No, take varsel(), but evaluate on independent test data (use
+  #         argument `d_test` for this).
   time_bef <- Sys.time()
   vs <- projpred::varsel(refm_fit, method = "forward", ...)
   time_aft <- Sys.time()
