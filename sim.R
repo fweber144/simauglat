@@ -44,6 +44,7 @@ if (!only_init_fit) {
 }
 
 nobsv <- 100L
+nobsv_indep <- nobsv
 ncat <- 5L
 yunq <- paste0("ycat", seq_len(ncat))
 nthres <- ncat - 1L
@@ -105,6 +106,8 @@ dataconstructor <- function() {
 
   ## Definitions ------------------------------------------------------------
 
+  nobsv_sim <- nobsv + nobsv_indep
+
   # The intercepts at centered predictors ("Intercept"s in brms parlance, not
   # "b_Intercept"s):
   thres <- sort(rnorm(nthres))
@@ -142,7 +145,7 @@ dataconstructor <- function() {
   ## Continuous predictors --------------------------------------------------
 
   dat_sim <- setNames(replicate(npreds_cont, {
-    rnorm(nobsv)
+    rnorm(nobsv_sim)
   }, simplify = FALSE), paste0("Xcont", seq_len(npreds_cont)))
   dat_sim <- as.data.frame(dat_sim)
   # Start constructing the linear predictor:
@@ -152,7 +155,7 @@ dataconstructor <- function() {
 
   if (npreds_grCP == 1) {
     dat_sim$XgrCP1 <- sample(
-      gl(n = ngrCP[1], k = floor(nobsv / ngrCP[1]), length = nobsv,
+      gl(n = ngrCP[1], k = floor(nobsv_sim / ngrCP[1]), length = nobsv_sim,
          labels = paste0("gr", seq_len(ngrCP[1])))
     )
     # Continue constructing the linear predictor:
@@ -165,7 +168,7 @@ dataconstructor <- function() {
 
   if (npreds_grPP == 1) {
     dat_sim$XgrPP1 <- sample(
-      gl(n = ngrPP[1], k = floor(nobsv / ngrPP[1]), length = nobsv,
+      gl(n = ngrPP[1], k = floor(nobsv_sim / ngrPP[1]), length = nobsv_sim,
          labels = paste0("gr", seq_len(ngrPP[1])))
     )
     # Continue constructing the linear predictor:
@@ -181,14 +184,14 @@ dataconstructor <- function() {
     thres_k - eta
   })
   # Shouldn't be necessary (just to be safe): Emulate a single posterior draw:
-  dim(thres_eta) <- c(1L, nobsv, nthres)
+  dim(thres_eta) <- c(1L, nobsv_sim, nthres)
   yprobs <- brms:::inv_link_cumulative(thres_eta, link = "logit")
   # Because of emulating a single posterior draw above:
-  dim(yprobs) <- c(nobsv, ncat)
+  dim(yprobs) <- c(nobsv_sim, ncat)
 
   ## Response ---------------------------------------------------------------
 
-  dat_sim$Y <- factor(sapply(seq_len(nobsv), function(i) {
+  dat_sim$Y <- factor(sapply(seq_len(nobsv_sim), function(i) {
     sample(yunq, size = 1, prob = yprobs[i, ])
   }), ordered = TRUE)
 
@@ -212,8 +215,9 @@ dataconstructor <- function() {
 
   return(list(true_coefs_cont = coefs_cont,
               true_PPEs = if (npreds_grPP > 0) coefs_grPP[[1]]$icpt else NULL,
-              dat = dat_sim,
-              fml = fml_sim))
+              dat = dat_sim[1:nobsv, , drop = FALSE],
+              fml = fml_sim,
+              dat_indep = dat_sim[(nobsv + 1):nobsv_sim, , drop = FALSE]))
 }
 
 # Initial reference model fit ---------------------------------------------
@@ -305,13 +309,13 @@ fit_ref <- function(dat, fml) {
 }
 
 # For running projpred's variable selection:
-run_projpred <- function(refm_fit, ...) {
-  # TODO:
-  # * Replace varsel() by cv_varsel() (and pick appropriate settings there).
-  #     --> No, take varsel(), but evaluate on independent test data (use
-  #         argument `d_test` for this).
+run_projpred <- function(refm_fit, dat_indep, ...) {
+  d_indep <- list(data = dat_indep,
+                  offset = rep(0, nrow(dat_indep)),
+                  weights = rep(1, nrow(dat_indep)),
+                  y = dat_indep$Y)
   time_bef <- Sys.time()
-  vs <- projpred::varsel(refm_fit, method = "forward", ...)
+  vs <- projpred::varsel(refm_fit, d_test = d_indep, method = "forward", ...)
   time_aft <- Sys.time()
   # Currently, we need to use the internal projpred function .tabulate_stats()
   # to obtain the reference model's performance:
@@ -341,14 +345,17 @@ sim_runner <- function(...) {
     sim_dat_etc <- dataconstructor()
     refm_fit <- fit_ref(dat = sim_dat_etc$dat, fml = sim_dat_etc$fml)
     seed_vs <- sample.int(.Machine$integer.max, 1)
-    projpred_aug <- try(
-      run_projpred(refm_fit, seed = seed_vs, ...),
-      silent = TRUE
-    )
-    projpred_lat <- try(
-      run_projpred(refm_fit, seed = seed_vs, latent_proj = TRUE, ...),
-      silent = TRUE
-    )
+    projpred_aug <- try(run_projpred(refm_fit,
+                                     dat_indep = sim_dat_etc$dat_indep,
+                                     seed = seed_vs,
+                                     ...),
+                        silent = TRUE)
+    projpred_lat <- try(run_projpred(refm_fit,
+                                     dat_indep = sim_dat_etc$dat_indep,
+                                     seed = seed_vs,
+                                     latent_proj = TRUE,
+                                     ...),
+                        silent = TRUE)
     if (inherits(projpred_aug, "try-error")) {
       save(sit, refm_fit, seed_vs, list(...), .Random.seed, file = "failed.rda")
       stop("The augmented-data projpred run failed in simulation iteration ",
@@ -509,7 +516,7 @@ plotter_ovrlay <- function(prj_meth) {
           ggplot2::geom_hline(yintercept = 0,
                               color = "firebrick",
                               linetype = "dashed") +
-          ggplot2::geom_hline(yintercept = -4 / nobsv,
+          ggplot2::geom_hline(yintercept = -4 / nobsv_indep,
                               color = "dodgerblue",
                               linetype = "dotdash") +
           ggplot2::geom_point() +
