@@ -357,14 +357,16 @@ sim_runner <- function(...) {
                                      ...),
                         silent = TRUE)
     if (inherits(projpred_aug, "try-error")) {
-      save(sit, refm_fit, seed_vs, list(...), .Random.seed, file = "failed.rda")
+      dot_args <- list(...)
+      save(sit, refm_fit, seed_vs, dot_args, .Random.seed, file = "failed.rda")
       stop("The augmented-data projpred run failed in simulation iteration ",
            sit, ". Objects for replicating this failure were saved to ",
            "\"failed.rda\". Use `load(\"failed.rda\")` to restore it ",
            "(including `.Random.seed` and the value of RNGkind()).")
     }
     if (inherits(projpred_lat, "try-error")) {
-      save(sit, refm_fit, seed_vs, list(...), .Random.seed, file = "failed.rda")
+      dot_args <- list(...)
+      save(sit, refm_fit, seed_vs, dot_args, .Random.seed, file = "failed.rda")
       stop("The latent projpred run failed in simulation iteration ",
            sit, ". Objects for replicating this failure were saved to ",
            "\"failed.rda\". Use `load(\"failed.rda\")` to restore it ",
