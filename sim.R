@@ -8,7 +8,7 @@
 ## Installation (only required once) --------------------------------------
 
 # devtools::install_github("fweber144/brms", "projpred_latent")
-# devtools::install_github("fweber144/projpred", "tmp_augdat_latent")
+# devtools::install_github("fweber144/projpred", "augdat_latent")
 
 ## Timestamp --------------------------------------------------------------
 
