@@ -109,8 +109,20 @@ dataconstructor <- function() {
   nobsv_sim <- nobsv + nobsv_indep
 
   # The intercepts at centered predictors ("Intercept"s in brms parlance, not
-  # "b_Intercept"s):
-  thres <- sort(rnorm(nthres))
+  # "b_Intercept"s); note that when switching the option, the prior in the
+  # data-fitting model usually should be adjusted:
+  ### Option 1 (would require an adjustment of the prior when fitting):
+  # thres <- seq(-1.5, 1.5, length.out = nthres)
+  ###
+  ### Option 2 (would require an adjustment of the prior when fitting):
+  # thres <- sort(rnorm(nthres))
+  ###
+  ### Option 3 (would require an adjustment of the prior when fitting):
+  # thres <- sort(2.5 * rt(nthres, df = 3) + 0)
+  ###
+  ### Option 4:
+  thres <- qnorm(seq_len(nthres) / ncat)
+  ###
   # print(diff(c(0, pnorm(thres), 1)))
 
   npreds_cont <- npreds_tot
@@ -236,7 +248,7 @@ if (only_init_fit) {
     data = sim_dat_etc$dat,
     family = brms::cumulative(link = "probit"),
     prior = brms::prior(horseshoe(par_ratio = p0 / (npreds_tot - p0))) +
-      brms::prior(normal(0, 1), class = "Intercept"),
+      brms::prior(normal(0, 2.5), class = "Intercept"),
     ### For backend = "rstan":
     control = list(adapt_delta = 0.99), # , max_treedepth = 15L
     init_r = 1,
