@@ -362,8 +362,13 @@ sim_runner <- function(...) {
                                      seed = seed_vs,
                                      ...),
                         silent = TRUE)
+    dat_indep_lat <- sim_dat_etc$dat_indep
+    dat_indep_lat$Y_orig <- dat_indep_lat$Y
+    dat_indep_lat$Y <- colMeans(
+      rstantools::posterior_linpred(refm_fit, newdata = dat_indep_lat)
+    )
     projpred_lat <- try(run_projpred(refm_fit,
-                                     dat_indep = sim_dat_etc$dat_indep,
+                                     dat_indep = dat_indep_lat,
                                      seed = seed_vs,
                                      latent_proj = TRUE,
                                      ...),
