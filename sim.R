@@ -571,22 +571,21 @@ sgg_sizes <- sapply(seq_along(simres), sgger_size)
 if (nsim <= 10) {
   print(sgg_sizes)
 }
-if (!anyNA(sgg_sizes)) {
-  sgg_sizes_lat_minus_aug <- apply(sgg_sizes, 2, diff)
-  cat("\n-----\n")
-  cat("Differences of the suggested sizes (latent minus augmented-data):\n")
-  sgg_sizes_tab <- table(sgg_sizes_lat_minus_aug, useNA = "always")
-  print(sgg_sizes_tab)
-  print(proportions(sgg_sizes_tab))
-  cat("-----\n")
-  xlab_long <- "Difference of the suggested sizes (latent minus augmented-data)"
-  print(ggplot2::qplot(factor(sgg_sizes_lat_minus_aug),
-                       geom = "bar",
-                       xlab = xlab_long) +
-          ggplot2::scale_y_continuous(breaks = scales::breaks_pretty()))
-} else {
+if (anyNA(sgg_sizes)) {
   warning("Found suggested sizes which are `NA`.")
 }
+sgg_sizes_lat_minus_aug <- apply(sgg_sizes, 2, diff)
+cat("\n-----\n")
+cat("Differences of the suggested sizes (latent minus augmented-data):\n")
+sgg_sizes_tab <- table(sgg_sizes_lat_minus_aug, useNA = "always")
+print(sgg_sizes_tab)
+print(proportions(sgg_sizes_tab))
+cat("-----\n")
+xlab_long <- "Difference of the suggested sizes (latent minus augmented-data)"
+print(ggplot2::qplot(factor(sgg_sizes_lat_minus_aug),
+                     geom = "bar",
+                     xlab = xlab_long) +
+        ggplot2::scale_y_continuous(breaks = scales::breaks_pretty()))
 
 # doRNG -------------------------------------------------------------------
 
