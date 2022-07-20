@@ -240,7 +240,7 @@ if (only_init_fit) {
   # checked here, not during the simulation.
   sim_dat_etc <- dataconstructor()
   # Check that all response categories are present in the initial model fit:
-  stopifnot(identical(levels(sim_dat_etc$Y), yunq))
+  stopifnot(identical(levels(sim_dat_etc$dat$Y), yunq))
   options(mc.cores = parallel::detectCores(logical = FALSE))
   # options(cmdstanr_write_stan_file_dir = getwd())
   bfit <- brms::brm(
