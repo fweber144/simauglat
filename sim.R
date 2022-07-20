@@ -539,9 +539,12 @@ plotter_ovrlay <- function(prj_meth) {
           ggplot2::geom_hline(yintercept = 0,
                               color = "firebrick",
                               linetype = "dashed") +
-          ggplot2::geom_hline(yintercept = -4 / nobsv_indep,
-                              color = "dodgerblue",
-                              linetype = "dotdash") +
+          ### Only required when using the extended suggest_size() heuristics
+          ### from branch `elpd4` of repo `fweber144/projpred`:
+          # ggplot2::geom_hline(yintercept = -4 / nobsv_indep,
+          #                     color = "dodgerblue",
+          #                     linetype = "dotdash") +
+          ###
           ggplot2::geom_point() +
           ggplot2::geom_line() +
           ggplot2::labs(title = title_raw))
