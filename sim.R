@@ -29,7 +29,7 @@ warn_orig_glob <- options(warn = 1)
 only_init_fit <- F
 
 if (!only_init_fit) {
-  nsim <- 4 * 8 # The number of simulation iterations
+  nsim <- 50 # The number of simulation iterations
   # par_type <- "doSeq"
   par_type <- "doParallel"
   # par_type <- "doMPI"
