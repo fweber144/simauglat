@@ -564,7 +564,9 @@ sgger_size <- function(sim_idx) {
   ))
 }
 sgg_sizes <- sapply(seq_along(simres), sgger_size)
-# print(sgg_sizes)
+if (nsim <= 10) {
+  print(sgg_sizes)
+}
 if (!anyNA(sgg_sizes)) {
   sgg_sizes_lat_minus_aug <- apply(sgg_sizes, 2, diff)
   cat("\n-----\n")
