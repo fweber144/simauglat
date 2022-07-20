@@ -357,6 +357,7 @@ sim_runner <- function(...) {
     .options.snow = list(attachExportEnv = TRUE)
   ) %dorng% {
     cat("\nSimulation iteration: ", sit, "\n", sep = "")
+    Rseed <- .Random.seed
     sim_dat_etc <- dataconstructor()
     refm_fit <- fit_ref(dat = sim_dat_etc$dat, fml = sim_dat_etc$fml)
     seed_vs <- sample.int(.Machine$integer.max, 1)
@@ -377,7 +378,7 @@ sim_runner <- function(...) {
                         silent = TRUE)
     if (inherits(projpred_aug, "try-error")) {
       dot_args <- list(...)
-      save(sit, refm_fit, seed_vs, dot_args, .Random.seed, file = "failed.rda")
+      save(sit, refm_fit, seed_vs, dot_args, Rseed, file = "failed.rda")
       stop("The augmented-data projpred run failed in simulation iteration ",
            sit, ". Error message: \"", attr(projpred_aug, "condition")$message,
            "\". Objects for replicating this failure were saved to ",
@@ -386,7 +387,7 @@ sim_runner <- function(...) {
     }
     if (inherits(projpred_lat, "try-error")) {
       dot_args <- list(...)
-      save(sit, refm_fit, seed_vs, dot_args, .Random.seed, file = "failed.rda")
+      save(sit, refm_fit, seed_vs, dot_args, Rseed, file = "failed.rda")
       stop("The latent projpred run failed in simulation iteration ",
            sit, ". Error message: \"", attr(projpred_lat, "condition")$message,
            "\". Objects for replicating this failure were saved to ",
