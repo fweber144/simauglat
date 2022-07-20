@@ -29,13 +29,13 @@ warn_orig_glob <- options(warn = 1)
 only_init_fit <- F
 
 if (!only_init_fit) {
-  nsim <- 4 # The number of simulation iterations
+  nsim <- 4 * 8 # The number of simulation iterations
   # par_type <- "doSeq"
   par_type <- "doParallel"
   # par_type <- "doMPI"
   if (par_type %in% c("doParallel")) {
     # The number of CPU cores (more generally, "workers") for the simulation:
-    ncores <- 4 # parallel::detectCores(logical = FALSE)
+    ncores <- 8 # parallel::detectCores(logical = FALSE)
     if (nsim < ncores) {
       warning("Increasing `nsim` to `ncores = ", ncores, "`.")
       nsim <- ncores
