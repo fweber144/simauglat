@@ -206,8 +206,6 @@ dataconstructor <- function() {
   dat_sim$Y <- factor(sapply(seq_len(nobsv_sim), function(i) {
     sample(yunq, size = 1, prob = yprobs[i, ])
   }), ordered = TRUE)
-  # Needed because the latent projection will have to modify this:
-  dat_sim$projpredY <- dat_sim$Y
 
   ## Formula ----------------------------------------------------------------
 
@@ -324,10 +322,12 @@ fit_ref <- function(dat, fml) {
 
 # For running projpred's variable selection:
 run_projpred <- function(refm_fit, dat_indep, ...) {
-  d_indep <- list(data = dat_indep,
-                  offset = rep(0, nrow(dat_indep)),
-                  weights = rep(1, nrow(dat_indep)),
-                  y = dat_indep$projpredY)
+  d_indep <- list(
+    data = dat_indep,
+    offset = rep(0, nrow(dat_indep)),
+    weights = rep(1, nrow(dat_indep)),
+    y = if (!is.null(dat_indep$projpredY)) dat_indep$projpredY else dat_indep$Y
+  )
   time_bef <- Sys.time()
   vs <- projpred::varsel(refm_fit, d_test = d_indep, method = "forward", ...)
   time_aft <- Sys.time()
