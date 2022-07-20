@@ -652,6 +652,7 @@ cat("Timestamp at the end of the script:\n")
 print(Sys.time())
 cat("-----\n")
 
-## Exit code --------------------------------------------------------------
+## Exit -------------------------------------------------------------------
 
 cat("\nExit code: 0\n")
+beepr::beep(2)
