@@ -291,6 +291,7 @@ if (only_init_fit) {
 
   # Exit code:
   cat("\nExit code: 0\n")
+  beepr::beep(2)
   stop("Exiting cleanly (only throwing an error to stop source()-ing the ",
        "script).")
 } else {
