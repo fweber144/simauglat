@@ -7,8 +7,14 @@
 
 ## Installation (only required once) --------------------------------------
 
+### With more checks:
 # devtools::install_github("fweber144/brms", "projpred_latent")
 # devtools::install_github("fweber144/projpred", "augdat_latent")
+###
+### With less checks:
+# remotes::install_github("fweber144/brms", "projpred_latent")
+# remotes::install_github("fweber144/projpred", "augdat_latent")
+###
 
 ## Timestamp --------------------------------------------------------------
 
@@ -291,7 +297,9 @@ if (only_init_fit) {
 
   # Exit code:
   cat("\nExit code: 0\n")
-  beepr::beep(2)
+  if (interactive() && !isatty(stdout())) {
+    beepr::beep(2)
+  }
   stop("Exiting cleanly (only throwing an error to stop source()-ing the ",
        "script).")
 } else {
@@ -676,4 +684,6 @@ cat("-----\n")
 ## Exit -------------------------------------------------------------------
 
 cat("\nExit code: 0\n")
-beepr::beep(2)
+if (interactive() && !isatty(stdout())) {
+  beepr::beep(2)
+}
