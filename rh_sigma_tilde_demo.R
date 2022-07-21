@@ -5,9 +5,9 @@ print(sapply(seq_len(3), calc_sigma2_tilde_y, ncats = 3))
 print(sapply(seq_len(4), calc_sigma2_tilde_y, ncats = 4))
 print(sapply(seq_len(5), calc_sigma2_tilde_y, ncats = 5))
 
-print(calc_sigma_tilde(agg_type = "type1"))
-print(calc_sigma_tilde(agg_type = "type2"))
-print(calc_sigma_tilde(agg_type = "type3"))
+print(calc_sigma_tilde(agg_type = "simple_mean"))
+print(calc_sigma_tilde(agg_type = "harmonic_mean"))
+print(calc_sigma_tilde(agg_type = "geometric_mean"))
 
 print(round(calc_sigma_tilde(ncats = 2), 3))
 ## --> Gives: 1.253

@@ -58,20 +58,20 @@ calc_sigma2_tilde_y <- function(y,
 # Function for aggregating the (approximate) variances of the Gaussian
 # pseudo-observations across all response values `y \in {1, ..., C}` with `C`
 # denoting the number of response categories:
-calc_sigma_tilde <- function(agg_type = "type3", ncats = 5, ...) {
+calc_sigma_tilde <- function(agg_type = "geometric_mean", ncats = 5, ...) {
   sigma2s_tilde <- do.call(c, lapply(
     seq_len(ncats),
     calc_sigma2_tilde_y,
     ncats = ncats,
     ...
   ))
-  if (agg_type == "type1") {
+  if (agg_type == "simple_mean") {
     # Root of the mean of the variances:
     return(sqrt(mean(sigma2s_tilde)))
-  } else if (agg_type == "type2") {
+  } else if (agg_type == "harmonic_mean") {
     # Root of the harmonic mean of the variances:
     return(sqrt(1 / mean(1 / sigma2s_tilde)))
-  } else if (agg_type == "type3") {
+  } else if (agg_type == "geometric_mean") {
     # Root of the geometric mean of the variances
     # (= exp of the mean of the log standard deviations):
     return(sqrt(exp(mean(log(sigma2s_tilde)))))
