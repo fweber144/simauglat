@@ -416,6 +416,8 @@ saveRDS(simres, file = "simres.rds") # simres <- readRDS(file = "simres.rds")
 
 # Post-processing ---------------------------------------------------------
 
+if (!dir.exists("figs")) dir.create("figs")
+
 ## True completely pooled coefficients ------------------------------------
 ## (i.e., the draws from the regularized horseshoe distribution)
 
@@ -430,6 +432,8 @@ cat("-----\n")
 print(ggplot2::ggplot(data = true_coefs_cont,
                       mapping = ggplot2::aes(x = coef)) +
         ggplot2::geom_histogram(bins = 40)) # + ggplot2::geom_density()
+ggplot2::ggsave(file.path("figs", "true_coefs_cont.pdf"),
+                width = 7, height = 7 * 0.618)
 
 ## Timing -----------------------------------------------------------------
 
@@ -453,6 +457,8 @@ mins_vs$sim_idx_ch <- NULL
 print(ggplot2::ggplot(data = mins_vs,
                       mapping = ggplot2::aes(x = prj_meth, y = minutes)) +
         ggplot2::geom_boxplot()) # + ggplot2::geom_violin()
+ggplot2::ggsave(file.path("figs", "time.pdf"),
+                width = 7, height = 7 * 0.618)
 
 ## True partially pooled effects ------------------------------------------
 
@@ -557,6 +563,8 @@ plotter_ovrlay <- function(prj_meth) {
           ggplot2::geom_point() +
           ggplot2::geom_line() +
           ggplot2::labs(title = title_raw))
+  ggplot2::ggsave(file.path("figs", paste0(y_chr, "_", prj_meth, ".pdf")),
+                  width = 7, height = 7 * 0.618)
   return(invisible(TRUE))
 }
 plotter_com <- function() {
@@ -596,6 +604,8 @@ print(ggplot2::qplot(factor(sgg_sizes_lat_minus_aug),
                      geom = "bar",
                      xlab = xlab_long) +
         ggplot2::scale_y_continuous(breaks = scales::breaks_pretty()))
+ggplot2::ggsave(file.path("figs", "sgg_sizes_diff.pdf"),
+                width = 7, height = 7 * 0.618)
 
 # doRNG -------------------------------------------------------------------
 
