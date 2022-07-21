@@ -41,7 +41,10 @@ calc_sigma2_tilde_y <- function(y,
   return(-1 / L_deriv2)
 }
 
-print(sapply(seq_len(5), calc_sigma2_tilde_y))
+print(sapply(seq_len(2), calc_sigma2_tilde_y, ncats = 2))
+print(sapply(seq_len(3), calc_sigma2_tilde_y, ncats = 3))
+print(sapply(seq_len(4), calc_sigma2_tilde_y, ncats = 4))
+print(sapply(seq_len(5), calc_sigma2_tilde_y, ncats = 5))
 
 # Function for aggregating the (approximate) variances of the Gaussian
 # pseudo-observations across all response values `y \in {1, ..., C}` with `C`
@@ -72,5 +75,11 @@ print(calc_sigma_tilde(agg_type = "type1"))
 print(calc_sigma_tilde(agg_type = "type2"))
 print(calc_sigma_tilde(agg_type = "type3"))
 
-print(round(calc_sigma_tilde(), 3))
+print(round(calc_sigma_tilde(ncats = 2), 3))
+## --> Gives: 1.253
+print(round(calc_sigma_tilde(ncats = 3), 3))
+## --> Gives: 1.127
+print(round(calc_sigma_tilde(ncats = 4), 3))
+## --> Gives: 1.082
+print(round(calc_sigma_tilde(ncats = 5), 3))
 ## --> Gives: 1.059
