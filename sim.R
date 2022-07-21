@@ -95,7 +95,7 @@ set.seed(seed_glob)
 rhorseshoe <- function(
     npreds_RH,
     df_lambdas = 1,
-    df_global = 1, scale_global = par_ratio / sqrt(N), par_ratio, N,
+    df_global = 1, scale_global = par_ratio / sqrt(N), par_ratio, N, # TODO: Multiply by an appropriate value from file `rh_sigma_tilde.R`?
     df_slab = 4, scale_slab = 2
 ) {
   csq <- 1 / rgamma(1, shape = df_slab / 2, rate = scale_slab^2 * df_slab / 2)
@@ -133,7 +133,7 @@ dataconstructor <- function() {
 
   npreds_cont <- npreds_tot
   coefs_cont <- rhorseshoe(npreds_cont,
-                           par_ratio = p0 / (npreds_cont - p0), N = nobsv)
+                           par_ratio = p0 / (npreds_cont - p0), N = nobsv) # TODO: Multiply by an appropriate value from file `rh_sigma_tilde.R`?
 
   npreds_grCP <- 0L # 1L
   ngrCP <- integer() # c(3L)
