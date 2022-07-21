@@ -416,10 +416,17 @@ saveRDS(simres, file = "simres.rds") # simres <- readRDS(file = "simres.rds")
 
 # Post-processing ---------------------------------------------------------
 
-## Regularized horseshoe prior draws --------------------------------------
+## True completely pooled coefficients ------------------------------------
+## (i.e., the draws from the regularized horseshoe distribution)
 
 true_coefs_cont <- unlist(lapply(simres, "[[", "true_coefs_cont"))
 true_coefs_cont <- data.frame(coef = true_coefs_cont)
+cat("\n-----\n")
+cat("Proportion of (completely pooled) coefficient draws with absolute value >",
+    "0.5 (across all simulation iterations and all `npreds_tot` coefficient",
+    "draws within each simulation iteration):\n")
+print(proportions(table(abs(true_coefs_cont$coef) > 0.5, useNA = "ifany")))
+cat("-----\n")
 print(ggplot2::ggplot(data = true_coefs_cont,
                       mapping = ggplot2::aes(x = coef)) +
         ggplot2::geom_histogram(bins = 40)) # + ggplot2::geom_density()
