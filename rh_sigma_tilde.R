@@ -5,7 +5,7 @@ dnorm_deriv <- function(x) {
   x_out <- rep(NaN, length(x))
   x_is_fin <- is.finite(x)
   x_out[!x_is_fin] <- 0
-  x_out[x_is_fin] <- -x[x_is_fin] / sqrt(2 * pi) * exp(-0.5 * x[x_is_fin]^2)
+  x_out[x_is_fin] <- -x[x_is_fin] * dnorm(x[x_is_fin])
   return(x_out)
 }
 
