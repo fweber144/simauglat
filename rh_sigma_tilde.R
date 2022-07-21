@@ -17,6 +17,8 @@ dlogis_deriv <- function(x) {
   x_is_fin <- is.finite(x)
   x_out[!x_is_fin] <- 0
   exp_minus_x <- exp(-x[x_is_fin])
+  # Note: For better numerical accuracy, we could use `expm1(-x[x_is_fin])`
+  # instead of `(exp_minus_x - 1)` in the following:
   x_out[x_is_fin] <- exp_minus_x * (exp_minus_x - 1) / (1 + exp_minus_x)^3
   return(x_out)
 }
