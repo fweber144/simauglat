@@ -9,6 +9,18 @@ dnorm_deriv <- function(x) {
   return(x_out)
 }
 
+# Derivative of the probability density function of the standard logistic
+# distribution (i.e., the second derivative of the cumulative distribution
+# function of the standard logistic distribution):
+dlogis_deriv <- function(x) {
+  x_out <- rep(NaN, length(x))
+  x_is_fin <- is.finite(x)
+  x_out[!x_is_fin] <- 0
+  exp_minus_x <- exp(-x[x_is_fin])
+  x_out[x_is_fin] <- exp_minus_x * (exp_minus_x - 1) / (1 + exp_minus_x)^3
+  return(x_out)
+}
+
 # Function for calculating the (approximate) variance of the Gaussian
 # pseudo-observations (`\tilde{\sigma}^2` from @piironen_sparsity_2017) in a
 # "cumulative" family for a given response value `y \in {1, ..., C}` with `C`
@@ -83,3 +95,14 @@ print(round(calc_sigma_tilde(ncats = 4), 3))
 ## --> Gives: 1.082
 print(round(calc_sigma_tilde(ncats = 5), 3))
 ## --> Gives: 1.059
+
+# For checking, use the Bernoulli family with the logit link which has a value
+# of `\tilde{\sigma}^2 = 4` in @piironen_sparsity_2017:
+brnll_logit_ch <- sapply(seq_len(2),
+                         calc_sigma2_tilde_y,
+                         ilink_fun = plogis,
+                         ilink_deriv_fun = dlogis,
+                         ilink_deriv2_fun = dlogis_deriv,
+                         ncats = 2)
+print(brnll_logit_ch)
+stopifnot(all.equal(brnll_logit_ch, rep(4, 2), tolerance = .Machine$double.eps))
