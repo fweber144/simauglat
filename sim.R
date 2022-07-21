@@ -56,10 +56,16 @@ yunq <- paste0("ycat", seq_len(ncat))
 nthres <- ncat - 1L
 npreds_tot <- 50L
 p0 <- as.integer(ceiling(npreds_tot * 0.10))
+source("rh_sigma_tilde.R")
+sigti <- calc_sigma_tilde(ncats = ncat)
 seed_glob <- 856824715
 
 cat("-----\np0:\n")
 print(p0)
+cat("-----\n")
+
+cat("-----\nsigma_tilde:\n")
+print(round(sigti, 3))
 cat("-----\n")
 
 ## Prepare simulation -----------------------------------------------------
@@ -95,7 +101,8 @@ set.seed(seed_glob)
 rhorseshoe <- function(
     npreds_RH,
     df_lambdas = 1,
-    df_global = 1, scale_global = par_ratio / sqrt(N), par_ratio, N, # TODO: Multiply by an appropriate value from file `rh_sigma_tilde.R`?
+    df_global = 1, scale_global = par_ratio * sigma_tilde / sqrt(N),
+    par_ratio, sigma_tilde, N,
     df_slab = 4, scale_slab = 2
 ) {
   csq <- 1 / rgamma(1, shape = df_slab / 2, rate = scale_slab^2 * df_slab / 2)
@@ -133,7 +140,9 @@ dataconstructor <- function() {
 
   npreds_cont <- npreds_tot
   coefs_cont <- rhorseshoe(npreds_cont,
-                           par_ratio = p0 / (npreds_cont - p0), N = nobsv) # TODO: Multiply by an appropriate value from file `rh_sigma_tilde.R`?
+                           par_ratio = p0 / (npreds_cont - p0),
+                           sigma_tilde = sigti,
+                           N = nobsv)
 
   npreds_grCP <- 0L # 1L
   ngrCP <- integer() # c(3L)
@@ -253,7 +262,7 @@ if (only_init_fit) {
     formula = sim_dat_etc$fml,
     data = sim_dat_etc$dat,
     family = brms::cumulative(link = "probit"),
-    prior = brms::prior(horseshoe(par_ratio = p0 / (npreds_tot - p0))) +
+    prior = brms::prior(horseshoe(par_ratio = p0 / (npreds_tot - p0) * sigti)) +
       brms::prior(normal(0, 2.5), class = "Intercept"),
     ### For backend = "rstan":
     control = list(adapt_delta = 0.99), # , max_treedepth = 15L
