@@ -65,7 +65,7 @@ print(p0)
 cat("-----\n")
 
 cat("-----\nsigma_tilde:\n")
-print(round(sigti, 3))
+print(sigti)
 cat("-----\n")
 
 ## Prepare simulation -----------------------------------------------------
@@ -258,11 +258,18 @@ if (only_init_fit) {
   stopifnot(identical(levels(sim_dat_etc$dat$Y), yunq))
   options(mc.cores = parallel::detectCores(logical = FALSE))
   # options(cmdstanr_write_stan_file_dir = getwd())
+  ### Needed because the computing cluster complains about `p0` not found:
+  par_ratio_sigti <- p0 / (npreds_tot - p0) * sigti
+  cat("-----\npar_ratio_sigti:\n")
+  print(par_ratio_sigti, digits = 9)
+  cat("-----\n")
+  stopifnot(all.equal(par_ratio_sigti, 0.117657042, tolerance = 1e-9))
+  ###
   bfit <- brms::brm(
     formula = sim_dat_etc$fml,
     data = sim_dat_etc$dat,
     family = brms::cumulative(link = "probit"),
-    prior = brms::prior(horseshoe(par_ratio = p0 / (npreds_tot - p0) * sigti)) +
+    prior = brms::prior(horseshoe(par_ratio = 0.117657042)) +
       brms::prior(normal(0, 2.5), class = "Intercept"),
     ### For backend = "rstan":
     control = list(adapt_delta = 0.99), # , max_treedepth = 15L
