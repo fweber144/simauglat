@@ -370,7 +370,7 @@ sim_runner <- function(...) {
     # .packages = c("brms", "projpred"), # , "rstanarm"
     .export = c("rhorseshoe", "dataconstructor", "fit_ref", "run_projpred",
                 "nobsv", "nobsv_indep", "ncat", "yunq", "nthres", "npreds_tot",
-                "p0", "bfit"),
+                "p0", "sigti", "bfit"),
     # .noexport = c("<object_name>"),
     .options.snow = list(attachExportEnv = TRUE)
   ) %dorng% {
