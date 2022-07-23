@@ -432,8 +432,10 @@ sim_runner <- function(...) {
 
 print(system.time({
   simres <- sim_runner(
-    nclusters_pred = 50,
-    nterms_max = 5 # TODO: Do not cut off at all or only at a higher model size?
+    ### For a faster (experimental) run:
+    # nclusters_pred = 50,
+    # nterms_max = 5
+    ###
   )
 }))
 saveRDS(simres, file = "simres.rds") # simres <- readRDS(file = "simres.rds")
