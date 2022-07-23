@@ -37,8 +37,8 @@ only_init_fit <- F
 if (!only_init_fit) {
   nsim <- 50 # The number of simulation iterations
   # par_type <- "doSeq"
-  par_type <- "doParallel"
-  # par_type <- "doMPI"
+  # par_type <- "doParallel"
+  par_type <- "doMPI"
   if (par_type %in% c("doParallel")) {
     # The number of CPU cores (more generally, "workers") for the simulation:
     ncores <- 8 # parallel::detectCores(logical = FALSE)
