@@ -59,7 +59,7 @@ if (!only_init_fit) {
   }
 }
 
-nobsv <- 100L
+nobsv <- 400L
 nobsv_indep <- nobsv
 ncat <- 5L
 yunq <- paste0("ycat", seq_len(ncat))
