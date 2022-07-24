@@ -408,7 +408,7 @@ sim_runner <- function(...) {
            sit, ". Error message: \"", attr(projpred_aug, "condition")$message,
            "\". Objects for replicating this failure were saved to ",
            "\"failed.rda\". Use `loaded_objs <- load(\"failed.rda\")` to ",
-           "restore it (including `.Random.seed` and the value of RNGkind()).")
+           "restore it (including `.Random.seed`).")
     }
     if (inherits(projpred_lat, "try-error")) {
       dot_args <- list(...)
@@ -417,7 +417,7 @@ sim_runner <- function(...) {
            sit, ". Error message: \"", attr(projpred_lat, "condition")$message,
            "\". Objects for replicating this failure were saved to ",
            "\"failed.rda\". Use `loaded_objs <- load(\"failed.rda\")` to ",
-           "restore it (including `.Random.seed` and the value of RNGkind()).")
+           "restore it (including `.Random.seed`).")
     }
     return(list(
       aug = projpred_aug,
