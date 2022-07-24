@@ -663,7 +663,7 @@ if (!isNamespaceLoaded("rmarkdown")) loadNamespace("rmarkdown")
 if (!isNamespaceLoaded("yaml")) loadNamespace("yaml")
 
 # sessioninfo::session_info(to_file = TRUE)
-sink(file = "session_info.txt")
+sink(file = paste0("session_info_", par_type, ".txt"))
 print(sessioninfo::session_info())
 cat("\n-----\n")
 cat("CmdStan version:\n")
