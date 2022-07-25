@@ -465,9 +465,9 @@ cat("Proportion of (completely pooled) coefficient draws with absolute value >",
     "draws within each simulation iteration):\n")
 print(proportions(table(abs(true_coefs_cont$coef) > 0.5, useNA = "ifany")))
 cat("-----\n")
-print(ggplot2::ggplot(data = true_coefs_cont,
-                      mapping = ggplot2::aes(x = coef)) +
-        ggplot2::geom_histogram(bins = 40)) # + ggplot2::geom_density()
+gg_true_coefs_cont <- ggplot2::ggplot(data = true_coefs_cont,
+                                      mapping = ggplot2::aes(x = coef)) +
+  ggplot2::geom_histogram(bins = 40) # + ggplot2::geom_density()
 ggplot2::ggsave(file.path("figs", "true_coefs_cont.pdf"),
                 width = 7, height = 7 * 0.618)
 
@@ -490,9 +490,9 @@ mins_vs <- reshape(
 )
 stopifnot(identical(mins_vs$sim_idx_ch, mins_vs$sim_idx))
 mins_vs$sim_idx_ch <- NULL
-print(ggplot2::ggplot(data = mins_vs,
-                      mapping = ggplot2::aes(x = prj_meth, y = minutes)) +
-        ggplot2::geom_boxplot()) # + ggplot2::geom_violin()
+gg_time <- ggplot2::ggplot(data = mins_vs,
+                           mapping = ggplot2::aes(x = prj_meth, y = minutes)) +
+  ggplot2::geom_boxplot() # + ggplot2::geom_violin()
 ggplot2::ggsave(file.path("figs", "time.pdf"),
                 width = 7, height = 7 * 0.618)
 
@@ -582,34 +582,30 @@ plotter_ovrlay <- function(prj_meth) {
     cbind(sim_idx = sim_idx,
           simres[[sim_idx]][[prj_meth]]$smmry[, c("size", y_chr)])
   }))
-  print(ggplot2::ggplot(data = plotdat_comm,
-                        mapping = ggplot2::aes_string(x = "size",
-                                                      y = y_chr,
-                                                      group = "sim_idx",
-                                                      alpha = I(0.4))) +
-          ggplot2::geom_hline(yintercept = 0,
-                              color = "firebrick",
-                              linetype = "dashed") +
-          ### Only required when using the extended suggest_size() heuristics
-          ### from branch `elpd4` of repo `fweber144/projpred`:
-          # ggplot2::geom_hline(yintercept = -4 / nobsv_indep,
-          #                     color = "dodgerblue",
-          #                     linetype = "dotdash") +
-          ###
-          ggplot2::geom_point() +
-          ggplot2::geom_line() +
-          ggplot2::labs(title = title_raw))
+  gg_perf <- ggplot2::ggplot(data = plotdat_comm,
+                             mapping = ggplot2::aes_string(x = "size",
+                                                           y = y_chr,
+                                                           group = "sim_idx",
+                                                           alpha = I(0.4))) +
+    ggplot2::geom_hline(yintercept = 0,
+                        color = "firebrick",
+                        linetype = "dashed") +
+    ### Only required when using the extended suggest_size() heuristics
+    ### from branch `elpd4` of repo `fweber144/projpred`:
+    # ggplot2::geom_hline(yintercept = -4 / nobsv_indep,
+    #                     color = "dodgerblue",
+    #                     linetype = "dotdash") +
+    ###
+    ggplot2::geom_point() +
+    ggplot2::geom_line() +
+    ggplot2::labs(title = title_raw)
   ggplot2::ggsave(file.path("figs", paste0(y_chr, "_", prj_meth, ".pdf")),
                   width = 7, height = 7 * 0.618)
-  return(invisible(TRUE))
+  return(list(succ_ind = TRUE, gg_obj = gg_perf))
 }
-plotter_com <- function() {
-  aug_succ <- plotter_ovrlay(prj_meth = "aug")
-  lat_succ <- plotter_ovrlay(prj_meth = "lat")
-  return(invisible(aug_succ && lat_succ))
-}
-com_succs <- plotter_com()
-stopifnot(com_succs)
+com_aug <- plotter_ovrlay(prj_meth = "aug")
+com_lat <- plotter_ovrlay(prj_meth = "lat")
+stopifnot(com_aug$succ_ind && com_lat$succ_ind)
 
 ## Suggested sizes --------------------------------------------------------
 
@@ -634,10 +630,10 @@ print(sgg_sizes_tab)
 print(proportions(sgg_sizes_tab))
 cat("-----\n")
 xlab_long <- "Difference of the suggested sizes (latent minus augmented-data)"
-print(ggplot2::qplot(factor(sgg_sizes_lat_minus_aug),
-                     geom = "bar",
-                     xlab = xlab_long) +
-        ggplot2::scale_y_continuous(breaks = scales::breaks_pretty()))
+gg_sgg_sizes_diff <- ggplot2::qplot(factor(sgg_sizes_lat_minus_aug),
+                                    geom = "bar",
+                                    xlab = xlab_long) +
+  ggplot2::scale_y_continuous(breaks = scales::breaks_pretty())
 ggplot2::ggsave(file.path("figs", "sgg_sizes_diff.pdf"),
                 width = 7, height = 7 * 0.618)
 
