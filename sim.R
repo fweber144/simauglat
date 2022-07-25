@@ -620,9 +620,7 @@ sgger_size <- function(sim_idx) {
   ))
 }
 sgg_sizes <- sapply(seq_along(simres), sgger_size)
-if (nsim <= 10) {
-  print(sgg_sizes)
-}
+print(sgg_sizes)
 if (anyNA(sgg_sizes)) {
   warning("Found suggested sizes which are `NA`.")
 }
