@@ -626,16 +626,38 @@ if (anyNA(sgg_sizes)) {
 sgg_sizes_lat_minus_aug <- apply(sgg_sizes, 2, function(x) {
   x["sgg_size_lat"] - x["sgg_size_aug"]
 })
+sgg_sizes_lat_minus_aug <- factor(sgg_sizes_lat_minus_aug)
+sgg_sizes_NA <- apply(sgg_sizes, 2, function(x) {
+  if (!is.na(x["sgg_size_lat"]) && is.na(x["sgg_size_aug"])) {
+    return("NA_a")
+  } else if (is.na(x["sgg_size_lat"]) && !is.na(x["sgg_size_aug"])) {
+    return("NA_l")
+  } else if (is.na(x["sgg_size_lat"]) && is.na(x["sgg_size_aug"])) {
+    return("NA_b")
+  } else {
+    return(NA)
+  }
+})
+sgg_sizes_NA <- factor(sgg_sizes_NA, levels = c("NA_a", "NA_l", "NA_b"))
+stopifnot(identical(is.na(sgg_sizes_lat_minus_aug), !is.na(sgg_sizes_NA)))
+sgg_sizes_lat_minus_aug <- factor(
+  sgg_sizes_lat_minus_aug,
+  levels = union(levels(sgg_sizes_lat_minus_aug), levels(sgg_sizes_NA))
+)
+sgg_sizes_lat_minus_aug[is.na(sgg_sizes_lat_minus_aug)] <- sgg_sizes_NA[
+  !is.na(sgg_sizes_NA)
+]
 cat("\n-----\n")
 cat("Differences of the suggested sizes (latent minus augmented-data):\n")
-sgg_sizes_tab <- table(sgg_sizes_lat_minus_aug, useNA = "always")
+sgg_sizes_tab <- table(sgg_sizes_lat_minus_aug, useNA = "ifany")
 print(sgg_sizes_tab)
 print(proportions(sgg_sizes_tab))
 cat("-----\n")
 xlab_long <- "Difference of the suggested sizes (latent minus augmented-data)"
-gg_sgg_sizes_diff <- ggplot2::qplot(factor(sgg_sizes_lat_minus_aug),
+gg_sgg_sizes_diff <- ggplot2::qplot(sgg_sizes_lat_minus_aug,
                                     geom = "bar",
                                     xlab = xlab_long) +
+  ggplot2::scale_x_discrete(drop = FALSE) +
   ggplot2::scale_y_continuous(breaks = scales::breaks_pretty())
 ggplot2::ggsave(file.path("figs", "sgg_sizes_diff.pdf"),
                 width = 7, height = 7 * 0.618)
