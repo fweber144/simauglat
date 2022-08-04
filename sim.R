@@ -384,7 +384,6 @@ run_projpred <- function(refm_fit, dat_indep, ...) {
 sim_runner <- function(...) {
   foreach(
     sit = seq_len(nsim), # Needs package "iterators": icount(nsim),
-    .inorder = FALSE,
     # .packages = c("brms", "projpred"), # , "rstanarm"
     .export = c("rhorseshoe", "dataconstructor", "fit_ref", "run_projpred",
                 "nobsv", "nobsv_indep", "ncat", "yunq", "nthres", "npreds_tot",
