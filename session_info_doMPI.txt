@@ -8,7 +8,7 @@
  collate  en_US.UTF-8
  ctype    en_US.UTF-8
  tz       Europe/Berlin
- date     2022-07-24
+ date     2022-08-04
  pandoc   NA (via rmarkdown)
 
 ─ Packages ───────────────────────────────────────────────────────────────────
@@ -19,7 +19,7 @@
  bayesplot        1.9.0      2022-03-10 [1] CRAN (R 4.2.0)
  boot             1.3-28     2021-05-03 [2] CRAN (R 4.2.0)
  bridgesampling   1.1-2      2021-04-16 [1] CRAN (R 4.2.0)
- brms           * 2.17.5     2022-07-21 [1] Github (fweber144/brms@1e52120)
+ brms           * 2.17.5     2022-08-04 [1] Github (fweber144/brms@d5077d0)
  Brobdingnag      1.2-7      2022-02-03 [1] CRAN (R 4.2.0)
  callr            3.7.1      2022-07-13 [1] CRAN (R 4.2.0)
  checkmate        2.1.0      2022-04-21 [1] CRAN (R 4.2.0)
@@ -86,7 +86,7 @@
  posterior        1.2.2      2022-06-09 [1] CRAN (R 4.2.0)
  prettyunits      1.1.1      2020-01-24 [1] CRAN (R 4.2.0)
  processx         3.7.0      2022-07-07 [1] CRAN (R 4.2.0)
- projpred       * 2.1.2.9000 2022-07-24 [1] Github (fweber144/projpred@7400a22)
+ projpred       * 2.1.2.9000 2022-08-04 [1] Github (fweber144/projpred@1db375d)
  promises         1.2.0.1    2021-02-11 [1] CRAN (R 4.2.0)
  ps               1.7.1      2022-06-18 [1] CRAN (R 4.2.0)
  purrr            0.3.4      2020-04-17 [1] CRAN (R 4.2.0)
