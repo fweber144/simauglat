@@ -701,23 +701,6 @@ print(cmdstanr::cmdstan_version(error_on_NA = FALSE))
 cat("-----\n")
 sink()
 
-## Free resources ---------------------------------------------------------
-
-if (par_type %in% c("doParallel")) {
-  stopImplicitCluster()
-} else if (par_type %in% c("doMPI")) {
-  ### Ideally, the following code should be used (at least according to the
-  ### "doMPI" vignette). However, `closeCluster(cl_obj)` as well as `mpi.quit()`
-  ### (as well as simply `q("no")`) seem to cause the execution to get stuck (so
-  ### that the R session is not quit):
-  # closeCluster(cl_obj)
-  # mpi.quit()
-  ###
-  mpi.finalize()
-  stop("Quitting cleanly (this is just a dummy error since the R session ",
-       "somehow can't be quitted using `q(\"no\")` here).")
-}
-
 ## Reset global options ---------------------------------------------------
 
 options(warn = warn_orig_glob$warn)
@@ -734,4 +717,21 @@ cat("-----\n")
 cat("\nExit code: 0\n")
 if (interactive() && !isatty(stdout())) {
   beepr::beep(2)
+}
+
+## Free resources ---------------------------------------------------------
+
+if (par_type %in% c("doParallel")) {
+  stopImplicitCluster()
+} else if (par_type %in% c("doMPI")) {
+  ### Ideally, the following code should be used (at least according to the
+  ### "doMPI" vignette). However, `closeCluster(cl_obj)` as well as `mpi.quit()`
+  ### (as well as simply `q("no")`) seem to cause the execution to get stuck (so
+  ### that the R session is not quit):
+  # closeCluster(cl_obj)
+  # mpi.quit()
+  ###
+  mpi.finalize()
+  stop("Quitting cleanly (this is just a dummy error since the R session ",
+       "somehow can't be quitted using `q(\"no\")` here).")
 }
