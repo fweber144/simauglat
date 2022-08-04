@@ -408,7 +408,7 @@ sim_runner <- function(...) {
     projpred_lat <- try(run_projpred(refm_fit,
                                      dat_indep = dat_indep_lat,
                                      seed = seed_vs,
-                                     latent_proj = TRUE,
+                                     latent = TRUE,
                                      ...),
                         silent = TRUE)
     if (inherits(projpred_aug, "try-error")) {
