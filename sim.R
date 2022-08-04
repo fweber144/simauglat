@@ -29,6 +29,7 @@ cat("-----\n")
 warn_orig_glob <- options(warn = 1)
 
 # options(projpred.warn_augdat_experimental = FALSE)
+# options(projpred.warn_latent_experimental = FALSE)
 
 ## User options -----------------------------------------------------------
 
