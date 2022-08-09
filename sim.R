@@ -223,7 +223,7 @@ dataconstructor <- function() {
   })
   # Shouldn't be necessary (just to be safe): Emulate a single posterior draw:
   dim(thres_eta) <- c(1L, nobsv_sim, nthres)
-  yprobs <- brms:::inv_link_cumulative(thres_eta, link = "logit")
+  yprobs <- brms:::inv_link_cumulative(thres_eta, link = "probit")
   # Because of emulating a single posterior draw above:
   dim(yprobs) <- c(nobsv_sim, ncat)
 
