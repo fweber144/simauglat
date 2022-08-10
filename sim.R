@@ -534,7 +534,10 @@ same_solpths <- sapply(simres, function(simres_i) {
 })
 cat("\n-----\n")
 cat("Differing solution paths:\n")
-for (sim_idx in seq_along(simres)[!same_solpths]) {
+cat("There are", sum(!same_solpths), "simulation iterations with the solution",
+    "path differing between augmented-data and latent projection. The first 10",
+    "(if there are less, then only those) in detail:\n")
+for (sim_idx in head(seq_along(simres)[!same_solpths], 10)) {
   cat("\n---\n")
   cat("Simulation iteration: ", sim_idx, "\n", sep = "")
   cat("Solution path of the augmented-data variable selection:\n",
