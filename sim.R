@@ -169,29 +169,29 @@ dataconstructor <- function() {
                            sigma_tilde = sigti,
                            N = nobsv)
 
-  npreds_grCP <- 0L # 1L
-  ngrCP <- integer() # c(3L)
-  stopifnot(identical(length(ngrCP), npreds_grCP))
-  if (npreds_grCP > 0) {
-    coefs_grCP <- list(
-      c(0, seq(-2, 2, length.out = ngrCP[1] - 1L))
+  npreds_grPL <- 0L # 1L
+  ngrPL <- integer() # c(3L)
+  stopifnot(identical(length(ngrPL), npreds_grPL))
+  if (npreds_grPL > 0) {
+    coefs_grPL <- list(
+      c(0, seq(-2, 2, length.out = ngrPL[1] - 1L))
     )
-    stopifnot(identical(length(coefs_grCP), npreds_grCP))
+    stopifnot(identical(length(coefs_grPL), npreds_grPL))
   }
 
-  npreds_grPP <- 0L # 1L
-  if (!exists("nobsv_per_grPP")) {
+  npreds_grGL <- 0L # 1L
+  if (!exists("nobsv_per_grGL")) {
     # Number of observations per group (only roughly; some groups might get a
     # few observations more):
-    nobsv_per_grPP <- integer() # c(2L)
+    nobsv_per_grGL <- integer() # c(2L)
   }
-  ngrPP <- c(nobsv %/% nobsv_per_grPP)
-  stopifnot(identical(length(ngrPP), npreds_grPP))
-  if (npreds_grPP > 0) {
-    coefs_grPP <- list(
-      list("icpt" = rnorm(ngrPP[1], sd = 1.5)) # , "Xcont1" = <...>
+  ngrGL <- c(nobsv %/% nobsv_per_grGL)
+  stopifnot(identical(length(ngrGL), npreds_grGL))
+  if (npreds_grGL > 0) {
+    coefs_grGL <- list(
+      list("icpt" = rnorm(ngrGL[1], sd = 1.5)) # , "Xcont1" = <...>
     )
-    stopifnot(identical(length(coefs_grPP), npreds_grPP))
+    stopifnot(identical(length(coefs_grGL), npreds_grGL))
   }
 
   ## Continuous predictors --------------------------------------------------
@@ -203,31 +203,31 @@ dataconstructor <- function() {
   # Start constructing the linear predictor:
   eta <- drop(as.matrix(dat_sim) %*% coefs_cont)
 
-  ## Completely pooled (CP) categorical predictors --------------------------
+  ## Population-level (PL) categorical predictors ---------------------------
 
-  if (npreds_grCP == 1) {
-    dat_sim$XgrCP1 <- sample(
-      gl(n = ngrCP[1], k = floor(nobsv_sim / ngrCP[1]), length = nobsv_sim,
-         labels = paste0("gr", seq_len(ngrCP[1])))
+  if (npreds_grPL == 1) {
+    dat_sim$XgrPL1 <- sample(
+      gl(n = ngrPL[1], k = floor(nobsv_sim / ngrPL[1]), length = nobsv_sim,
+         labels = paste0("gr", seq_len(ngrPL[1])))
     )
     # Continue constructing the linear predictor:
-    eta <- eta + coefs_grCP[[1]][dat_sim$XgrCP1]
-  } else if (npreds_grCP > 1) {
-    stop("This value of `npreds_grCP` is currently not supported.")
+    eta <- eta + coefs_grPL[[1]][dat_sim$XgrPL1]
+  } else if (npreds_grPL > 1) {
+    stop("This value of `npreds_grPL` is currently not supported.")
   }
 
-  ## Partially pooled (PP) categorical predictors ---------------------------
+  ## Group-level (GL) categorical predictors --------------------------------
 
-  if (npreds_grPP == 1) {
-    dat_sim$XgrPP1 <- sample(
-      gl(n = ngrPP[1], k = floor(nobsv_sim / ngrPP[1]), length = nobsv_sim,
-         labels = paste0("gr", seq_len(ngrPP[1])))
+  if (npreds_grGL == 1) {
+    dat_sim$XgrGL1 <- sample(
+      gl(n = ngrGL[1], k = floor(nobsv_sim / ngrGL[1]), length = nobsv_sim,
+         labels = paste0("gr", seq_len(ngrGL[1])))
     )
     # Continue constructing the linear predictor:
-    eta <- eta + coefs_grPP[[1]]$icpt[dat_sim$XgrPP1]
-    # + coefs_grPP[[1]]$Xcont1[dat_sim$XgrPP1] * dat_sim$Xcont1
-  } else if (npreds_grPP > 1) {
-    stop("This value of `npreds_grPP` is currently not supported.")
+    eta <- eta + coefs_grGL[[1]]$icpt[dat_sim$XgrGL1]
+    # + coefs_grGL[[1]]$Xcont1[dat_sim$XgrGL1] * dat_sim$Xcont1
+  } else if (npreds_grGL > 1) {
+    stop("This value of `npreds_grGL` is currently not supported.")
   }
 
   ## Construct "epred" ------------------------------------------------------
@@ -250,23 +250,23 @@ dataconstructor <- function() {
   ## Formula ----------------------------------------------------------------
 
   voutc <- "Y"
-  vpreds <- grep("^Xcont|^XgrCP", names(dat_sim), value = TRUE)
-  vpreds_PP <- grep("^XgrPP", names(dat_sim), value = TRUE)
-  if (length(vpreds_PP) > 0L) {
-    if (!all(lengths(coefs_grPP) == 1)) {
+  vpreds <- grep("^Xcont|^XgrPL", names(dat_sim), value = TRUE)
+  vpreds_GL <- grep("^XgrGL", names(dat_sim), value = TRUE)
+  if (length(vpreds_GL) > 0L) {
+    if (!all(lengths(coefs_grGL) == 1)) {
       stop("Group-level slopes are currently not supported.")
     }
-    vpreds_PP <- paste0("(1 | ", vpreds_PP, ")")
+    vpreds_GL <- paste0("(1 | ", vpreds_GL, ")")
   }
 
   fml_sim <- as.formula(paste(
-    voutc, "~", paste(c(vpreds, vpreds_PP), collapse = " + ")
+    voutc, "~", paste(c(vpreds, vpreds_GL), collapse = " + ")
   ))
 
   ## Output -----------------------------------------------------------------
 
   return(list(true_coefs_cont = coefs_cont,
-              true_PPEs = if (npreds_grPP > 0) coefs_grPP[[1]]$icpt else NULL,
+              true_GLEs = if (npreds_grGL > 0) coefs_grGL[[1]]$icpt else NULL,
               dat = dat_sim[1:nobsv, , drop = FALSE],
               fml = fml_sim,
               dat_indep = dat_sim[(nobsv + 1):nobsv_sim, , drop = FALSE]))
@@ -447,7 +447,7 @@ sim_runner <- function(...) {
       aug = projpred_aug,
       lat = projpred_lat,
       true_coefs_cont = sim_dat_etc$true_coefs_cont,
-      true_PPEs = sim_dat_etc$true_PPEs
+      true_GLEs = sim_dat_etc$true_GLEs
     ))
   }
 }
@@ -468,13 +468,13 @@ saveRDS(simres, file = "simres.rds") # simres <- readRDS(file = "simres.rds")
 
 if (!dir.exists("figs")) dir.create("figs")
 
-## True completely pooled coefficients ------------------------------------
+## True population-level coefficients -------------------------------------
 ## (i.e., the draws from the regularized horseshoe distribution)
 
 true_coefs_cont <- unlist(lapply(simres, "[[", "true_coefs_cont"))
 true_coefs_cont <- data.frame(coef = true_coefs_cont)
 cat("\n-----\n")
-cat("Proportion of (completely pooled) coefficient draws with absolute value >",
+cat("Proportion of (population-level) coefficient draws with absolute value >",
     "0.5 (across all simulation iterations and all `npreds_tot` coefficient",
     "draws within each simulation iteration):\n")
 print(proportions(table(abs(true_coefs_cont$coef) > 0.5, useNA = "ifany")))
@@ -510,31 +510,31 @@ gg_time <- ggplot2::ggplot(data = mins_vs,
 ggplot2::ggsave(file.path("figs", "time.pdf"),
                 width = 7, height = 7 * 0.618)
 
-## True partially pooled effects ------------------------------------------
+## True group-level effects -----------------------------------------------
 
-if (!all(sapply(lapply(simres, "[[", "true_PPEs"), is.null))) {
-  true_PPEs <- do.call(cbind, lapply(simres, "[[", "true_PPEs"))
-  dimnames(true_PPEs) <- list(
-    grp = paste0("grp", seq_len(nrow(true_PPEs))),
-    simiter = paste0("simiter", seq_len(ncol(true_PPEs)))
+if (!all(sapply(lapply(simres, "[[", "true_GLEs"), is.null))) {
+  true_GLEs <- do.call(cbind, lapply(simres, "[[", "true_GLEs"))
+  dimnames(true_GLEs) <- list(
+    grp = paste0("grp", seq_len(nrow(true_GLEs))),
+    simiter = paste0("simiter", seq_len(ncol(true_GLEs)))
   )
-  stopifnot(!all(lengths(apply(true_PPEs, 1, unique, simplify = FALSE)) == 1))
+  stopifnot(!all(lengths(apply(true_GLEs, 1, unique, simplify = FALSE)) == 1))
   cat("\n-----\n")
-  cat("Quartiles of the true partially pooled effects (across",
+  cat("Quartiles of the true group-level effects (across",
       "all simulation iterations):\n")
-  print(quantile(true_PPEs))
+  print(quantile(true_GLEs))
   cat("-----\n")
   if (nsim <= 10) {
     cat("\n-----\n")
-    cat("Empirical SDs of the true partially pooled effects (for",
+    cat("Empirical SDs of the true group-level effects (for",
         "all simulation iterations):\n")
-    print(apply(true_PPEs, 2, sd))
+    print(apply(true_GLEs, 2, sd))
     cat("-----\n")
   } else {
     cat("\n-----\n")
-    cat("Quartiles of the empirical SDs of the true partially pooled effects",
+    cat("Quartiles of the empirical SDs of the true group-level effects",
         "(across all simulation iterations):\n")
-    print(quantile(apply(true_PPEs, 2, sd)))
+    print(quantile(apply(true_GLEs, 2, sd)))
     cat("-----\n")
   }
 }
