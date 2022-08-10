@@ -64,6 +64,7 @@ nobsv <- 100L
 nobsv_indep <- nobsv
 ncat <- 5L
 yunq <- paste0("ycat", seq_len(ncat))
+link_str <- "probit"
 nthres <- ncat - 1L
 npreds_tot <- 50L
 p0 <- as.integer(ceiling(npreds_tot * 0.10))
@@ -223,7 +224,7 @@ dataconstructor <- function() {
   })
   # Shouldn't be necessary (just to be safe): Emulate a single posterior draw:
   dim(thres_eta) <- c(1L, nobsv_sim, nthres)
-  yprobs <- brms:::inv_link_cumulative(thres_eta, link = "probit")
+  yprobs <- brms:::inv_link_cumulative(thres_eta, link = link_str)
   # Because of emulating a single posterior draw above:
   dim(yprobs) <- c(nobsv_sim, ncat)
 
@@ -279,7 +280,7 @@ if (only_init_fit) {
   bfit <- brms::brm(
     formula = sim_dat_etc$fml,
     data = sim_dat_etc$dat,
-    family = brms::cumulative(link = "probit"),
+    family = brms::cumulative(link = link_str),
     prior = brms::prior(horseshoe(par_ratio = 0.117657042)) +
       brms::prior(normal(0, 2.5), class = "Intercept"),
     ### For backend = "rstan":
@@ -386,8 +387,8 @@ sim_runner <- function(...) {
     sit = seq_len(nsim), # Needs package "iterators": icount(nsim),
     # .packages = c("brms", "projpred"), # , "rstanarm"
     .export = c("rhorseshoe", "dataconstructor", "fit_ref", "run_projpred",
-                "nobsv", "nobsv_indep", "ncat", "yunq", "nthres", "npreds_tot",
-                "p0", "sigti", "bfit"),
+                "nobsv", "nobsv_indep", "ncat", "yunq", "link_str", "nthres",
+                "npreds_tot", "p0", "sigti", "bfit"),
     # .noexport = c("<object_name>"),
     .options.snow = list(attachExportEnv = TRUE)
   ) %dorng% {
