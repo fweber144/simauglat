@@ -505,7 +505,7 @@ gg_true_coefs_cont <- ggplot2::ggplot(data = true_coefs_cont,
 ggplot2::ggsave(file.path("figs", "true_coefs_cont.pdf"),
                 width = 7, height = 7 * 0.618)
 
-## Timing -----------------------------------------------------------------
+## Runtime ----------------------------------------------------------------
 
 mins_vs <- do.call(rbind, lapply(seq_along(simres), function(sim_idx) {
   return(data.frame(sim_idx = sim_idx,
