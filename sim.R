@@ -619,7 +619,7 @@ plotter_ovrlay <- function(prj_meth, eval_scale = "response") {
     ###
     ggplot2::geom_point() +
     ggplot2::geom_line() +
-    ggplot2::labs(title = title_raw)
+    ggplot2::labs(title = title_raw, y = bquote(Delta*.(toupper(y_chr))))
   ggplot2::ggsave(
     file.path("figs", paste0(y_chr, "_", prj_meth, "_", eval_scale, ".pdf")),
     width = 7, height = 7 * 0.618
