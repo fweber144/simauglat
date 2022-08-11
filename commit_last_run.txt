@@ -1,1 +1,2 @@
-a24bb44031659863d5656167ff2be59ebfd711f9
+Locally (doParallel) with `nsim <- 4` and `ncores <- 4`:
+05cf9d37a6cbf38c6303d3360b4d2fa6690a3f26
