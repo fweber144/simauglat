@@ -402,6 +402,8 @@ run_projpred <- function(refm_fit, dat_indep, latent = FALSE, ...) {
     stats_man <- projpred:::.tabulate_stats(vs, stats = "mlpd",
                                             lat2resp = lat2resp_val)
     return(list(
+      # TODO: Perhaps also return `vs$summaries$ref` to be able to compare this
+      # between augmented-data and latent projection later.
       refstat = stats_man$value[stats_man$size == Inf],
       # plot_obj = plot(vs, deltas = TRUE, stats = "mlpd",
       #                 lat2resp = lat2resp_val),
@@ -597,13 +599,12 @@ plotter_ovrlay <- function(prj_meth, eval_scale = "response") {
   title_raw <- paste0(title_raw, " (evaluation scale: ", eval_scale, ")")
   y_chr <- setdiff(names(simres[[1L]][[prj_meth]][[lat2resp_nm]]$smmry),
                    c("solution_terms", "se", "lower", "upper", "size"))
-  plotdat_comm <- do.call(rbind, lapply(seq_along(simres), function(sim_idx) {
-    cbind(
-      sim_idx = sim_idx,
-      simres[[sim_idx]][[prj_meth]][[lat2resp_nm]]$smmry[, c("size", y_chr)]
-    )
+  stopifnot(length(y_chr) == 1)
+  plotdat <- do.call(rbind, lapply(seq_along(simres), function(sim_idx) {
+    cbind(sim_idx = sim_idx,
+          simres[[sim_idx]][[prj_meth]][[lat2resp_nm]]$smmry[c("size", y_chr)])
   }))
-  gg_perf <- ggplot2::ggplot(data = plotdat_comm,
+  gg_perf <- ggplot2::ggplot(data = plotdat,
                              mapping = ggplot2::aes_string(x = "size",
                                                            y = y_chr,
                                                            group = "sim_idx",
@@ -635,6 +636,65 @@ com_aug <- plotter_ovrlay(prj_meth = "aug")
 com_lat <- plotter_ovrlay(prj_meth = "lat")
 com_lat_nonOrig <- plotter_ovrlay(prj_meth = "lat", eval_scale = "latent")
 stopifnot(com_aug$succ_ind && com_lat$succ_ind && com_lat_nonOrig$succ_ind)
+
+plotter_ovrlay_diff <- function(eval_scale = "response") {
+  stopifnot(eval_scale == "response")
+  lat2resp_nm_aug <- paste0("lat2resp_", FALSE)
+  lat2resp_nm_lat <- paste0("lat2resp_", eval_scale == "response")
+  title_raw <- "Augmented-data vs. latent"
+  title_raw <- paste0(title_raw, " (evaluation scale: ", eval_scale, ")",
+                      "; sol. paths can differ")
+
+  # Check that the reference model (performance) is the same, so that the
+  # difference of the Delta MLPDs can be interpreted as the difference of the
+  # submodel MLPDs (i.e., the reference model MLPD cancels out):
+  refstats_aug <- do.call(c, lapply(seq_along(simres), function(sim_idx) {
+    simres[[sim_idx]]$aug[[lat2resp_nm_aug]]$refstat
+  }))
+  refstats_lat <- do.call(c, lapply(seq_along(simres), function(sim_idx) {
+    simres[[sim_idx]]$lat[[lat2resp_nm_lat]]$refstat
+  }))
+  stopifnot(isTRUE(all.equal(refstats_aug, refstats_lat,
+                             tolerance = .Machine$double.eps)))
+
+  smmry_nms <- names(simres[[1L]]$aug[[lat2resp_nm_aug]]$smmry)
+  stopifnot(identical(smmry_nms,
+                      names(simres[[1L]]$lat[[lat2resp_nm_lat]]$smmry)))
+  y_chr <- setdiff(smmry_nms,
+                   c("solution_terms", "se", "lower", "upper", "size"))
+  stopifnot(length(y_chr) == 1)
+  y_chr_aug <- paste(y_chr, "aug", sep = "_")
+  y_chr_lat <- paste(y_chr, "lat", sep = "_")
+  plotdat <- do.call(rbind, lapply(seq_along(simres), function(sim_idx) {
+    smmry_aug <- simres[[sim_idx]]$aug[[lat2resp_nm_aug]]$smmry
+    smmry_lat <- simres[[sim_idx]]$lat[[lat2resp_nm_lat]]$smmry
+    stopifnot(identical(smmry_aug["size"], smmry_lat["size"]))
+    cbind(sim_idx = sim_idx, smmry_aug["size"],
+          setNames(smmry_aug[y_chr], y_chr_aug),
+          setNames(smmry_lat[y_chr], y_chr_lat))
+  }))
+  y_chr_diff <- paste("diff", y_chr, sep = "_")
+  plotdat[[y_chr_diff]] <- plotdat[[y_chr_aug]] - plotdat[[y_chr_lat]]
+  gg_perf <- ggplot2::ggplot(data = plotdat,
+                             mapping = ggplot2::aes_string(x = "size",
+                                                           y = y_chr_diff,
+                                                           group = "sim_idx",
+                                                           alpha = I(0.4))) +
+    ggplot2::geom_hline(yintercept = 0,
+                        color = "gray30",
+                        linetype = "dotted") +
+    ggplot2::geom_point() +
+    ggplot2::geom_line() +
+    ggplot2::labs(title = title_raw,
+                  x = "Submodel size",
+                  y = bquote(.(toupper(y_chr))[aug] - .(toupper(y_chr))[lat]))
+  fnm_base <- paste(y_chr_diff, eval_scale, sep = "_")
+  ggplot2::ggsave(file.path("figs", paste0(fnm_base, ".pdf")),
+                  width = 7, height = 7 * 0.618)
+  return(list(succ_ind = TRUE, gg_obj = gg_perf))
+}
+dif_out <- plotter_ovrlay_diff()
+stopifnot(dif_out$succ_ind)
 
 ## Suggested sizes --------------------------------------------------------
 
