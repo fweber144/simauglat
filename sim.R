@@ -371,23 +371,24 @@ fit_ref <- function(dat, fml) {
 }
 
 # For running projpred's variable selection:
-run_projpred <- function(refm_fit, dat_indep, ...) {
+run_projpred <- function(refm_fit, dat_indep, latent = FALSE, ...) {
   d_indep <- list(
     data = dat_indep,
     offset = rep(0, nrow(dat_indep)),
     weights = rep(1, nrow(dat_indep)),
-    y = if (!is.null(dat_indep$projpredY)) dat_indep$projpredY else dat_indep$Y
+    y = if (latent) dat_indep$projpredY else dat_indep$Y
   )
-  if (!is.null(dat_indep$projpredY)) {
+  if (latent) {
     d_indep$yOrig <- dat_indep$Y
   }
   time_bef <- Sys.time()
-  vs <- projpred::varsel(refm_fit, d_test = d_indep, method = "forward", ...)
+  vs <- projpred::varsel(refm_fit, d_test = d_indep, method = "forward",
+                         latent = latent, ...)
   time_aft <- Sys.time()
   # Currently, we need to use the internal projpred function .tabulate_stats()
   # to obtain the reference model's performance:
   stats_man <- projpred:::.tabulate_stats(vs, stats = "mlpd")
-  return(list(
+  out_projpred <- list(
     time_vs = as.numeric(time_aft - time_bef, units = "mins"),
     refstat = stats_man$value[stats_man$size == Inf],
     # plot_obj = plot(vs, deltas = TRUE, stats = "mlpd"),
@@ -395,7 +396,22 @@ run_projpred <- function(refm_fit, dat_indep, ...) {
     smmry = summary(vs, deltas = TRUE, stats = "mlpd",
                     type = c("mean", "se", "lower", "upper"))$selection,
     soltrms = projpred::solution_terms(vs)
-  ))
+  )
+  if (latent) {
+    stats_man_Orig <- projpred:::.tabulate_stats(vs, stats = "mlpd",
+                                                 lat2resp = TRUE)
+    out_projpred <- c(out_projpred, list(
+      refstat_Orig = stats_man_Orig$value[stats_man_Orig$size == Inf],
+      # plot_obj_Orig = plot(vs, deltas = TRUE, stats = "mlpd",
+      #                      lat2resp = TRUE),
+      sgg_size_Orig = projpred::suggest_size(vs, stat = "mlpd",
+                                             lat2resp = TRUE),
+      smmry_Orig = summary(vs, deltas = TRUE, stats = "mlpd",
+                           type = c("mean", "se", "lower", "upper"),
+                           lat2resp = TRUE)$selection
+    ))
+  }
+  return(out_projpred)
 }
 
 sim_runner <- function(...) {
