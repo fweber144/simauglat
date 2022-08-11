@@ -378,6 +378,9 @@ run_projpred <- function(refm_fit, dat_indep, ...) {
     weights = rep(1, nrow(dat_indep)),
     y = if (!is.null(dat_indep$projpredY)) dat_indep$projpredY else dat_indep$Y
   )
+  if (!is.null(dat_indep$projpredY)) {
+    d_indep$yOrig <- dat_indep$Y
+  }
   time_bef <- Sys.time()
   vs <- projpred::varsel(refm_fit, d_test = d_indep, method = "forward", ...)
   time_aft <- Sys.time()
