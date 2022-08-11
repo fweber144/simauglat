@@ -585,39 +585,23 @@ cat("-----\n")
 
 ## Model size selection plots ---------------------------------------------
 
-### Currently can't be used since returning the output of plot.vsel() leads to
-### memory issues when running the simulation in parallel:
-# plotter_single <- function(sim_idx, prj_meth) {
-#   if (prj_meth == "aug") {
-#     title_raw <- "Augmented-data"
-#   } else if (prj_meth == "lat") {
-#     title_raw <- "Latent"
-#   }
-#   title_pretty <- paste0(title_raw, "; simulation iteration ", sim_idx)
-#   stopifnot(inherits(simres[[sim_idx]][[prj_meth]]$plot_obj, "ggplot"))
-#   print(simres[[sim_idx]][[prj_meth]]$plot_obj +
-#           ggplot2::labs(title = title_pretty))
-#   return(invisible(TRUE))
-# }
-# plotter_sep <- function(sim_idx) {
-#   aug_succ <- plotter_single(sim_idx = sim_idx, prj_meth = "aug")
-#   lat_succ <- plotter_single(sim_idx = sim_idx, prj_meth = "lat")
-#   return(invisible(aug_succ && lat_succ))
-# }
-# sep_succs <- lapply(seq_along(simres), plotter_sep)
-# stopifnot(all(unlist(sep_succs)))
-###
-plotter_ovrlay <- function(prj_meth) {
+plotter_ovrlay <- function(prj_meth, eval_scale = "response") {
   if (prj_meth == "aug") {
     title_raw <- "Augmented-data"
+    stopifnot(eval_scale == "response")
+    lat2resp_nm <- paste0("lat2resp_", FALSE)
   } else if (prj_meth == "lat") {
     title_raw <- "Latent"
+    lat2resp_nm <- paste0("lat2resp_", eval_scale == "response")
   }
-  y_chr <- setdiff(names(simres[[1L]][[prj_meth]]$smmry),
+  title_raw <- paste0(title_raw, " (evaluation scale: ", eval_scale, ")")
+  y_chr <- setdiff(names(simres[[1L]][[prj_meth]][[lat2resp_nm]]$smmry),
                    c("solution_terms", "se", "lower", "upper", "size"))
   plotdat_comm <- do.call(rbind, lapply(seq_along(simres), function(sim_idx) {
-    cbind(sim_idx = sim_idx,
-          simres[[sim_idx]][[prj_meth]]$smmry[, c("size", y_chr)])
+    cbind(
+      sim_idx = sim_idx,
+      simres[[sim_idx]][[prj_meth]][[lat2resp_nm]]$smmry[, c("size", y_chr)]
+    )
   }))
   gg_perf <- ggplot2::ggplot(data = plotdat_comm,
                              mapping = ggplot2::aes_string(x = "size",
@@ -627,8 +611,8 @@ plotter_ovrlay <- function(prj_meth) {
     ggplot2::geom_hline(yintercept = 0,
                         color = "firebrick",
                         linetype = "dashed") +
-    ### Only required when using the extended suggest_size() heuristics
-    ### from branch `elpd4` of repo `fweber144/projpred`:
+    ### Only applicable when using the extended suggest_size() heuristics by
+    ### setting argument `thres_elpd` to `4`:
     # ggplot2::geom_hline(yintercept = -4 / nobsv_indep,
     #                     color = "dodgerblue",
     #                     linetype = "dotdash") +
@@ -636,68 +620,85 @@ plotter_ovrlay <- function(prj_meth) {
     ggplot2::geom_point() +
     ggplot2::geom_line() +
     ggplot2::labs(title = title_raw)
-  ggplot2::ggsave(file.path("figs", paste0(y_chr, "_", prj_meth, ".pdf")),
-                  width = 7, height = 7 * 0.618)
+  ggplot2::ggsave(
+    file.path("figs", paste0(y_chr, "_", prj_meth, "_", eval_scale, ".pdf")),
+    width = 7, height = 7 * 0.618
+  )
   return(list(succ_ind = TRUE, gg_obj = gg_perf))
 }
 com_aug <- plotter_ovrlay(prj_meth = "aug")
 com_lat <- plotter_ovrlay(prj_meth = "lat")
-stopifnot(com_aug$succ_ind && com_lat$succ_ind)
+com_lat_nonOrig <- plotter_ovrlay(prj_meth = "lat", eval_scale = "latent")
+stopifnot(com_aug$succ_ind && com_lat$succ_ind && com_lat_nonOrig$succ_ind)
 
 ## Suggested sizes --------------------------------------------------------
 
-sgger_size <- function(sim_idx) {
+sgger_size <- function(sim_idx, eval_scale_lat = "response") {
+  # TODO: Also add the possibility to compare the two latent projection
+  # evaluation scales against each other (response vs. latent).
+  lat2resp_nm_aug <- paste0("lat2resp_", FALSE)
+  lat2resp_nm_lat <- paste0("lat2resp_", eval_scale_lat == "response")
   return(c(
-    sgg_size_aug = simres[[sim_idx]]$aug$sgg_size,
-    sgg_size_lat = simres[[sim_idx]]$lat$sgg_size
+    sgg_size_aug = simres[[sim_idx]]$aug[[lat2resp_nm_aug]]$sgg_size,
+    sgg_size_lat = simres[[sim_idx]]$lat[[lat2resp_nm_lat]]$sgg_size
   ))
 }
-sgg_sizes <- sapply(seq_along(simres), sgger_size)
-cat("\n-----\n")
-cat("Suggested sizes (printing only the first 10 simulation iterations):\n")
-print(sgg_sizes[, head(seq_len(ncol(sgg_sizes)), 10), drop = FALSE])
-cat("-----\n")
-if (anyNA(sgg_sizes)) {
-  warning("Found suggested sizes which are `NA`.")
-}
-sgg_sizes_lat_minus_aug <- apply(sgg_sizes, 2, function(x) {
-  x["sgg_size_lat"] - x["sgg_size_aug"]
-})
-sgg_sizes_lat_minus_aug <- factor(sgg_sizes_lat_minus_aug)
-sgg_sizes_NA <- apply(sgg_sizes, 2, function(x) {
-  if (!is.na(x["sgg_size_lat"]) && is.na(x["sgg_size_aug"])) {
-    return("NA_a")
-  } else if (is.na(x["sgg_size_lat"]) && !is.na(x["sgg_size_aug"])) {
-    return("NA_l")
-  } else if (is.na(x["sgg_size_lat"]) && is.na(x["sgg_size_aug"])) {
-    return("NA_b")
-  } else {
-    return(NA)
+for (eval_scale_lat_val in c("response", "latent")) {
+  cat("\n----------\n")
+  cat("Evaluation scale for the latent projection (CAUTION: always using ",
+      "response scale for the augmented-data projection): ", eval_scale_lat_val,
+      "\n", sep = "")
+  sgg_sizes <- sapply(seq_along(simres), sgger_size,
+                      eval_scale_lat = eval_scale_lat_val)
+  cat("\n-----\n")
+  cat("Suggested sizes (printing only the first 10 simulation iterations):\n")
+  print(sgg_sizes[, head(seq_len(ncol(sgg_sizes)), 10), drop = FALSE])
+  cat("-----\n")
+  if (anyNA(sgg_sizes)) {
+    warning("Found suggested sizes which are `NA`.")
   }
-})
-sgg_sizes_NA <- factor(sgg_sizes_NA, levels = c("NA_a", "NA_l", "NA_b"))
-stopifnot(identical(is.na(sgg_sizes_lat_minus_aug), !is.na(sgg_sizes_NA)))
-sgg_sizes_lat_minus_aug <- factor(
-  sgg_sizes_lat_minus_aug,
-  levels = union(levels(sgg_sizes_lat_minus_aug), levels(sgg_sizes_NA))
-)
-sgg_sizes_lat_minus_aug[is.na(sgg_sizes_lat_minus_aug)] <- sgg_sizes_NA[
-  !is.na(sgg_sizes_NA)
-]
-cat("\n-----\n")
-cat("Differences of the suggested sizes (latent minus augmented-data):\n")
-sgg_sizes_tab <- table(sgg_sizes_lat_minus_aug, useNA = "ifany")
-print(sgg_sizes_tab)
-print(proportions(sgg_sizes_tab))
-cat("-----\n")
-xlab_long <- "Difference of the suggested sizes (latent minus augmented-data)"
-gg_sgg_sizes_diff <- ggplot2::qplot(sgg_sizes_lat_minus_aug,
-                                    geom = "bar",
-                                    xlab = xlab_long) +
-  ggplot2::scale_x_discrete(drop = FALSE) +
-  ggplot2::scale_y_continuous(breaks = scales::breaks_pretty())
-ggplot2::ggsave(file.path("figs", "sgg_sizes_diff.pdf"),
-                width = 7, height = 7 * 0.618)
+  sgg_sizes_lat_minus_aug <- apply(sgg_sizes, 2, function(x) {
+    x["sgg_size_lat"] - x["sgg_size_aug"]
+  })
+  sgg_sizes_lat_minus_aug <- factor(sgg_sizes_lat_minus_aug)
+  sgg_sizes_NA <- apply(sgg_sizes, 2, function(x) {
+    if (!is.na(x["sgg_size_lat"]) && is.na(x["sgg_size_aug"])) {
+      return("NA_a")
+    } else if (is.na(x["sgg_size_lat"]) && !is.na(x["sgg_size_aug"])) {
+      return("NA_l")
+    } else if (is.na(x["sgg_size_lat"]) && is.na(x["sgg_size_aug"])) {
+      return("NA_b")
+    } else {
+      return(NA)
+    }
+  })
+  sgg_sizes_NA <- factor(sgg_sizes_NA, levels = c("NA_a", "NA_l", "NA_b"))
+  stopifnot(identical(is.na(sgg_sizes_lat_minus_aug), !is.na(sgg_sizes_NA)))
+  sgg_sizes_lat_minus_aug <- factor(
+    sgg_sizes_lat_minus_aug,
+    levels = union(levels(sgg_sizes_lat_minus_aug), levels(sgg_sizes_NA))
+  )
+  sgg_sizes_lat_minus_aug[is.na(sgg_sizes_lat_minus_aug)] <- sgg_sizes_NA[
+    !is.na(sgg_sizes_NA)
+  ]
+  cat("\n-----\n")
+  cat("Differences of the suggested sizes (latent minus augmented-data):\n")
+  sgg_sizes_tab <- table(sgg_sizes_lat_minus_aug, useNA = "ifany")
+  print(sgg_sizes_tab)
+  print(proportions(sgg_sizes_tab))
+  cat("-----\n")
+  xlab_long <- "Difference of the suggested sizes (latent minus augmented-data)"
+  gg_sgg_sizes_diff <- ggplot2::qplot(sgg_sizes_lat_minus_aug,
+                                      geom = "bar",
+                                      xlab = xlab_long) +
+    ggplot2::scale_x_discrete(drop = FALSE) +
+    ggplot2::scale_y_continuous(breaks = scales::breaks_pretty())
+  ggplot2::ggsave(
+    file.path("figs", paste0("sgg_sizes_diff_", eval_scale_lat_val, "Lat.pdf")),
+    width = 7, height = 7 * 0.618
+  )
+  cat("----------\n")
+}
 
 # doRNG -------------------------------------------------------------------
 
