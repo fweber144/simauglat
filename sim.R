@@ -604,11 +604,11 @@ plotter_ovrlay <- function(prj_meth, eval_scale = "response") {
     cbind(sim_idx = sim_idx,
           simres[[sim_idx]][[prj_meth]][[lat2resp_nm]]$smmry[c("size", y_chr)])
   }))
-  gg_perf <- ggplot2::ggplot(data = plotdat,
-                             mapping = ggplot2::aes_string(x = "size",
-                                                           y = y_chr,
-                                                           group = "sim_idx",
-                                                           alpha = I(0.4))) +
+  ggobj <- ggplot2::ggplot(data = plotdat,
+                           mapping = ggplot2::aes_string(x = "size",
+                                                         y = y_chr,
+                                                         group = "sim_idx",
+                                                         alpha = I(0.4))) +
     ggplot2::geom_hline(yintercept = 0,
                         color = "firebrick",
                         linetype = "dashed") +
@@ -626,11 +626,11 @@ plotter_ovrlay <- function(prj_meth, eval_scale = "response") {
   fnm_base <- paste(y_chr, prj_meth, eval_scale, sep = "_")
   ggplot2::ggsave(file.path("figs", paste0(fnm_base, ".pdf")),
                   width = 7, height = 7 * 0.618)
-  gg_perf_zoom <- gg_perf +
+  ggobj_zoom <- ggobj +
     ggplot2::coord_cartesian(ylim = c(-0.75, 0.05))
   ggplot2::ggsave(file.path("figs", paste0(fnm_base, "_zoom.pdf")),
                   width = 7, height = 7 * 0.618)
-  return(list(succ_ind = TRUE, gg_obj = gg_perf, gg_obj_zoom = gg_perf_zoom))
+  return(list(succ_ind = TRUE, ggobj = ggobj, ggobj_zoom = ggobj_zoom))
 }
 comm_aug <- plotter_ovrlay(prj_meth = "aug")
 comm_lat <- plotter_ovrlay(prj_meth = "lat")
@@ -675,11 +675,11 @@ plotter_ovrlay_diff <- function(eval_scale = "response") {
   }))
   y_chr_diff <- paste("diff", y_chr, sep = "_")
   plotdat[[y_chr_diff]] <- plotdat[[y_chr_aug]] - plotdat[[y_chr_lat]]
-  gg_perf <- ggplot2::ggplot(data = plotdat,
-                             mapping = ggplot2::aes_string(x = "size",
-                                                           y = y_chr_diff,
-                                                           group = "sim_idx",
-                                                           alpha = I(0.4))) +
+  ggobj <- ggplot2::ggplot(data = plotdat,
+                           mapping = ggplot2::aes_string(x = "size",
+                                                         y = y_chr_diff,
+                                                         group = "sim_idx",
+                                                         alpha = I(0.4))) +
     ggplot2::geom_hline(yintercept = 0,
                         color = "gray30",
                         linetype = "dotted") +
@@ -691,7 +691,7 @@ plotter_ovrlay_diff <- function(eval_scale = "response") {
   fnm_base <- paste(y_chr_diff, eval_scale, sep = "_")
   ggplot2::ggsave(file.path("figs", paste0(fnm_base, ".pdf")),
                   width = 7, height = 7 * 0.618)
-  return(list(succ_ind = TRUE, gg_obj = gg_perf))
+  return(list(succ_ind = TRUE, ggobj = ggobj))
 }
 diff_out <- plotter_ovrlay_diff()
 stopifnot(diff_out$succ_ind)
