@@ -288,7 +288,7 @@ if (only_init_fit) {
   cat("-----\npar_ratio_sigti:\n")
   print(par_ratio_sigti, digits = 9)
   cat("-----\n")
-  stopifnot(all.equal(par_ratio_sigti, 0.117657042, tolerance = 1e-9))
+  stopifnot(all.equal(par_ratio_sigti, 0.125261003))
   ###
   bfit <- brms::brm(
     formula = sim_dat_etc$fml,
