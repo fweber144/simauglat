@@ -619,12 +619,17 @@ plotter_ovrlay <- function(prj_meth, eval_scale = "response") {
     ###
     ggplot2::geom_point() +
     ggplot2::geom_line() +
-    ggplot2::labs(title = title_raw, y = bquote(Delta*.(toupper(y_chr))))
-  ggplot2::ggsave(
-    file.path("figs", paste0(y_chr, "_", prj_meth, "_", eval_scale, ".pdf")),
-    width = 7, height = 7 * 0.618
-  )
-  return(list(succ_ind = TRUE, gg_obj = gg_perf))
+    ggplot2::labs(title = title_raw,
+                  x = "Submodel size",
+                  y = bquote(Delta*.(toupper(y_chr))))
+  fnm_base <- paste(y_chr, prj_meth, eval_scale, sep = "_")
+  ggplot2::ggsave(file.path("figs", paste0(fnm_base, ".pdf")),
+                  width = 7, height = 7 * 0.618)
+  gg_perf_zoom <- gg_perf +
+    ggplot2::coord_cartesian(ylim = c(-0.75, 0.05))
+  ggplot2::ggsave(file.path("figs", paste0(fnm_base, "_zoom.pdf")),
+                  width = 7, height = 7 * 0.618)
+  return(list(succ_ind = TRUE, gg_obj = gg_perf, gg_obj_zoom = gg_perf_zoom))
 }
 com_aug <- plotter_ovrlay(prj_meth = "aug")
 com_lat <- plotter_ovrlay(prj_meth = "lat")
