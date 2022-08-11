@@ -632,10 +632,10 @@ plotter_ovrlay <- function(prj_meth, eval_scale = "response") {
                   width = 7, height = 7 * 0.618)
   return(list(succ_ind = TRUE, gg_obj = gg_perf, gg_obj_zoom = gg_perf_zoom))
 }
-com_aug <- plotter_ovrlay(prj_meth = "aug")
-com_lat <- plotter_ovrlay(prj_meth = "lat")
-com_lat_nonOrig <- plotter_ovrlay(prj_meth = "lat", eval_scale = "latent")
-stopifnot(com_aug$succ_ind && com_lat$succ_ind && com_lat_nonOrig$succ_ind)
+comm_aug <- plotter_ovrlay(prj_meth = "aug")
+comm_lat <- plotter_ovrlay(prj_meth = "lat")
+comm_lat_nonOrig <- plotter_ovrlay(prj_meth = "lat", eval_scale = "latent")
+stopifnot(comm_aug$succ_ind && comm_lat$succ_ind && comm_lat_nonOrig$succ_ind)
 
 plotter_ovrlay_diff <- function(eval_scale = "response") {
   stopifnot(eval_scale == "response")
@@ -693,8 +693,8 @@ plotter_ovrlay_diff <- function(eval_scale = "response") {
                   width = 7, height = 7 * 0.618)
   return(list(succ_ind = TRUE, gg_obj = gg_perf))
 }
-dif_out <- plotter_ovrlay_diff()
-stopifnot(dif_out$succ_ind)
+diff_out <- plotter_ovrlay_diff()
+stopifnot(diff_out$succ_ind)
 
 ## Suggested sizes --------------------------------------------------------
 
