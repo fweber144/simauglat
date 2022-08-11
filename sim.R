@@ -385,32 +385,33 @@ run_projpred <- function(refm_fit, dat_indep, latent = FALSE, ...) {
   vs <- projpred::varsel(refm_fit, d_test = d_indep, method = "forward",
                          latent = latent, ...)
   time_aft <- Sys.time()
-  # Currently, we need to use the internal projpred function .tabulate_stats()
-  # to obtain the reference model's performance:
-  stats_man <- projpred:::.tabulate_stats(vs, stats = "mlpd")
   out_projpred <- list(
     time_vs = as.numeric(time_aft - time_bef, units = "mins"),
-    refstat = stats_man$value[stats_man$size == Inf],
-    # plot_obj = plot(vs, deltas = TRUE, stats = "mlpd"),
-    sgg_size = projpred::suggest_size(vs, stat = "mlpd"),
-    smmry = summary(vs, deltas = TRUE, stats = "mlpd",
-                    type = c("mean", "se", "lower", "upper"))$selection,
     soltrms = projpred::solution_terms(vs)
   )
   if (latent) {
-    stats_man_Orig <- projpred:::.tabulate_stats(vs, stats = "mlpd",
-                                                 lat2resp = TRUE)
-    out_projpred <- c(out_projpred, list(
-      refstat_Orig = stats_man_Orig$value[stats_man_Orig$size == Inf],
-      # plot_obj_Orig = plot(vs, deltas = TRUE, stats = "mlpd",
-      #                      lat2resp = TRUE),
-      sgg_size_Orig = projpred::suggest_size(vs, stat = "mlpd",
-                                             lat2resp = TRUE),
-      smmry_Orig = summary(vs, deltas = TRUE, stats = "mlpd",
-                           type = c("mean", "se", "lower", "upper"),
-                           lat2resp = TRUE)$selection
-    ))
+    lat2resp_vals <- c(TRUE, FALSE)
+  } else {
+    lat2resp_vals <- FALSE
   }
+  lat2resp_vals <- setNames(nm = lat2resp_vals)
+  names(lat2resp_vals) <- paste0("lat2resp_", names(lat2resp_vals))
+  out_projpred <- c(out_projpred, lapply(lat2resp_vals, function(lat2resp_val) {
+    # Currently, we need to use the internal projpred function .tabulate_stats()
+    # to obtain the reference model's performance:
+    stats_man <- projpred:::.tabulate_stats(vs, stats = "mlpd",
+                                            lat2resp = lat2resp_val)
+    return(list(
+      refstat = stats_man$value[stats_man$size == Inf],
+      # plot_obj = plot(vs, deltas = TRUE, stats = "mlpd",
+      #                 lat2resp = lat2resp_val),
+      sgg_size = projpred::suggest_size(vs, stat = "mlpd",
+                                        lat2resp = lat2resp_val),
+      smmry = summary(vs, deltas = TRUE, stats = "mlpd",
+                      type = c("mean", "se", "lower", "upper"),
+                      lat2resp = lat2resp_val)$selection
+    ))
+  }))
   return(out_projpred)
 }
 
