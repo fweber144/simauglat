@@ -19,7 +19,7 @@
 ####SBA|TCH --mem-per-cpu=8000
 #SBATCH --mem=24000
 
-#SBATCH --time=300
+#SBATCH --time=30
 
 #------------------------------------------------
 # Configuration of modules
