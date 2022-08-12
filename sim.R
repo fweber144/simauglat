@@ -667,8 +667,8 @@ plotter_ovrlay_diff <- function(eval_scale = "response") {
   refstats_lat <- do.call(c, lapply(seq_along(simres), function(sim_idx) {
     simres[[sim_idx]]$lat[[lat2resp_nm_lat]]$refstat
   }))
-  stopifnot(isTRUE(all.equal(refstats_aug, refstats_lat,
-                             tolerance = .Machine$double.eps)))
+  stopifnot(all.equal(refstats_aug, refstats_lat,
+                      tolerance = .Machine$double.eps))
 
   smmry_nms <- names(simres[[1L]]$aug[[lat2resp_nm_aug]]$smmry)
   stopifnot(identical(smmry_nms,
