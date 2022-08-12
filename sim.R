@@ -75,7 +75,7 @@ if (!only_init_fit) {
 
 nobsv <- 100L
 nobsv_indep <- nobsv
-ncat <- 3L
+ncat <- 5L
 yunq <- paste0("ycat", seq_len(ncat))
 link_str <- "probit"
 nthres <- ncat - 1L
