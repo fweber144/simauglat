@@ -294,7 +294,7 @@ if (only_init_fit) {
     formula = sim_dat_etc$fml,
     data = sim_dat_etc$dat,
     family = brms::cumulative(link = link_str),
-    prior = brms::prior(horseshoe(par_ratio = 0.117657042)) +
+    prior = brms::prior(horseshoe(par_ratio = 0.125261003)) +
       brms::prior(normal(0, 2.5), class = "Intercept"),
     ### For backend = "rstan":
     control = list(adapt_delta = 0.99), # , max_treedepth = 15L
