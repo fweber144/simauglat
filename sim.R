@@ -641,7 +641,7 @@ plotter_ovrlay_diff <- function(eval_scale = "response") {
   stopifnot(eval_scale == "response")
   lat2resp_nm_aug <- paste0("lat2resp_", FALSE)
   lat2resp_nm_lat <- paste0("lat2resp_", eval_scale == "response")
-  title_gg <- "Latent vs. augmented-data"
+  title_gg <- "Performance diff."
   title_gg <- paste0(title_gg, " (evaluation scale: ", eval_scale, ")")
 
   # Check that the reference model (performance) is the same, so that the
@@ -752,7 +752,7 @@ for (eval_scale_lat_val in c("response", "latent")) {
   print(proportions(sgg_sizes_tab))
   cat("-----\n")
   xlab_long <- bquote(M[lat] - M[aug])
-  title_gg <- "Latent vs. augmented-data"
+  title_gg <- "Suggested size diff."
   title_gg <- paste0(title_gg, " (evaluation scale for the latent projection: ",
                      eval_scale_lat_val, ")")
   gg_sgg_sizes_diff <- ggplot2::qplot(sgg_sizes_lat_minus_aug,
