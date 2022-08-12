@@ -700,7 +700,7 @@ stopifnot(diff_out$succ_ind)
 
 sgger_size <- function(sim_idx, eval_scale_lat = "response") {
   # TODO: Also add the possibility to compare the two latent projection
-  # evaluation scales against each other (response vs. latent).
+  # evaluation scales against each other (response vs. latent)?
   lat2resp_nm_aug <- paste0("lat2resp_", FALSE)
   lat2resp_nm_lat <- paste0("lat2resp_", eval_scale_lat == "response")
   return(c(
@@ -752,7 +752,9 @@ for (eval_scale_lat_val in c("response", "latent")) {
   print(sgg_sizes_tab)
   print(proportions(sgg_sizes_tab))
   cat("-----\n")
-  xlab_long <- "Difference of the suggested sizes (latent minus augmented-data)"
+  xlab_long <- paste0("Difference of the suggested sizes ",
+                     "(latent vs. augmented-data) ",
+                     "(lat. evaluation scale: ", eval_scale_lat_val, ")")
   gg_sgg_sizes_diff <- ggplot2::qplot(sgg_sizes_lat_minus_aug,
                                       geom = "bar",
                                       xlab = xlab_long) +
