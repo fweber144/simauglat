@@ -589,14 +589,14 @@ cat("-----\n")
 
 plotter_ovrlay <- function(prj_meth, eval_scale = "response") {
   if (prj_meth == "aug") {
-    title_raw <- "Augmented-data"
+    title_gg <- "Augmented-data"
     stopifnot(eval_scale == "response")
     lat2resp_nm <- paste0("lat2resp_", FALSE)
   } else if (prj_meth == "lat") {
-    title_raw <- "Latent"
+    title_gg <- "Latent"
     lat2resp_nm <- paste0("lat2resp_", eval_scale == "response")
   }
-  title_raw <- paste0(title_raw, " (evaluation scale: ", eval_scale, ")")
+  title_gg <- paste0(title_gg, " (evaluation scale: ", eval_scale, ")")
   y_chr <- setdiff(names(simres[[1L]][[prj_meth]][[lat2resp_nm]]$smmry),
                    c("solution_terms", "se", "lower", "upper", "size"))
   stopifnot(length(y_chr) == 1)
@@ -620,7 +620,7 @@ plotter_ovrlay <- function(prj_meth, eval_scale = "response") {
     ###
     ggplot2::geom_point() +
     ggplot2::geom_line() +
-    ggplot2::labs(title = title_raw,
+    ggplot2::labs(title = title_gg,
                   x = "Submodel size",
                   y = bquote(Delta*.(toupper(y_chr))))
   fnm_base <- paste(y_chr, prj_meth, eval_scale, sep = "_")
@@ -641,9 +641,9 @@ plotter_ovrlay_diff <- function(eval_scale = "response") {
   stopifnot(eval_scale == "response")
   lat2resp_nm_aug <- paste0("lat2resp_", FALSE)
   lat2resp_nm_lat <- paste0("lat2resp_", eval_scale == "response")
-  title_raw <- "Latent vs. augmented-data"
-  title_raw <- paste0(title_raw, " (evaluation scale: ", eval_scale, ")",
-                      "; sol. paths can differ")
+  title_gg <- "Latent vs. augmented-data"
+  title_gg <- paste0(title_gg, " (evaluation scale: ", eval_scale, ")",
+                     "; sol. paths can differ")
 
   # Check that the reference model (performance) is the same, so that the
   # difference of the Delta MLPDs can be interpreted as the difference of the
@@ -685,7 +685,7 @@ plotter_ovrlay_diff <- function(eval_scale = "response") {
                         linetype = "dotted") +
     ggplot2::geom_point() +
     ggplot2::geom_line() +
-    ggplot2::labs(title = title_raw,
+    ggplot2::labs(title = title_gg,
                   x = "Submodel size",
                   y = bquote(.(toupper(y_chr))[lat] - .(toupper(y_chr))[aug]))
   fnm_base <- paste(y_chr_diff, eval_scale, sep = "_")
@@ -752,11 +752,13 @@ for (eval_scale_lat_val in c("response", "latent")) {
   print(sgg_sizes_tab)
   print(proportions(sgg_sizes_tab))
   cat("-----\n")
-  xlab_long <- paste0("Difference of the suggested sizes ",
-                     "(latent vs. augmented-data) ",
-                     "(lat. evaluation scale: ", eval_scale_lat_val, ")")
+  xlab_long <- bquote(M[lat] - M[aug])
+  title_gg <- "Latent vs. augmented-data"
+  title_gg <- paste0(title_gg, " (evaluation scale for the latent projection: ",
+                     eval_scale_lat_val, ")")
   gg_sgg_sizes_diff <- ggplot2::qplot(sgg_sizes_lat_minus_aug,
                                       geom = "bar",
+                                      main = title_gg,
                                       xlab = xlab_long) +
     ggplot2::scale_x_discrete(drop = FALSE) +
     ggplot2::scale_y_continuous(breaks = scales::breaks_pretty())
