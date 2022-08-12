@@ -641,7 +641,7 @@ plotter_ovrlay_diff <- function(eval_scale = "response") {
   stopifnot(eval_scale == "response")
   lat2resp_nm_aug <- paste0("lat2resp_", FALSE)
   lat2resp_nm_lat <- paste0("lat2resp_", eval_scale == "response")
-  title_raw <- "Latent minus augmented-data"
+  title_raw <- "Latent vs. augmented-data"
   title_raw <- paste0(title_raw, " (evaluation scale: ", eval_scale, ")",
                       "; sol. paths can differ")
 
