@@ -1,10 +1,10 @@
 # brms::mcmc_plot(bfit, variable = "^b_X", regex = TRUE, type = "areas")
 
-input_type <- "failed" # "simresrng"
+input_type <- "simresrng" # "failed"
 
 if (input_type == "simresrng") {
   simresrng <- readRDS(file = "simresrng.rds")
-  SIM_ITER <- 4L
+  SIM_ITER <- 33L
   .Random.seed <- simresrng[[SIM_ITER]]
 } else if (input_type == "failed") {
   loaded_objs <- load("failed.rda")
