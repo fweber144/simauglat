@@ -401,9 +401,10 @@ run_projpred <- function(refm_fit, dat_indep, latent = FALSE, ...) {
     # to obtain the reference model's performance:
     stats_man <- projpred:::.tabulate_stats(vs, stats = "mlpd",
                                             lat2resp = lat2resp_val)
+    refsmms <- vs$summaries$ref
+    if (latent && lat2resp_val) refsmms <- refsmms$Orig
     return(list(
-      # TODO: Perhaps also return `vs$summaries$ref` to be able to compare this
-      # between augmented-data and latent projection later.
+      refsmms = refsmms,
       refstat = stats_man$value[stats_man$size == Inf],
       # plot_obj = plot(vs, deltas = TRUE, stats = "mlpd",
       #                 lat2resp = lat2resp_val),
@@ -465,6 +466,11 @@ sim_runner <- function(...) {
            "\"failed.rda\". Use `loaded_objs <- load(\"failed.rda\")` to ",
            "restore it (including `.Random.seed`).")
     }
+    stopifnot(all.equal(projpred_aug$lat2resp_FALSE$refsmms,
+                        projpred_lat$lat2resp_TRUE$refsmms))
+    projpred_aug$lat2resp_FALSE$refsmms <- NULL
+    projpred_lat$lat2resp_TRUE$refsmms <- NULL
+    projpred_lat$lat2resp_FALSE$refsmms <- NULL
     return(list(
       aug = projpred_aug,
       lat = projpred_lat,
