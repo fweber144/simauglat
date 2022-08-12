@@ -641,7 +641,7 @@ plotter_ovrlay_diff <- function(eval_scale = "response") {
   stopifnot(eval_scale == "response")
   lat2resp_nm_aug <- paste0("lat2resp_", FALSE)
   lat2resp_nm_lat <- paste0("lat2resp_", eval_scale == "response")
-  title_raw <- "Augmented-data vs. latent"
+  title_raw <- "Latent minus augmented-data"
   title_raw <- paste0(title_raw, " (evaluation scale: ", eval_scale, ")",
                       "; sol. paths can differ")
 
@@ -674,7 +674,7 @@ plotter_ovrlay_diff <- function(eval_scale = "response") {
           setNames(smmry_lat[y_chr], y_chr_lat))
   }))
   y_chr_diff <- paste("diff", y_chr, sep = "_")
-  plotdat[[y_chr_diff]] <- plotdat[[y_chr_aug]] - plotdat[[y_chr_lat]]
+  plotdat[[y_chr_diff]] <- plotdat[[y_chr_lat]] - plotdat[[y_chr_aug]]
   ggobj <- ggplot2::ggplot(data = plotdat,
                            mapping = ggplot2::aes_string(x = "size",
                                                          y = y_chr_diff,
@@ -687,7 +687,7 @@ plotter_ovrlay_diff <- function(eval_scale = "response") {
     ggplot2::geom_line() +
     ggplot2::labs(title = title_raw,
                   x = "Submodel size",
-                  y = bquote(.(toupper(y_chr))[aug] - .(toupper(y_chr))[lat]))
+                  y = bquote(.(toupper(y_chr))[lat] - .(toupper(y_chr))[aug]))
   fnm_base <- paste(y_chr_diff, eval_scale, sep = "_")
   ggplot2::ggsave(file.path("figs", paste0(fnm_base, ".pdf")),
                   width = 7, height = 7 * 0.618)
