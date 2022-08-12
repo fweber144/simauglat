@@ -282,7 +282,11 @@ if (only_init_fit) {
   # Check that all response categories are present in the initial model fit:
   stopifnot(identical(levels(sim_dat_etc$dat$Y), yunq))
   options(mc.cores = parallel::detectCores(logical = FALSE))
-  # options(cmdstanr_write_stan_file_dir = getwd())
+  # if (packageVersion("cmdstanr") >= "0.5.3") {
+  #   options(cmdstanr_write_stan_file_dir = ".")
+  # } else {
+  #   options(cmdstanr_write_stan_file_dir = getwd())
+  # }
   ### Needed because the computing cluster complains about `p0` not found:
   par_ratio_sigti <- p0 / (npreds_tot - p0) * sigti
   cat("-----\npar_ratio_sigti:\n")
