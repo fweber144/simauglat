@@ -148,7 +148,7 @@ dataconstructor <- function() {
 
   # The intercepts at centered predictors ("Intercept"s in brms parlance, not
   # "b_Intercept"s); note that when switching the option, the prior in the
-  # data-fitting model usually should be adjusted:
+  # data-fitting model should usually be adjusted:
   ### Option 1:
   # thres <- seq(-1.5, 1.5, length.out = nthres)
   ###
