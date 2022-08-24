@@ -282,11 +282,11 @@ if (only_init_fit) {
   # Check that all response categories are present in the initial model fit:
   stopifnot(identical(levels(sim_dat_etc$dat$Y), yunq))
   options(mc.cores = parallel::detectCores(logical = FALSE))
-  # if (packageVersion("cmdstanr") >= "0.5.3") {
-  #   options(cmdstanr_write_stan_file_dir = ".")
-  # } else {
-  #   options(cmdstanr_write_stan_file_dir = getwd())
-  # }
+  if (packageVersion("cmdstanr") >= "0.5.3") {
+    options(cmdstanr_write_stan_file_dir = ".")
+  } else {
+    options(cmdstanr_write_stan_file_dir = getwd())
+  }
   ### Needed because the computing cluster complains about `p0` not found:
   par_ratio_sigti <- p0 / (npreds_tot - p0) * sigti
   cat("-----\npar_ratio_sigti:\n")
@@ -301,14 +301,14 @@ if (only_init_fit) {
     prior = brms::prior(horseshoe(par_ratio = 0.117657042)) +
       brms::prior(normal(0, 2.5), class = "Intercept"),
     ### For backend = "rstan":
-    control = list(adapt_delta = 0.99), # , max_treedepth = 15L
-    init_r = 1,
+    # control = list(adapt_delta = 0.99), # , max_treedepth = 15L
+    # init_r = 1,
     ###
     ### For backend = "cmdstanr":
-    # backend = "cmdstanr",
-    # adapt_delta = 0.99,
-    # # max_treedepth = 15L,
-    # init = 1,
+    backend = "cmdstanr",
+    adapt_delta = 0.99,
+    # max_treedepth = 15L,
+    init = 1,
     ###
     silent = 0,
     file = "bfit",
@@ -363,12 +363,12 @@ fit_ref <- function(dat, fml) {
     silent = 2,
     refresh = 0,
     ### For backend = "rstan":
-    init_r = 1,
+    # init_r = 1,
     ###
     ### For backend = "cmdstanr":
-    # adapt_delta = 0.99,
-    # # max_treedepth = 15L,
-    # init = 1,
+    adapt_delta = 0.99,
+    # max_treedepth = 15L,
+    init = 1,
     ###
     seed = sample.int(.Machine$integer.max, 1)
   ))
