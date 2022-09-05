@@ -452,20 +452,26 @@ sim_runner <- function(...) {
                                      latent = TRUE,
                                      ...),
                         silent = TRUE)
-    if (inherits(projpred_aug, "try-error")) {
+    aug_failed <- inherits(projpred_aug, "try-error")
+    lat_failed <- inherits(projpred_lat, "try-error")
+    if (aug_failed || lat_failed) {
       dot_args <- list(...)
       save(sit, refm_fit, seed_vs, dot_args, Rseed, file = "failed.rda")
-      stop("The augmented-data projpred run failed in simulation iteration ",
-           sit, ". Error message: \"", attr(projpred_aug, "condition")$message,
-           "\". Objects for replicating this failure were saved to ",
-           "\"failed.rda\". Use `loaded_objs <- load(\"failed.rda\")` to ",
-           "restore it (including `.Random.seed`).")
-    }
-    if (inherits(projpred_lat, "try-error")) {
-      dot_args <- list(...)
-      save(sit, refm_fit, seed_vs, dot_args, Rseed, file = "failed.rda")
-      stop("The latent projpred run failed in simulation iteration ",
-           sit, ". Error message: \"", attr(projpred_lat, "condition")$message,
+      mssgs_failed <- NULL
+      if (aug_failed) {
+        which_failed <- "augmented-data"
+        mssgs_failed <- c(mssgs_failed, attr(projpred_aug, "condition")$message)
+      } else if (lat_failed) {
+        which_failed <- "latent"
+        mssgs_failed <- c(mssgs_failed, attr(projpred_lat, "condition")$message)
+      }
+      if (aug_failed && lat_failed) {
+        which_failed <- "both"
+      }
+      stop("The following of the two projpred runs (augmented-data, latent) ",
+           "failed in simulation iteration ", sit, ": ", which_failed, ". ",
+           "Error message(s for augmented-data and latent run, respectively): ",
+           "\"", paste(mssgs_failed, collapse = "\", \""),
            "\". Objects for replicating this failure were saved to ",
            "\"failed.rda\". Use `loaded_objs <- load(\"failed.rda\")` to ",
            "restore it (including `.Random.seed`).")
