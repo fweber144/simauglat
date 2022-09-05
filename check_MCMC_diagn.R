@@ -1,4 +1,4 @@
-# MCMC diagnostics (convergence (stationarity, mixing)) ---------------------------------------------------------------------------------------------
+# MCMC diagnostics (convergence (stationarity, mixing)) -------------------
 
 check_MCMC_diagn <- function(
     C_stanfit,
@@ -19,7 +19,7 @@ check_MCMC_diagn <- function(
     new_plots = FALSE, # Deactivated by default, but often makes sense.
     ...
 ){
-  ## Preparations --------------------------------------------------------------------------------
+  ## Preparations -----------------------------------------------------------
 
   if(!("data.table" %in% loadedNamespaces() && "data.table" %in% .packages())){
     suppressPackageStartupMessages({
@@ -57,7 +57,7 @@ check_MCMC_diagn <- function(
             "The posterior results should not be used.")
   }
 
-  ## HMC-specific diagnostics --------------------------------------------------------------------
+  ## HMC-specific diagnostics -----------------------------------------------
 
   if(isTRUE(HMC_auto)){
     rstan::check_hmc_diagnostics(C_stanfit)
@@ -118,9 +118,9 @@ check_MCMC_diagn <- function(
                        "sampler_params_smmry" = C_sampler_params_smmry))
   }
 
-  ## General MCMC diagnostics --------------------------------------------------------------------
+  ## General MCMC diagnostics -----------------------------------------------
 
-  ### Bulk-ESS ------------------------------------------------------------------------------------
+  ### Bulk-ESS --------------------------------------------------------------
   ### (cf. Vehtari et al., 2021, DOI: 10.1214/20-BA1221)
 
   C_essBulk <- apply(C_draws_arr, MARGIN = 3, FUN = rstan::ess_bulk)
@@ -158,7 +158,7 @@ check_MCMC_diagn <- function(
                      "essBulk_OK" = C_essBulk_OK,
                      "essBulkRatio" = C_essBulkRatio))
 
-  ### "New" R-hat ---------------------------------------------------------------------------------
+  ### "New" R-hat -----------------------------------------------------------
   ### (cf. Vehtari et al., 2021, DOI: 10.1214/20-BA1221)
 
   C_rhat <- apply(C_draws_arr, MARGIN = 3, FUN = rstan::Rhat)
@@ -180,7 +180,7 @@ check_MCMC_diagn <- function(
                 list("rhat" = C_rhat,
                      "rhat_OK" = C_rhat_OK))
 
-  ### Tail-ESS ------------------------------------------------------------------------------------
+  ### Tail-ESS --------------------------------------------------------------
   ### (cf. Vehtari et al., 2021, DOI: 10.1214/20-BA1221)
 
   C_essTail <- apply(C_draws_arr, MARGIN = 3, FUN = rstan::ess_tail)
@@ -211,9 +211,10 @@ check_MCMC_diagn <- function(
                      "essTail_OK" = C_essTail_OK,
                      "essTailRatio" = C_essTailRatio))
 
-  ### ESS -----------------------------------------------------------------------------------------
-  ### (only necessary if posterior mean is of interest which is not advised for heavy-tailed priors
-  ### with infinite mean, especially if the data is weakly identifying)
+  ### ESS -------------------------------------------------------------------
+  ### (only necessary if posterior mean is of interest which is not advised for
+  ### heavy-tailed priors with infinite mean, especially if the data is weakly
+  ### identifying)
 
   if(isTRUE(ESS_classical)){
     if(!("rstan" %in% loadedNamespaces() && "rstan" %in% .packages())){
@@ -254,7 +255,7 @@ check_MCMC_diagn <- function(
                        "essRatio" = C_essRatio))
   }
 
-  ### Autocorrelation -----------------------------------------------------------------------------
+  ### Autocorrelation -------------------------------------------------------
 
   if(isTRUE(AC)){
     C_ac_obj <- rstan::stan_ac(C_stanfit, pars = C_pars, ncol = 1, lags = 10) # , separate_chains = TRUE
@@ -272,7 +273,7 @@ check_MCMC_diagn <- function(
                        "ac_max" = C_ac_max))
   }
 
-  ## Overall check for all MCMC diagnostics ------------------------------------------------------
+  ## Overall check for all MCMC diagnostics ---------------------------------
 
   # Note: The following approach for naming the vector might seem a bit tedious, but in fact, a more
   # automatic solution (see <https://stackoverflow.com/questions/5042806/r-creating-a-named-vector-from-variables>) is
@@ -298,7 +299,7 @@ check_MCMC_diagn <- function(
             "The concerned diagnostic(s) is/are: ", paste(names(C_OKs)[!C_OKs], collapse = ", "))
   }
 
-  ## Overview ------------------------------------------------------------------------------------
+  ## Overview ---------------------------------------------------------------
 
   if(isTRUE(overview)){
     if(!("rstan" %in% loadedNamespaces() && "rstan" %in% .packages())){
@@ -310,14 +311,14 @@ check_MCMC_diagn <- function(
       })
     }
 
-    ### rstan ---------------------------------------------------------------------------------------
+    ### rstan -----------------------------------------------------------------
 
     # print(C_stanfit, pars = C_pars, digits_summary = 4)
     C_smmry <- summary(C_stanfit, pars = C_pars)$summary
     C_mon_old <- rstan::monitor(C_stanfit)
     # print(C_mon_old, digits = 4) # , se = TRUE
 
-    ### "New" diagnostics ---------------------------------------------------------------------------
+    ### "New" diagnostics -----------------------------------------------------
     ### (cf. Vehtari et al., 2021, DOI: 10.1214/20-BA1221)
 
     devtools::source_url("https://raw.githubusercontent.com/avehtari/rhat_ess/master/code/monitornew.R")
@@ -336,9 +337,9 @@ check_MCMC_diagn <- function(
                        "monex" = C_monex))
   }
 
-  ## Diagnostic plots ----------------------------------------------------------------------------
+  ## Diagnostic plots -------------------------------------------------------
 
-  ### rstan ---------------------------------------------------------------------------------------
+  ### rstan -----------------------------------------------------------------
 
   if(isTRUE(rstan_plots)){
     # NOTE: As may be seen from rstan:::pairs.stanfit(), for 4 chains, using "condition = NULL" means
@@ -355,9 +356,7 @@ check_MCMC_diagn <- function(
     }
   }
 
-  ### bayesplot -----------------------------------------------------------------------------------
-
-  # NOTE: For a more complete list of possibilities, see file "UNUSED_RStan_template.R".
+  ### bayesplot -------------------------------------------------------------
 
   if(isTRUE(bayesplot_MCMC) || isTRUE(bayesplot_HMC) || isTRUE(bayesplot_parallelCoord)){
     # bayesplot::color_scheme_set("gray")
@@ -366,7 +365,7 @@ check_MCMC_diagn <- function(
     C_np <- bayesplot::nuts_params(C_stanfit) # , inc_warmup = TRUE
   }
 
-  #### General MCMC plots --------------------------------------------------------------------------
+  #### General MCMC plots ---------------------------------------------------
 
   if(isTRUE(bayesplot_MCMC)){
     print(bayesplot::mcmc_trace(C_stanfit, pars = C_selPars, np = C_np))
@@ -375,7 +374,7 @@ check_MCMC_diagn <- function(
     print(bayesplot::mcmc_rank_overlay(C_stanfit, pars = C_selPars))
   }
 
-  #### HMC-specific plots --------------------------------------------------------------------------
+  #### HMC-specific plots ---------------------------------------------------
 
   if(isTRUE(bayesplot_HMC)){
     bayesplot::color_scheme_set("darkgray")
@@ -390,7 +389,7 @@ check_MCMC_diagn <- function(
     bayesplot::color_scheme_set("blue")
   }
 
-  #### Parallel coordinates plot -------------------------------------------------------------------
+  #### Parallel coordinates plot --------------------------------------------
   #### (useful for "debugging" divergent transitions)
 
   ### WARNING: Might take long!:
@@ -399,7 +398,7 @@ check_MCMC_diagn <- function(
   }
   ###
 
-  ### "New" diagnostic plots ----------------------------------------------------------------------
+  ### "New" diagnostic plots ------------------------------------------------
   ### (cf. Vehtari et al., 2021, DOI: 10.1214/20-BA1221)
 
   if(isTRUE(new_plots)){
@@ -442,7 +441,7 @@ check_MCMC_diagn <- function(
     ###
   }
 
-  ## Output --------------------------------------------------------------------------------------
+  ## Output -----------------------------------------------------------------
 
   out_list <- c(out_list,
                 list("all_OK" = C_all_OK))
