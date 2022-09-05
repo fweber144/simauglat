@@ -80,7 +80,7 @@ yunq <- paste0("ycat", seq_len(ncat))
 link_str <- "probit"
 nthres <- ncat - 1L
 npreds_tot <- 50L
-p0 <- as.integer(ceiling(npreds_tot * 0.10))
+p0 <- as.integer(ceiling(npreds_tot * 0.25))
 source("rh_sigma_tilde.R")
 sigti <- calc_sigma_tilde(ncats = ncat)
 seed_glob <- 856824715
@@ -167,7 +167,8 @@ dataconstructor <- function() {
   coefs_cont <- rhorseshoe(npreds_cont,
                            par_ratio = p0 / (npreds_cont - p0),
                            sigma_tilde = sigti,
-                           N = nobsv)
+                           N = nobsv,
+                           df_slab = 10) # , scale_slab = 1.5
 
   npreds_grPL <- 0L # 1L
   ngrPL <- integer() # c(3L)
@@ -292,13 +293,13 @@ if (only_init_fit) {
   cat("-----\npar_ratio_sigti:\n")
   print(par_ratio_sigti, digits = 9)
   cat("-----\n")
-  stopifnot(all.equal(par_ratio_sigti, 0.117657042, tolerance = 1e-9))
+  stopifnot(all.equal(par_ratio_sigti, 0.372050646, tolerance = 1e-9))
   ###
   bfit <- brms::brm(
     formula = sim_dat_etc$fml,
     data = sim_dat_etc$dat,
     family = brms::cumulative(link = link_str),
-    prior = brms::prior(horseshoe(par_ratio = 0.117657042)) +
+    prior = brms::prior(horseshoe(df_slab = 10, par_ratio = 0.372050646)) + # , scale_slab = 1.5
       brms::prior(normal(0, 2.5), class = "Intercept"),
     ### For backend = "rstan":
     # control = list(adapt_delta = 0.99), # , max_treedepth = 15L
