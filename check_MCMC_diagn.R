@@ -27,10 +27,6 @@ check_MCMC_diagn <- function(
       library(data.table)
     })
   }
-  # loadNamespace("rstan")
-  # # if (!requireNamespace("rstan", quietly = TRUE)) {
-  # #   stop("Package \"rstan\" needed.")
-  # # }
 
   out_list <- list()
 
@@ -48,8 +44,8 @@ check_MCMC_diagn <- function(
     C_selPars <- C_pars # C_selPars <- C_pars[seq_len(min(2, length(C_pars)))]
   }
 
-  # Check that the mode of the resulting "stanfit" object is the "normal" mode (0L), i.e. neither
-  # test gradient mode (1L) nor error mode (2L):
+  # Check that the mode of the resulting "stanfit" object is the "normal" mode
+  # (0L), i.e. neither test gradient mode (1L) nor error mode (2L):
   stopifnot(identical(C_stanfit@mode, 0L))
 
   # Check the number of chains in the output:
@@ -64,30 +60,14 @@ check_MCMC_diagn <- function(
     rstan::check_hmc_diagnostics(C_stanfit)
   }
 
-  # C_div <- capture.output({
-  #   rstan::check_divergences(C_stanfit)
-  # }, type = "message")
-  # C_div_OK <- grepl("^0 of", C_div)
   C_div <- rstan::get_num_divergent(C_stanfit)
   C_div_OK <- identical(C_div, 0L)
 
-  # C_tree <- capture.output({
-  #   rstan::check_treedepth(C_stanfit)
-  # }, type = "message")
-  # C_tree_OK <- grepl("^0 of", C_tree)
   C_tree <- rstan::get_num_max_treedepth(C_stanfit)
   C_tree_OK <- identical(C_tree, 0L)
 
-  # C_EBFMI <- capture.output({
-  #   rstan::check_EBFMI(C_stanfit)
-  # }, type = "message")
-  # C_EBFMI_OK <- identical(C_EBFMI, "E-BFMI indicated no pathological behavior.")
   C_EBFMI <- rstan::get_bfmi(C_stanfit)
   C_EBFMI_OK <- all(C_EBFMI >= 0.3)
-  # stopifnot(identical(
-  #   C_EBFMI_OK,
-  #   identical(length(rstan::get_low_bfmi_chains(C_stanfit)), 0L)
-  # ))
 
   out_list <- c(out_list,
                 list("div" = C_div,
@@ -99,20 +79,26 @@ check_MCMC_diagn <- function(
 
   if (isTRUE(sampler_pars)) {
     C_sampler_params <- rstan::get_sampler_params(C_stanfit, inc_warmup = FALSE)
-    C_sampler_params <- lapply(seq_along(C_sampler_params), function(idx_chain) {
-      data.table(C_sampler_params[[idx_chain]], "chain" = paste0("chain", idx_chain))
-    })
+    C_sampler_params <- lapply(
+      seq_along(C_sampler_params),
+      function(idx_chain) {
+        data.table(C_sampler_params[[idx_chain]],
+                   "chain" = paste0("chain", idx_chain))
+      }
+    )
     C_sampler_params <- rbindlist(C_sampler_params, fill = TRUE)
 
-    C_sampler_params_smmry <- C_sampler_params[,
-                                               .("mean_accept_stat" = mean(accept_stat__),
-                                                 "max_treedepth" = max(treedepth__),
-                                                 "sum_divergent" = sum(divergent__),
-                                                 "median_stepsize" = median(stepsize__),
-                                                 "median_leapfrog" = median(n_leapfrog__),
-                                                 "max_leapfrog" = max(n_leapfrog__),
-                                                 "median_energy" = mean(energy__)),
-                                               by = chain]
+    C_sampler_params_smmry <- C_sampler_params[
+      ,
+      .("mean_accept_stat" = mean(accept_stat__),
+        "max_treedepth" = max(treedepth__),
+        "sum_divergent" = sum(divergent__),
+        "median_stepsize" = median(stepsize__),
+        "median_leapfrog" = median(n_leapfrog__),
+        "max_leapfrog" = max(n_leapfrog__),
+        "median_energy" = mean(energy__)),
+      by = chain
+    ]
 
     out_list <- c(out_list,
                   list("sampler_params" = C_sampler_params,
@@ -129,30 +115,18 @@ check_MCMC_diagn <- function(
     C_essBulk_OK <- all(C_essBulk > 100 * n_chains)
     if (any(is.na(C_essBulk))) {
       warning("\"C_essBulk\" contains at least one NA.")
-      # C_pars_diagsNA <- names(C_essBulk[is.na(C_essBulk)])
-      # unique(C_draws_mat[, C_pars_diagsNA])
-      # unique(C_draws_arr[, , C_pars_diagsNA])
-      # C_mon_old_DF <- as.data.frame(C_mon_old)
-      # print(C_mon_old_DF[C_pars_diagsNA, names(C_mon_old_DF)])
-      # # C_mon_DF <- as.data.frame(C_mon)
-      # # print(C_mon_DF[C_pars_diagsNA, names(C_mon_DF)])
       C_essBulk_OK <- all(C_essBulk > 100 * n_chains, na.rm = TRUE)
     }
-  } else{
+  } else {
     if (any(is.na(C_essBulk))) {
       C_essBulk_OK <- FALSE
-    } else{
+    } else {
       C_essBulk_OK <- all(C_essBulk > 100 * n_chains)
     }
   }
 
   # Bulk-ESS ratio to total number of (post-warmup) draws:
   C_essBulkRatio <- C_essBulk / n_draws
-  # print(quantile(C_essBulkRatio))
-  # if (any(is.na(C_essBulkRatio))) {
-  #   warning("\"C_essBulkRatio\" contains at least one NA.")
-  #   print(quantile(C_essBulkRatio, na.rm = TRUE))
-  # }
 
   out_list <- c(out_list,
                 list("essBulk" = C_essBulk,
@@ -169,10 +143,10 @@ check_MCMC_diagn <- function(
       warning("\"C_rhat\" contains at least one NA.")
       C_rhat_OK <- all(C_rhat < 1.01, na.rm = TRUE)
     }
-  } else{
+  } else {
     if (any(is.na(C_rhat))) {
       C_rhat_OK <- FALSE
-    } else{
+    } else {
       C_rhat_OK <- all(C_rhat < 1.01)
     }
   }
@@ -191,21 +165,16 @@ check_MCMC_diagn <- function(
       warning("\"C_essTail\" contains at least one NA.")
       C_essTail_OK <- all(C_essTail > 100 * n_chains, na.rm = TRUE)
     }
-  } else{
+  } else {
     if (any(is.na(C_essTail))) {
       C_essTail_OK <- FALSE
-    } else{
+    } else {
       C_essTail_OK <- all(C_essTail > 100 * n_chains)
     }
   }
 
   # Tail-ESS ratio to total number of (post-warmup) draws:
   C_essTailRatio <- C_essTail / n_draws
-  # print(quantile(C_essTailRatio))
-  # if (any(is.na(C_essTailRatio))) {
-  #   warning("\"C_essTailRatio\" contains at least one NA.")
-  #   print(quantile(C_essTailRatio, na.rm = TRUE))
-  # }
 
   out_list <- c(out_list,
                 list("essTail" = C_essTail,
@@ -234,21 +203,16 @@ check_MCMC_diagn <- function(
         warning("\"C_ess\" contains at least one NA.")
         C_ess_OK <- all(C_ess > 100 * n_chains, na.rm = TRUE)
       }
-    } else{
+    } else {
       if (any(is.na(C_ess))) {
         C_ess_OK <- FALSE
-      } else{
+      } else {
         C_ess_OK <- all(C_ess > 100 * n_chains)
       }
     }
 
     # ESS ratio to total number of (post-warmup) draws:
     C_essRatio <- C_ess / n_draws
-    # print(quantile(C_essRatio))
-    # if (any(is.na(C_essRatio))) {
-    #   warning("\"C_essRatio\" contains at least one NA.")
-    #   print(quantile(C_essRatio, na.rm = TRUE))
-    # }
 
     out_list <- c(out_list,
                   list("ess" = C_ess,
@@ -262,12 +226,7 @@ check_MCMC_diagn <- function(
     C_ac_obj <- rstan::stan_ac(C_stanfit, pars = C_pars, ncol = 1, lags = 10) # , separate_chains = TRUE
     C_ac <- as.data.table(C_ac_obj$data)
     C_ac <- C_ac[lag != 0L, ]
-    C_ac_max <- C_ac[, .("ac_max" = max(abs(ac))), parameters] # [, setNames(ac_max, gsub("^log-posterior$", "lp__", parameters))]
-    # print(C_ac_max[, quantile(ac_max)])
-    # if (C_ac_max[, any(is.na(ac_max))]) {
-    #   warning("\"C_ac_max$ac_max\" contains at least one NA.")
-    #   print(C_ac_max[, quantile(ac_max, na.rm = TRUE)])
-    # }
+    C_ac_max <- C_ac[, .("ac_max" = max(abs(ac))), parameters]
 
     out_list <- c(out_list,
                   list("ac" = C_ac,
@@ -276,15 +235,13 @@ check_MCMC_diagn <- function(
 
   ## Overall check for all MCMC diagnostics ---------------------------------
 
-  # Note: The following approach for naming the vector might seem a bit tedious, but in fact, a more
-  # automatic solution (see <https://stackoverflow.com/questions/5042806/r-creating-a-named-vector-from-variables>) is
-  # quite complex and not recommended within functions.
-  C_OKs <- c("C_div_OK" = C_div_OK, "C_tree_OK" = C_tree_OK, "C_EBFMI_OK" = C_EBFMI_OK,
-             "C_essBulk_OK" = C_essBulk_OK, "C_rhat_OK" = C_rhat_OK, "C_essTail_OK" = C_essTail_OK)
+  C_OKs <- c("C_div_OK" = C_div_OK, "C_tree_OK" = C_tree_OK,
+             "C_EBFMI_OK" = C_EBFMI_OK, "C_essBulk_OK" = C_essBulk_OK,
+             "C_rhat_OK" = C_rhat_OK, "C_essTail_OK" = C_essTail_OK)
   if (exists("C_ess_OK")) {
     C_OKs <- c(C_OKs, "C_ess_OK" = C_ess_OK)
   }
-  # Make the names better readable:
+  # Improve readability of the names:
   names(C_OKs) <- sub("^C_", "", names(C_OKs))
   stopifnot(identical(
     names(C_OKs),
@@ -296,8 +253,9 @@ check_MCMC_diagn <- function(
   if (!C_all_OK) {
     warning("At least one MCMC diagnostic is worrying. This should be ",
             "inspected (see the output from this function for details). ",
-            "In general, this indicates that the posterior results should not be used. ",
-            "The concerned diagnostic(s) is/are: ", paste(names(C_OKs)[!C_OKs], collapse = ", "))
+            "In general, this indicates that the posterior results should not ",
+            "be used. The concerned diagnostic(s) is/are: ",
+            paste(names(C_OKs)[!C_OKs], collapse = ", "))
   }
 
   ## Overview ---------------------------------------------------------------
@@ -314,10 +272,8 @@ check_MCMC_diagn <- function(
 
     ### rstan -----------------------------------------------------------------
 
-    # print(C_stanfit, pars = C_pars, digits_summary = 4)
     C_smmry <- summary(C_stanfit, pars = C_pars)$summary
     C_mon_old <- rstan::monitor(C_stanfit)
-    # print(C_mon_old, digits = 4) # , se = TRUE
 
     ### "New" diagnostics -----------------------------------------------------
     ### (cf. Vehtari et al., 2021, DOI: 10.1214/20-BA1221)
@@ -326,10 +282,7 @@ check_MCMC_diagn <- function(
     devtools::source_url("https://raw.githubusercontent.com/avehtari/rhat_ess/master/code/monitorplot.R")
 
     C_mon <- monitor(C_stanfit)
-    # print(C_mon, digits = 4) # , se = TRUE
-
     C_monex <- monitor_extra(C_stanfit)
-    # print(C_monex, digits = 4) # NOTE: Setting "se = TRUE" doesn't seem to have an effect.
 
     out_list <- c(out_list,
                   list("smmry" = C_smmry,
@@ -343,14 +296,15 @@ check_MCMC_diagn <- function(
   ### rstan -----------------------------------------------------------------
 
   if (isTRUE(rstan_plots)) {
-    # NOTE: As may be seen from rstan:::pairs.stanfit(), for 4 chains, using "condition = NULL" means
-    # to plot chains 1 and 2 in the lower panel and chains 3 and 4 in the upper panel.
+    # NOTE: As may be seen from rstan:::pairs.stanfit(), for 4 chains, using
+    # "condition = NULL" means to plot chains 1 and 2 in the lower panel and
+    # chains 3 and 4 in the upper panel.
     print(pairs(C_stanfit, pars = C_selPars, condition = NULL))
     print(pairs(C_stanfit, pars = C_selPars, condition = "accept_stat__"))
     print(pairs(C_stanfit, pars = C_selPars, condition = "divergent__"))
-    # [... (see ?rstan:::pairs.stanfit for more info on the usage of argument "condition")]
 
-    print(rstan::traceplot(C_stanfit, pars = C_selPars, inc_warmup = TRUE, nrow = 2))
+    print(rstan::traceplot(C_stanfit, pars = C_selPars, inc_warmup = TRUE,
+                           nrow = 2))
 
     for (idx in seq_along(C_selPars)) {
       print(rstan::stan_par(C_stanfit, par = C_selPars[idx], chain = 0))
@@ -359,8 +313,8 @@ check_MCMC_diagn <- function(
 
   ### bayesplot -------------------------------------------------------------
 
-  if (isTRUE(bayesplot_MCMC) || isTRUE(bayesplot_HMC) || isTRUE(bayesplot_parallelCoord)) {
-    # bayesplot::color_scheme_set("gray")
+  if (isTRUE(bayesplot_MCMC) || isTRUE(bayesplot_HMC) ||
+      isTRUE(bayesplot_parallelCoord)) {
     bayesplot::color_scheme_set("blue")
     # Extract log-posterior and NUTS statistics:
     C_np <- bayesplot::nuts_params(C_stanfit) # , inc_warmup = TRUE
@@ -370,7 +324,8 @@ check_MCMC_diagn <- function(
 
   if (isTRUE(bayesplot_MCMC)) {
     print(bayesplot::mcmc_trace(C_stanfit, pars = C_selPars, np = C_np))
-    print(bayesplot::mcmc_trace_highlight(C_stanfit, pars = C_selPars, highlight = trace_chain_highlight))
+    print(bayesplot::mcmc_trace_highlight(C_stanfit, pars = C_selPars,
+                                          highlight = trace_chain_highlight))
     print(bayesplot::mcmc_rank_hist(C_stanfit, pars = C_selPars))
     print(bayesplot::mcmc_rank_overlay(C_stanfit, pars = C_selPars))
   }
@@ -381,12 +336,11 @@ check_MCMC_diagn <- function(
     bayesplot::color_scheme_set("darkgray")
     C_lp <- log_posterior(C_stanfit) # , inc_warmup = TRUE
     # available_mcmc(pattern = "_nuts_")
-    print(bayesplot::mcmc_nuts_acceptance(x = C_np, lp = C_lp)) # , chain = 2
-    print(bayesplot::mcmc_nuts_divergence(x = C_np, lp = C_lp)) # , chain = 2
+    print(bayesplot::mcmc_nuts_acceptance(x = C_np, lp = C_lp))
+    print(bayesplot::mcmc_nuts_divergence(x = C_np, lp = C_lp))
     print(bayesplot::mcmc_nuts_energy(x = C_np)) # , merge_chains = TRUE
-    print(bayesplot::mcmc_nuts_stepsize(x = C_np, lp = C_lp)) # , chain = 2
-    print(bayesplot::mcmc_nuts_treedepth(x = C_np, lp = C_lp)) # , chain = 2
-    # bayesplot::color_scheme_set("gray")
+    print(bayesplot::mcmc_nuts_stepsize(x = C_np, lp = C_lp))
+    print(bayesplot::mcmc_nuts_treedepth(x = C_np, lp = C_lp))
     bayesplot::color_scheme_set("blue")
   }
 
@@ -404,8 +358,8 @@ check_MCMC_diagn <- function(
 
   if (isTRUE(new_plots)) {
     if (!exists("plot_local_ess") ||
-       !exists("plot_quantile_ess") ||
-       !exists("plot_change_ess")) { #  || !exists("mcmc_hist_r_scale")
+        !exists("plot_quantile_ess") ||
+        !exists("plot_change_ess")) { #  || !exists("mcmc_hist_r_scale")
       devtools::source_url("https://raw.githubusercontent.com/avehtari/rhat_ess/master/code/monitornew.R")
       devtools::source_url("https://raw.githubusercontent.com/avehtari/rhat_ess/master/code/monitorplot.R")
     }
@@ -418,7 +372,7 @@ check_MCMC_diagn <- function(
         detach("package:rstan")
       })
     }
-    for (selPar_i in C_selPars) { # selPar_i <- C_selPars[1]
+    for (selPar_i in C_selPars) {
       print(
         plot_local_ess(fit = C_stanfit, par = selPar_i, nalpha = 20) # , rank = FALSE
       )
@@ -428,7 +382,8 @@ check_MCMC_diagn <- function(
       print(
         plot_change_ess(fit = C_stanfit, par = selPar_i)
       )
-      ### Not needed because bayesplot::mcmc_rank_hist() and bayesplot::mcmc_rank_overlay() now exist:
+      ### Not needed because bayesplot::mcmc_rank_hist() and
+      ### bayesplot::mcmc_rank_overlay() now exist:
       # print(
       #   mcmc_hist_r_scale(C_draws_arr[, , selPar_i])
       # )
