@@ -396,7 +396,7 @@ run_projpred <- function(refm_fit, dat_indep, latent = FALSE, ...) {
   if (latent) {
     lat2resp_vals <- c(TRUE, FALSE)
   } else {
-    lat2resp_vals <- FALSE
+    lat2resp_vals <- TRUE
   }
   lat2resp_vals <- setNames(nm = lat2resp_vals)
   names(lat2resp_vals) <- paste0("lat2resp_", names(lat2resp_vals))
@@ -470,9 +470,9 @@ sim_runner <- function(...) {
            "\"failed.rda\". Use `loaded_objs <- load(\"failed.rda\")` to ",
            "restore it (including `.Random.seed`).")
     }
-    stopifnot(all.equal(projpred_aug$lat2resp_FALSE$refsmms,
+    stopifnot(all.equal(projpred_aug$lat2resp_TRUE$refsmms,
                         projpred_lat$lat2resp_TRUE$refsmms))
-    projpred_aug$lat2resp_FALSE$refsmms <- NULL
+    projpred_aug$lat2resp_TRUE$refsmms <- NULL
     projpred_lat$lat2resp_TRUE$refsmms <- NULL
     projpred_lat$lat2resp_FALSE$refsmms <- NULL
     return(list(
@@ -601,7 +601,7 @@ plotter_ovrlay <- function(prj_meth, eval_scale = "response") {
   if (prj_meth == "aug") {
     title_gg <- "Augmented-data"
     stopifnot(eval_scale == "response")
-    lat2resp_nm <- paste0("lat2resp_", FALSE)
+    lat2resp_nm <- paste0("lat2resp_", TRUE)
   } else if (prj_meth == "lat") {
     title_gg <- "Latent"
     lat2resp_nm <- paste0("lat2resp_", eval_scale == "response")
@@ -653,7 +653,7 @@ plotter_ovrlay_diff <- function(eval_scale = "response") {
   # compare the augmented-data projection (response scale) against the latent
   # projection with latent scale?
   stopifnot(eval_scale == "response")
-  lat2resp_nm_aug <- paste0("lat2resp_", FALSE)
+  lat2resp_nm_aug <- paste0("lat2resp_", TRUE)
   lat2resp_nm_lat <- paste0("lat2resp_", eval_scale == "response")
   title_gg <- "Performance diff."
   title_gg <- paste0(title_gg, " (evaluation scale: ", eval_scale, ")")
@@ -714,7 +714,7 @@ stopifnot(diff_out$succ_ind)
 sgger_size <- function(sim_idx, eval_scale_lat = "response") {
   # TODO: Also add the possibility to compare the two latent projection
   # evaluation scales against each other (response vs. latent scale)?
-  lat2resp_nm_aug <- paste0("lat2resp_", FALSE)
+  lat2resp_nm_aug <- paste0("lat2resp_", TRUE)
   lat2resp_nm_lat <- paste0("lat2resp_", eval_scale_lat == "response")
   return(c(
     sgg_size_aug = simres[[sim_idx]]$aug[[lat2resp_nm_aug]]$sgg_size,
