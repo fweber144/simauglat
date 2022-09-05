@@ -18,16 +18,17 @@ check_MCMC_diagn <- function(
     bayesplot_parallelCoord = FALSE,
     new_plots = FALSE, # Deactivated by default, but often makes sense.
     ...
-){
+) {
   ## Preparations -----------------------------------------------------------
 
-  if(!("data.table" %in% loadedNamespaces() && "data.table" %in% .packages())){
+  if (!("data.table" %in% loadedNamespaces() &&
+        "data.table" %in% .packages())) {
     suppressPackageStartupMessages({
       library(data.table)
     })
   }
   # loadNamespace("rstan")
-  # # if(!requireNamespace("rstan", quietly = TRUE)){
+  # # if (!requireNamespace("rstan", quietly = TRUE)) {
   # #   stop("Package \"rstan\" needed.")
   # # }
 
@@ -40,10 +41,10 @@ check_MCMC_diagn <- function(
   n_draws <- nrow(C_draws_mat)
   stopifnot(identical(n_draws, n_chains * n_drawsPerChain))
 
-  if(identical(length(C_pars), 0L)){
+  if (identical(length(C_pars), 0L)) {
     C_pars <- colnames(C_draws_mat)
   }
-  if(identical(length(C_selPars), 0L)){
+  if (identical(length(C_selPars), 0L)) {
     C_selPars <- C_pars # C_selPars <- C_pars[seq_len(min(2, length(C_pars)))]
   }
 
@@ -52,14 +53,14 @@ check_MCMC_diagn <- function(
   stopifnot(identical(C_stanfit@mode, 0L))
 
   # Check the number of chains in the output:
-  if(n_chains < n_chains_spec){
+  if (n_chains < n_chains_spec) {
     warning("At least one chain exited with an error.",
             "The posterior results should not be used.")
   }
 
   ## HMC-specific diagnostics -----------------------------------------------
 
-  if(isTRUE(HMC_auto)){
+  if (isTRUE(HMC_auto)) {
     rstan::check_hmc_diagnostics(C_stanfit)
   }
 
@@ -96,9 +97,9 @@ check_MCMC_diagn <- function(
                      "EBFMI" = C_EBFMI,
                      "EBFMI_OK" = C_EBFMI_OK))
 
-  if(isTRUE(sampler_pars)){
+  if (isTRUE(sampler_pars)) {
     C_sampler_params <- rstan::get_sampler_params(C_stanfit, inc_warmup = FALSE)
-    C_sampler_params <- lapply(seq_along(C_sampler_params), function(idx_chain){
+    C_sampler_params <- lapply(seq_along(C_sampler_params), function(idx_chain) {
       data.table(C_sampler_params[[idx_chain]], "chain" = paste0("chain", idx_chain))
     })
     C_sampler_params <- rbindlist(C_sampler_params, fill = TRUE)
@@ -124,9 +125,9 @@ check_MCMC_diagn <- function(
   ### (cf. Vehtari et al., 2021, DOI: 10.1214/20-BA1221)
 
   C_essBulk <- apply(C_draws_arr, MARGIN = 3, FUN = rstan::ess_bulk)
-  if(isTRUE(exclude_NAs)){
+  if (isTRUE(exclude_NAs)) {
     C_essBulk_OK <- all(C_essBulk > 100 * n_chains)
-    if(any(is.na(C_essBulk))){
+    if (any(is.na(C_essBulk))) {
       warning("\"C_essBulk\" contains at least one NA.")
       # C_pars_diagsNA <- names(C_essBulk[is.na(C_essBulk)])
       # unique(C_draws_mat[, C_pars_diagsNA])
@@ -138,7 +139,7 @@ check_MCMC_diagn <- function(
       C_essBulk_OK <- all(C_essBulk > 100 * n_chains, na.rm = TRUE)
     }
   } else{
-    if(any(is.na(C_essBulk))){
+    if (any(is.na(C_essBulk))) {
       C_essBulk_OK <- FALSE
     } else{
       C_essBulk_OK <- all(C_essBulk > 100 * n_chains)
@@ -148,7 +149,7 @@ check_MCMC_diagn <- function(
   # Bulk-ESS ratio to total number of (post-warmup) draws:
   C_essBulkRatio <- C_essBulk / n_draws
   # print(quantile(C_essBulkRatio))
-  # if(any(is.na(C_essBulkRatio))){
+  # if (any(is.na(C_essBulkRatio))) {
   #   warning("\"C_essBulkRatio\" contains at least one NA.")
   #   print(quantile(C_essBulkRatio, na.rm = TRUE))
   # }
@@ -162,14 +163,14 @@ check_MCMC_diagn <- function(
   ### (cf. Vehtari et al., 2021, DOI: 10.1214/20-BA1221)
 
   C_rhat <- apply(C_draws_arr, MARGIN = 3, FUN = rstan::Rhat)
-  if(isTRUE(exclude_NAs)){
+  if (isTRUE(exclude_NAs)) {
     C_rhat_OK <- all(C_rhat < 1.01)
-    if(any(is.na(C_rhat))){
+    if (any(is.na(C_rhat))) {
       warning("\"C_rhat\" contains at least one NA.")
       C_rhat_OK <- all(C_rhat < 1.01, na.rm = TRUE)
     }
   } else{
-    if(any(is.na(C_rhat))){
+    if (any(is.na(C_rhat))) {
       C_rhat_OK <- FALSE
     } else{
       C_rhat_OK <- all(C_rhat < 1.01)
@@ -184,14 +185,14 @@ check_MCMC_diagn <- function(
   ### (cf. Vehtari et al., 2021, DOI: 10.1214/20-BA1221)
 
   C_essTail <- apply(C_draws_arr, MARGIN = 3, FUN = rstan::ess_tail)
-  if(isTRUE(exclude_NAs)){
+  if (isTRUE(exclude_NAs)) {
     C_essTail_OK <- all(C_essTail > 100 * n_chains)
-    if(any(is.na(C_essTail))){
+    if (any(is.na(C_essTail))) {
       warning("\"C_essTail\" contains at least one NA.")
       C_essTail_OK <- all(C_essTail > 100 * n_chains, na.rm = TRUE)
     }
   } else{
-    if(any(is.na(C_essTail))){
+    if (any(is.na(C_essTail))) {
       C_essTail_OK <- FALSE
     } else{
       C_essTail_OK <- all(C_essTail > 100 * n_chains)
@@ -201,7 +202,7 @@ check_MCMC_diagn <- function(
   # Tail-ESS ratio to total number of (post-warmup) draws:
   C_essTailRatio <- C_essTail / n_draws
   # print(quantile(C_essTailRatio))
-  # if(any(is.na(C_essTailRatio))){
+  # if (any(is.na(C_essTailRatio))) {
   #   warning("\"C_essTailRatio\" contains at least one NA.")
   #   print(quantile(C_essTailRatio, na.rm = TRUE))
   # }
@@ -216,8 +217,8 @@ check_MCMC_diagn <- function(
   ### heavy-tailed priors with infinite mean, especially if the data is weakly
   ### identifying)
 
-  if(isTRUE(ESS_classical)){
-    if(!("rstan" %in% loadedNamespaces() && "rstan" %in% .packages())){
+  if (isTRUE(ESS_classical)) {
+    if (!("rstan" %in% loadedNamespaces() && "rstan" %in% .packages())) {
       suppressPackageStartupMessages({
         library(rstan)
       })
@@ -227,14 +228,14 @@ check_MCMC_diagn <- function(
     }
     C_smmry <- summary(C_stanfit, pars = C_pars)$summary
     C_ess <- C_smmry[, "n_eff"]
-    if(isTRUE(exclude_NAs)){
+    if (isTRUE(exclude_NAs)) {
       C_ess_OK <- all(C_ess > 100 * n_chains)
-      if(any(is.na(C_ess))){
+      if (any(is.na(C_ess))) {
         warning("\"C_ess\" contains at least one NA.")
         C_ess_OK <- all(C_ess > 100 * n_chains, na.rm = TRUE)
       }
     } else{
-      if(any(is.na(C_ess))){
+      if (any(is.na(C_ess))) {
         C_ess_OK <- FALSE
       } else{
         C_ess_OK <- all(C_ess > 100 * n_chains)
@@ -244,7 +245,7 @@ check_MCMC_diagn <- function(
     # ESS ratio to total number of (post-warmup) draws:
     C_essRatio <- C_ess / n_draws
     # print(quantile(C_essRatio))
-    # if(any(is.na(C_essRatio))){
+    # if (any(is.na(C_essRatio))) {
     #   warning("\"C_essRatio\" contains at least one NA.")
     #   print(quantile(C_essRatio, na.rm = TRUE))
     # }
@@ -257,13 +258,13 @@ check_MCMC_diagn <- function(
 
   ### Autocorrelation -------------------------------------------------------
 
-  if(isTRUE(AC)){
+  if (isTRUE(AC)) {
     C_ac_obj <- rstan::stan_ac(C_stanfit, pars = C_pars, ncol = 1, lags = 10) # , separate_chains = TRUE
     C_ac <- as.data.table(C_ac_obj$data)
     C_ac <- C_ac[lag != 0L, ]
     C_ac_max <- C_ac[, .("ac_max" = max(abs(ac))), parameters] # [, setNames(ac_max, gsub("^log-posterior$", "lp__", parameters))]
     # print(C_ac_max[, quantile(ac_max)])
-    # if(C_ac_max[, any(is.na(ac_max))]){
+    # if (C_ac_max[, any(is.na(ac_max))]) {
     #   warning("\"C_ac_max$ac_max\" contains at least one NA.")
     #   print(C_ac_max[, quantile(ac_max, na.rm = TRUE)])
     # }
@@ -280,7 +281,7 @@ check_MCMC_diagn <- function(
   # quite complex and not recommended within functions.
   C_OKs <- c("C_div_OK" = C_div_OK, "C_tree_OK" = C_tree_OK, "C_EBFMI_OK" = C_EBFMI_OK,
              "C_essBulk_OK" = C_essBulk_OK, "C_rhat_OK" = C_rhat_OK, "C_essTail_OK" = C_essTail_OK)
-  if(exists("C_ess_OK")){
+  if (exists("C_ess_OK")) {
     C_OKs <- c(C_OKs, "C_ess_OK" = C_ess_OK)
   }
   # Make the names better readable:
@@ -292,7 +293,7 @@ check_MCMC_diagn <- function(
   names(C_OKs) <- sub("_OK$", "", names(C_OKs))
   C_all_OK <- all(C_OKs)
 
-  if(!C_all_OK){
+  if (!C_all_OK) {
     warning("At least one MCMC diagnostic is worrying. This should be ",
             "inspected (see the output from this function for details). ",
             "In general, this indicates that the posterior results should not be used. ",
@@ -301,8 +302,8 @@ check_MCMC_diagn <- function(
 
   ## Overview ---------------------------------------------------------------
 
-  if(isTRUE(overview)){
-    if(!("rstan" %in% loadedNamespaces() && "rstan" %in% .packages())){
+  if (isTRUE(overview)) {
+    if (!("rstan" %in% loadedNamespaces() && "rstan" %in% .packages())) {
       suppressPackageStartupMessages({
         library(rstan)
       })
@@ -341,7 +342,7 @@ check_MCMC_diagn <- function(
 
   ### rstan -----------------------------------------------------------------
 
-  if(isTRUE(rstan_plots)){
+  if (isTRUE(rstan_plots)) {
     # NOTE: As may be seen from rstan:::pairs.stanfit(), for 4 chains, using "condition = NULL" means
     # to plot chains 1 and 2 in the lower panel and chains 3 and 4 in the upper panel.
     print(pairs(C_stanfit, pars = C_selPars, condition = NULL))
@@ -351,14 +352,14 @@ check_MCMC_diagn <- function(
 
     print(rstan::traceplot(C_stanfit, pars = C_selPars, inc_warmup = TRUE, nrow = 2))
 
-    for(idx in seq_along(C_selPars)){
+    for (idx in seq_along(C_selPars)) {
       print(rstan::stan_par(C_stanfit, par = C_selPars[idx], chain = 0))
     }
   }
 
   ### bayesplot -------------------------------------------------------------
 
-  if(isTRUE(bayesplot_MCMC) || isTRUE(bayesplot_HMC) || isTRUE(bayesplot_parallelCoord)){
+  if (isTRUE(bayesplot_MCMC) || isTRUE(bayesplot_HMC) || isTRUE(bayesplot_parallelCoord)) {
     # bayesplot::color_scheme_set("gray")
     bayesplot::color_scheme_set("blue")
     # Extract log-posterior and NUTS statistics:
@@ -367,7 +368,7 @@ check_MCMC_diagn <- function(
 
   #### General MCMC plots ---------------------------------------------------
 
-  if(isTRUE(bayesplot_MCMC)){
+  if (isTRUE(bayesplot_MCMC)) {
     print(bayesplot::mcmc_trace(C_stanfit, pars = C_selPars, np = C_np))
     print(bayesplot::mcmc_trace_highlight(C_stanfit, pars = C_selPars, highlight = trace_chain_highlight))
     print(bayesplot::mcmc_rank_hist(C_stanfit, pars = C_selPars))
@@ -376,7 +377,7 @@ check_MCMC_diagn <- function(
 
   #### HMC-specific plots ---------------------------------------------------
 
-  if(isTRUE(bayesplot_HMC)){
+  if (isTRUE(bayesplot_HMC)) {
     bayesplot::color_scheme_set("darkgray")
     C_lp <- log_posterior(C_stanfit) # , inc_warmup = TRUE
     # available_mcmc(pattern = "_nuts_")
@@ -393,7 +394,7 @@ check_MCMC_diagn <- function(
   #### (useful for "debugging" divergent transitions)
 
   ### WARNING: Might take long!:
-  if(isTRUE(bayesplot_parallelCoord)){
+  if (isTRUE(bayesplot_parallelCoord)) {
     print(bayesplot::mcmc_parcoord(C_draws_arr, np = C_np))
   }
   ###
@@ -401,15 +402,15 @@ check_MCMC_diagn <- function(
   ### "New" diagnostic plots ------------------------------------------------
   ### (cf. Vehtari et al., 2021, DOI: 10.1214/20-BA1221)
 
-  if(isTRUE(new_plots)){
-    if(!exists("plot_local_ess") ||
+  if (isTRUE(new_plots)) {
+    if (!exists("plot_local_ess") ||
        !exists("plot_quantile_ess") ||
-       !exists("plot_change_ess")){ #  || !exists("mcmc_hist_r_scale")
+       !exists("plot_change_ess")) { #  || !exists("mcmc_hist_r_scale")
       devtools::source_url("https://raw.githubusercontent.com/avehtari/rhat_ess/master/code/monitornew.R")
       devtools::source_url("https://raw.githubusercontent.com/avehtari/rhat_ess/master/code/monitorplot.R")
     }
 
-    if(!("rstan" %in% loadedNamespaces() && "rstan" %in% .packages())){
+    if (!("rstan" %in% loadedNamespaces() && "rstan" %in% .packages())) {
       suppressPackageStartupMessages({
         library(rstan)
       })
@@ -417,7 +418,7 @@ check_MCMC_diagn <- function(
         detach("package:rstan")
       })
     }
-    for(selPar_i in C_selPars){ # selPar_i <- C_selPars[1]
+    for (selPar_i in C_selPars) { # selPar_i <- C_selPars[1]
       print(
         plot_local_ess(fit = C_stanfit, par = selPar_i, nalpha = 20) # , rank = FALSE
       )
