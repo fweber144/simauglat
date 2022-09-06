@@ -440,7 +440,16 @@ sim_runner <- function(...) {
   ) %dorng% {
     cat("\nSimulation iteration: ", sit, "\n", sep = "")
     Rseed <- .Random.seed
-    sim_dat_etc <- dataconstructor()
+    sim_dat_etc <- try(dataconstructor(), silent = TRUE)
+    dat_failed <- inherits(sim_dat_etc, "try-error")
+    if (dat_failed) {
+      save(sit, Rseed, file = "failed.rda")
+      stop("The data generation failed in simulation iteration ", sit, ". ",
+           "Error message: \"", attr(sim_dat_etc, "condition")$message, "\". ",
+           "Objects for replicating this failure were saved to ",
+           "\"failed.rda\". Use `loaded_objs <- load(\"failed.rda\")` to ",
+           "restore it.")
+    }
     refm_fit <- fit_ref(dat = sim_dat_etc$dat, fml = sim_dat_etc$fml)
     seed_vs <- sample.int(.Machine$integer.max, 1)
     projpred_aug <- try(run_projpred(refm_fit,
@@ -480,7 +489,7 @@ sim_runner <- function(...) {
            "\"", paste(mssgs_failed, collapse = "\", \""),
            "\". Objects for replicating this failure were saved to ",
            "\"failed.rda\". Use `loaded_objs <- load(\"failed.rda\")` to ",
-           "restore it (including `.Random.seed`).")
+           "restore it.")
     }
     stopifnot(all.equal(projpred_aug$lat2resp_TRUE$refsmms,
                         projpred_lat$lat2resp_TRUE$refsmms))
