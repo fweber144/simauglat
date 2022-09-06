@@ -263,13 +263,21 @@ dataconstructor <- function() {
     voutc, "~", paste(c(vpreds, vpreds_GL), collapse = " + ")
   ))
 
+  ## Check response categories ----------------------------------------------
+
+  dat_train <- dat_sim[1:nobsv, , drop = FALSE]
+  dat_test <- dat_sim[(nobsv + 1):nobsv_sim, , drop = FALSE]
+  # Check that all response categories are present in training and test dataset:
+  stopifnot(identical(levels(droplevels(dat_train$Y)), yunq) &&
+              identical(levels(droplevels(dat_test$Y)), yunq))
+
   ## Output -----------------------------------------------------------------
 
   return(list(true_coefs_cont = coefs_cont,
               true_GLEs = if (npreds_grGL > 0) coefs_grGL[[1]]$icpt else NULL,
-              dat = dat_sim[1:nobsv, , drop = FALSE],
+              dat = dat_train,
               fml = fml_sim,
-              dat_indep = dat_sim[(nobsv + 1):nobsv_sim, , drop = FALSE]))
+              dat_indep = dat_test))
 }
 
 # Initial reference model fit ---------------------------------------------
@@ -279,8 +287,6 @@ if (only_init_fit) {
   # recompiled) during the simulation. MCMC convergence diagnostics are only
   # checked here, not during the simulation.
   sim_dat_etc <- dataconstructor()
-  # Check that all response categories are present in the initial model fit:
-  stopifnot(identical(levels(sim_dat_etc$dat$Y), yunq))
   options(mc.cores = parallel::detectCores(logical = FALSE))
   if (packageVersion("cmdstanr") >= "0.5.3") {
     options(cmdstanr_write_stan_file_dir = ".")
