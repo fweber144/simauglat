@@ -190,7 +190,7 @@ dataconstructor <- function() {
   stopifnot(identical(length(ngrGL), npreds_grGL))
   if (npreds_grGL > 0) {
     coefs_grGL <- list(
-      list("icpt" = rnorm(ngrGL[1], sd = 1.5)) # , "Xcont1" = <...>
+      list("icpt" = rnorm(ngrGL[1], sd = 0.5)) # , "Xcont1" = <...>
     )
     stopifnot(identical(length(coefs_grGL), npreds_grGL))
   }
