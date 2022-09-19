@@ -402,29 +402,29 @@ run_projpred <- function(refm_fit, dat_indep, latent = FALSE, ...) {
     soltrms = projpred::solution_terms(vs)
   )
   if (latent) {
-    lat2resp_vals <- c(TRUE, FALSE)
+    respOrig_vals <- c(TRUE, FALSE)
   } else {
-    lat2resp_vals <- TRUE
+    respOrig_vals <- TRUE
   }
-  lat2resp_vals <- setNames(nm = lat2resp_vals)
-  names(lat2resp_vals) <- paste0("lat2resp_", names(lat2resp_vals))
-  out_projpred <- c(out_projpred, lapply(lat2resp_vals, function(lat2resp_val) {
+  respOrig_vals <- setNames(nm = respOrig_vals)
+  names(respOrig_vals) <- paste0("respOrig_", names(respOrig_vals))
+  out_projpred <- c(out_projpred, lapply(respOrig_vals, function(respOrig_val) {
     # Currently, we need to use the internal projpred function .tabulate_stats()
     # to obtain the reference model's performance:
     stats_man <- projpred:::.tabulate_stats(vs, stats = "mlpd",
-                                            lat2resp = lat2resp_val)
+                                            respOrig = respOrig_val)
     refsmms <- vs$summaries$ref
-    if (latent && lat2resp_val) refsmms <- refsmms$Orig
+    if (latent && respOrig_val) refsmms <- refsmms$Orig
     return(list(
       refsmms = refsmms,
       refstat = stats_man$value[stats_man$size == Inf],
       # plot_obj = plot(vs, deltas = TRUE, stats = "mlpd",
-      #                 lat2resp = lat2resp_val),
+      #                 respOrig = respOrig_val),
       sgg_size = projpred::suggest_size(vs, stat = "mlpd",
-                                        lat2resp = lat2resp_val),
+                                        respOrig = respOrig_val),
       smmry = summary(vs, deltas = TRUE, stats = "mlpd",
                       type = c("mean", "se", "lower", "upper"),
-                      lat2resp = lat2resp_val)$selection
+                      respOrig = respOrig_val)$selection
     ))
   }))
   return(out_projpred)
@@ -493,11 +493,11 @@ sim_runner <- function(...) {
            "\"failed.rda\". Use `loaded_objs <- load(\"failed.rda\")` to ",
            "restore it.")
     }
-    stopifnot(all.equal(projpred_aug$lat2resp_TRUE$refsmms,
-                        projpred_lat$lat2resp_TRUE$refsmms))
-    projpred_aug$lat2resp_TRUE$refsmms <- NULL
-    projpred_lat$lat2resp_TRUE$refsmms <- NULL
-    projpred_lat$lat2resp_FALSE$refsmms <- NULL
+    stopifnot(all.equal(projpred_aug$respOrig_TRUE$refsmms,
+                        projpred_lat$respOrig_TRUE$refsmms))
+    projpred_aug$respOrig_TRUE$refsmms <- NULL
+    projpred_lat$respOrig_TRUE$refsmms <- NULL
+    projpred_lat$respOrig_FALSE$refsmms <- NULL
     return(list(
       aug = projpred_aug,
       lat = projpred_lat,
@@ -624,18 +624,18 @@ plotter_ovrlay <- function(prj_meth, eval_scale = "response") {
   if (prj_meth == "aug") {
     title_gg <- "Augmented-data"
     stopifnot(eval_scale == "response")
-    lat2resp_nm <- paste0("lat2resp_", TRUE)
+    respOrig_nm <- paste0("respOrig_", TRUE)
   } else if (prj_meth == "lat") {
     title_gg <- "Latent"
-    lat2resp_nm <- paste0("lat2resp_", eval_scale == "response")
+    respOrig_nm <- paste0("respOrig_", eval_scale == "response")
   }
   title_gg <- paste0(title_gg, " (evaluation scale: ", eval_scale, ")")
-  y_chr <- setdiff(names(simres[[1L]][[prj_meth]][[lat2resp_nm]]$smmry),
+  y_chr <- setdiff(names(simres[[1L]][[prj_meth]][[respOrig_nm]]$smmry),
                    c("solution_terms", "se", "lower", "upper", "size"))
   stopifnot(length(y_chr) == 1)
   plotdat <- do.call(rbind, lapply(seq_along(simres), function(sim_idx) {
     cbind(sim_idx = sim_idx,
-          simres[[sim_idx]][[prj_meth]][[lat2resp_nm]]$smmry[c("size", y_chr)])
+          simres[[sim_idx]][[prj_meth]][[respOrig_nm]]$smmry[c("size", y_chr)])
   }))
   ggobj <- ggplot2::ggplot(data = plotdat,
                            mapping = ggplot2::aes_string(x = "size",
@@ -676,8 +676,8 @@ plotter_ovrlay_diff <- function(eval_scale = "response") {
   # compare the augmented-data projection (response scale) against the latent
   # projection with latent scale?
   stopifnot(eval_scale == "response")
-  lat2resp_nm_aug <- paste0("lat2resp_", TRUE)
-  lat2resp_nm_lat <- paste0("lat2resp_", eval_scale == "response")
+  respOrig_nm_aug <- paste0("respOrig_", TRUE)
+  respOrig_nm_lat <- paste0("respOrig_", eval_scale == "response")
   title_gg <- "Performance diff."
   title_gg <- paste0(title_gg, " (evaluation scale: ", eval_scale, ")")
 
@@ -685,25 +685,25 @@ plotter_ovrlay_diff <- function(eval_scale = "response") {
   # difference of the Delta MLPDs can be interpreted as the difference of the
   # submodel MLPDs (i.e., the reference model MLPD cancels out):
   refstats_aug <- do.call(c, lapply(seq_along(simres), function(sim_idx) {
-    simres[[sim_idx]]$aug[[lat2resp_nm_aug]]$refstat
+    simres[[sim_idx]]$aug[[respOrig_nm_aug]]$refstat
   }))
   refstats_lat <- do.call(c, lapply(seq_along(simres), function(sim_idx) {
-    simres[[sim_idx]]$lat[[lat2resp_nm_lat]]$refstat
+    simres[[sim_idx]]$lat[[respOrig_nm_lat]]$refstat
   }))
   stopifnot(all.equal(refstats_aug, refstats_lat,
                       tolerance = .Machine$double.eps))
 
-  smmry_nms <- names(simres[[1L]]$aug[[lat2resp_nm_aug]]$smmry)
+  smmry_nms <- names(simres[[1L]]$aug[[respOrig_nm_aug]]$smmry)
   stopifnot(identical(smmry_nms,
-                      names(simres[[1L]]$lat[[lat2resp_nm_lat]]$smmry)))
+                      names(simres[[1L]]$lat[[respOrig_nm_lat]]$smmry)))
   y_chr <- setdiff(smmry_nms,
                    c("solution_terms", "se", "lower", "upper", "size"))
   stopifnot(length(y_chr) == 1)
   y_chr_aug <- paste(y_chr, "aug", sep = "_")
   y_chr_lat <- paste(y_chr, "lat", sep = "_")
   plotdat <- do.call(rbind, lapply(seq_along(simres), function(sim_idx) {
-    smmry_aug <- simres[[sim_idx]]$aug[[lat2resp_nm_aug]]$smmry
-    smmry_lat <- simres[[sim_idx]]$lat[[lat2resp_nm_lat]]$smmry
+    smmry_aug <- simres[[sim_idx]]$aug[[respOrig_nm_aug]]$smmry
+    smmry_lat <- simres[[sim_idx]]$lat[[respOrig_nm_lat]]$smmry
     stopifnot(identical(smmry_aug["size"], smmry_lat["size"]))
     cbind(sim_idx = sim_idx, smmry_aug["size"],
           setNames(smmry_aug[y_chr], y_chr_aug),
@@ -737,11 +737,11 @@ stopifnot(diff_out$succ_ind)
 sgger_size <- function(sim_idx, eval_scale_lat = "response") {
   # TODO: Also add the possibility to compare the two latent projection
   # evaluation scales against each other (response vs. latent scale)?
-  lat2resp_nm_aug <- paste0("lat2resp_", TRUE)
-  lat2resp_nm_lat <- paste0("lat2resp_", eval_scale_lat == "response")
+  respOrig_nm_aug <- paste0("respOrig_", TRUE)
+  respOrig_nm_lat <- paste0("respOrig_", eval_scale_lat == "response")
   return(c(
-    sgg_size_aug = simres[[sim_idx]]$aug[[lat2resp_nm_aug]]$sgg_size,
-    sgg_size_lat = simres[[sim_idx]]$lat[[lat2resp_nm_lat]]$sgg_size
+    sgg_size_aug = simres[[sim_idx]]$aug[[respOrig_nm_aug]]$sgg_size,
+    sgg_size_lat = simres[[sim_idx]]$lat[[respOrig_nm_lat]]$sgg_size
   ))
 }
 for (eval_scale_lat_val in c("response", "latent")) {
