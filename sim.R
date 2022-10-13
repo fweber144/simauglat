@@ -168,7 +168,7 @@ dataconstructor <- function() {
                            par_ratio = p0 / (npreds_cont - p0),
                            sigma_tilde = sigti,
                            N = nobsv,
-                           df_slab = 15, scale_slab = 1)
+                           df_slab = 100, scale_slab = 1)
 
   npreds_grPL <- 0L # 1L
   ngrPL <- integer() # c(3L)
@@ -305,7 +305,7 @@ if (only_init_fit) {
     formula = sim_dat_etc$fml,
     data = sim_dat_etc$dat,
     family = brms::cumulative(link = link_str),
-    prior = brms::prior(horseshoe(df_slab = 15, scale_slab = 1,
+    prior = brms::prior(horseshoe(df_slab = 100, scale_slab = 1,
                                   par_ratio = 0.264728344)) +
       brms::prior(normal(0, 2.5), class = "Intercept"),
     ### For backend = "rstan":
