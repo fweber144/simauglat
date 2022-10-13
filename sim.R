@@ -388,7 +388,7 @@ run_projpred <- function(refm_fit, dat_indep, latent = FALSE, ...) {
     data = dat_indep,
     offset = rep(0, nrow(dat_indep)),
     weights = rep(1, nrow(dat_indep)),
-    y = if (latent) dat_indep$projpredY else dat_indep$Y
+    y = if (latent) rep(NA, nrow(dat_indep)) else dat_indep$Y
   )
   if (latent) {
     d_indep$yOrig <- dat_indep$Y
@@ -402,7 +402,7 @@ run_projpred <- function(refm_fit, dat_indep, latent = FALSE, ...) {
     soltrms = projpred::solution_terms(vs)
   )
   if (latent) {
-    respOrig_vals <- c(TRUE, FALSE)
+    respOrig_vals <- c(TRUE) # , FALSE
   } else {
     respOrig_vals <- TRUE
   }
@@ -459,12 +459,8 @@ sim_runner <- function(...) {
                                      seed = seed_vs,
                                      ...),
                         silent = TRUE)
-    dat_indep_lat <- sim_dat_etc$dat_indep
-    dat_indep_lat$projpredY <- colMeans(
-      rstantools::posterior_linpred(refm_fit, newdata = dat_indep_lat)
-    )
     projpred_lat <- try(run_projpred(refm_fit,
-                                     dat_indep = dat_indep_lat,
+                                     dat_indep = sim_dat_etc$dat_indep,
                                      seed = seed_vs,
                                      latent = TRUE,
                                      ...),
@@ -497,7 +493,7 @@ sim_runner <- function(...) {
                         projpred_lat$respOrig_TRUE$refsmms))
     projpred_aug$respOrig_TRUE$refsmms <- NULL
     projpred_lat$respOrig_TRUE$refsmms <- NULL
-    projpred_lat$respOrig_FALSE$refsmms <- NULL
+    # projpred_lat$respOrig_FALSE$refsmms <- NULL
     return(list(
       aug = projpred_aug,
       lat = projpred_lat,
@@ -667,8 +663,8 @@ plotter_ovrlay <- function(prj_meth, eval_scale = "response") {
 }
 comm_aug <- plotter_ovrlay(prj_meth = "aug")
 comm_lat <- plotter_ovrlay(prj_meth = "lat")
-comm_lat_nonOrig <- plotter_ovrlay(prj_meth = "lat", eval_scale = "latent")
-stopifnot(comm_aug$succ_ind && comm_lat$succ_ind && comm_lat_nonOrig$succ_ind)
+# comm_lat_nonOrig <- plotter_ovrlay(prj_meth = "lat", eval_scale = "latent")
+stopifnot(comm_aug$succ_ind && comm_lat$succ_ind) #  && comm_lat_nonOrig$succ_ind
 
 plotter_ovrlay_diff <- function(eval_scale = "response") {
   # TODO: Also add the possibility to compare the two latent projection
@@ -744,7 +740,7 @@ sgger_size <- function(sim_idx, eval_scale_lat = "response") {
     sgg_size_lat = simres[[sim_idx]]$lat[[respOrig_nm_lat]]$sgg_size
   ))
 }
-for (eval_scale_lat_val in c("response", "latent")) {
+for (eval_scale_lat_val in c("response")) { # , "latent"
   cat("\n----------\n")
   cat("Evaluation scale for the latent projection (CAUTION: always using ",
       "response scale for the augmented-data projection): ", eval_scale_lat_val,
