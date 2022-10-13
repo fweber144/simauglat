@@ -667,10 +667,6 @@ comm_lat <- plotter_ovrlay(prj_meth = "lat")
 stopifnot(comm_aug$succ_ind && comm_lat$succ_ind) #  && comm_lat_nonOrig$succ_ind
 
 plotter_ovrlay_diff <- function(eval_scale = "response") {
-  # TODO: Also add the possibility to compare the two latent projection
-  # evaluation scales against each other (response vs. latent scale) and to
-  # compare the augmented-data projection (response scale) against the latent
-  # projection with latent scale?
   stopifnot(eval_scale == "response")
   respOrig_nm_aug <- paste0("respOrig_", TRUE)
   respOrig_nm_lat <- paste0("respOrig_", eval_scale == "response")
@@ -731,8 +727,6 @@ stopifnot(diff_out$succ_ind)
 ## Suggested sizes --------------------------------------------------------
 
 sgger_size <- function(sim_idx, eval_scale_lat = "response") {
-  # TODO: Also add the possibility to compare the two latent projection
-  # evaluation scales against each other (response vs. latent scale)?
   respOrig_nm_aug <- paste0("respOrig_", TRUE)
   respOrig_nm_lat <- paste0("respOrig_", eval_scale_lat == "response")
   return(c(
