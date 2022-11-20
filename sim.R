@@ -634,10 +634,10 @@ plotter_ovrlay <- function(prj_meth, eval_scale = "response") {
           simres[[sim_idx]][[prj_meth]][[respOrig_nm]]$smmry[c("size", y_chr)])
   }))
   ggobj <- ggplot2::ggplot(data = plotdat,
-                           mapping = ggplot2::aes_string(x = "size",
-                                                         y = y_chr,
-                                                         group = "sim_idx",
-                                                         alpha = I(0.4))) +
+                           mapping = ggplot2::aes(x = size,
+                                                  y = .data[[y_chr]],
+                                                  group = sim_idx,
+                                                  alpha = I(0.4))) +
     ggplot2::geom_hline(yintercept = 0,
                         color = "firebrick",
                         linetype = "dashed") +
@@ -704,10 +704,10 @@ plotter_ovrlay_diff <- function(eval_scale = "response") {
   y_chr_diff <- paste("diff", y_chr, sep = "_")
   plotdat[[y_chr_diff]] <- plotdat[[y_chr_lat]] - plotdat[[y_chr_aug]]
   ggobj <- ggplot2::ggplot(data = plotdat,
-                           mapping = ggplot2::aes_string(x = "size",
-                                                         y = y_chr_diff,
-                                                         group = "sim_idx",
-                                                         alpha = I(0.4))) +
+                           mapping = ggplot2::aes(x = size,
+                                                  y = .data[[y_chr_diff]],
+                                                  group = sim_idx,
+                                                  alpha = I(0.4))) +
     ggplot2::geom_hline(yintercept = 0,
                         color = "gray30",
                         linetype = "dotted") +
