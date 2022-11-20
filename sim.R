@@ -782,10 +782,12 @@ for (eval_scale_lat_val in c("response")) { # , "latent"
   title_gg <- "Suggested size diff."
   title_gg <- paste0(title_gg, " (evaluation scale for the latent projection: ",
                      eval_scale_lat_val, ")")
-  gg_sgg_sizes_diff <- ggplot2::qplot(sgg_sizes_lat_minus_aug,
-                                      geom = "bar",
-                                      main = title_gg,
-                                      xlab = xlab_long) +
+  gg_sgg_sizes_diff <- ggplot2::ggplot(
+    data = data.frame(sgg_sizes_lat_minus_aug),
+    mapping = ggplot2::aes(x = sgg_sizes_lat_minus_aug)
+  ) +
+    ggplot2::geom_bar() +
+    ggplot2::labs(x = xlab_long, title = title_gg) +
     ggplot2::scale_x_discrete(drop = FALSE) +
     ggplot2::scale_y_continuous(breaks = scales::breaks_pretty())
   ggplot2::ggsave(
