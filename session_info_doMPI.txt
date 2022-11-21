@@ -8,7 +8,7 @@
  collate  en_US.UTF-8
  ctype    en_US.UTF-8
  tz       Europe/Berlin
- date     2022-11-10
+ date     2022-11-21
  pandoc   NA (via rmarkdown)
 
 ─ Packages ───────────────────────────────────────────────────────────────────
@@ -16,7 +16,7 @@
  abind            1.4-5      2016-07-21 [1] CRAN (R 4.2.0)
  backports        1.4.1      2021-12-13 [1] CRAN (R 4.2.0)
  base64enc        0.1-3      2015-07-28 [1] CRAN (R 4.2.0)
- bayesplot        1.9.0      2022-03-10 [1] CRAN (R 4.2.0)
+ bayesplot        1.10.0     2022-11-16 [1] CRAN (R 4.2.0)
  boot             1.3-28     2021-05-03 [2] CRAN (R 4.2.0)
  bridgesampling   1.1-2      2021-04-16 [1] CRAN (R 4.2.0)
  brms           * 2.18.1     2022-11-10 [1] Github (fweber144/brms@9f16e62)
@@ -47,7 +47,6 @@
  gamm4            0.2-6      2020-04-03 [1] CRAN (R 4.2.0)
  generics         0.1.3      2022-07-05 [1] CRAN (R 4.2.0)
  ggplot2        * 3.4.0      2022-11-04 [1] CRAN (R 4.2.0)
- ggridges         0.5.4      2022-09-26 [1] CRAN (R 4.2.0)
  glue             1.6.2      2022-02-24 [1] CRAN (R 4.2.0)
  gridExtra        2.3        2017-09-09 [1] CRAN (R 4.2.0)
  gtable           0.3.1      2022-09-01 [1] CRAN (R 4.2.0)
@@ -59,7 +58,7 @@
  inline           0.3.19     2021-05-31 [1] CRAN (R 4.2.0)
  iterators      * 1.0.14     2022-02-05 [1] CRAN (R 4.2.0)
  jsonlite         1.8.3      2022-10-21 [1] CRAN (R 4.2.0)
- knitr            1.40       2022-08-24 [1] CRAN (R 4.2.0)
+ knitr            1.41       2022-11-18 [1] CRAN (R 4.2.0)
  labeling         0.4.2      2020-10-20 [1] CRAN (R 4.2.0)
  later            1.3.0      2021-08-18 [1] CRAN (R 4.2.0)
  lattice          0.20-45    2021-09-22 [2] CRAN (R 4.2.0)
@@ -67,10 +66,10 @@
  lme4             1.1-31     2022-11-01 [1] CRAN (R 4.2.0)
  loo              2.5.1      2022-03-24 [1] CRAN (R 4.2.0)
  magrittr         2.0.3      2022-03-30 [1] CRAN (R 4.2.0)
- markdown         1.3        2022-10-29 [1] CRAN (R 4.2.0)
+ markdown         1.4        2022-11-16 [1] CRAN (R 4.2.0)
  MASS             7.3-58.1   2022-08-03 [1] CRAN (R 4.2.0)
- Matrix           1.5-1      2022-09-13 [1] CRAN (R 4.2.0)
- matrixStats      0.62.0     2022-04-19 [1] CRAN (R 4.2.0)
+ Matrix           1.5-3      2022-11-11 [1] CRAN (R 4.2.0)
+ matrixStats      0.63.0     2022-11-18 [1] CRAN (R 4.2.0)
  mgcv             1.8-41     2022-10-21 [1] CRAN (R 4.2.0)
  mime             0.12       2021-09-28 [1] CRAN (R 4.2.0)
  miniUI           0.1.1.1    2018-05-18 [1] CRAN (R 4.2.0)
@@ -82,7 +81,7 @@
  pillar           1.8.1      2022-08-19 [1] CRAN (R 4.2.0)
  pkgbuild         1.3.1      2021-12-20 [1] CRAN (R 4.2.0)
  pkgconfig        2.0.3      2019-09-22 [1] CRAN (R 4.2.0)
- plyr             1.8.7      2022-03-24 [1] CRAN (R 4.2.0)
+ plyr             1.8.8      2022-11-11 [1] CRAN (R 4.2.0)
  posterior        1.3.1      2022-09-06 [1] CRAN (R 4.2.0)
  prettyunits      1.1.1      2020-01-24 [1] CRAN (R 4.2.0)
  processx         3.8.0      2022-10-26 [1] CRAN (R 4.2.0)
@@ -115,9 +114,9 @@
  tibble           3.1.8      2022-07-22 [1] CRAN (R 4.2.0)
  tidyselect       1.2.0      2022-10-10 [1] CRAN (R 4.2.0)
  utf8             1.2.2      2021-07-24 [1] CRAN (R 4.2.0)
- vctrs            0.5.0      2022-10-22 [1] CRAN (R 4.2.0)
+ vctrs            0.5.1      2022-11-16 [1] CRAN (R 4.2.0)
  withr            2.5.0      2022-03-03 [1] CRAN (R 4.2.0)
- xfun             0.34       2022-10-18 [1] CRAN (R 4.2.0)
+ xfun             0.35       2022-11-16 [1] CRAN (R 4.2.0)
  xtable           1.8-4      2019-04-21 [1] CRAN (R 4.2.0)
  xts              0.12.2     2022-10-16 [1] CRAN (R 4.2.0)
  yaml             2.3.6      2022-10-18 [1] CRAN (R 4.2.0)
