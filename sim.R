@@ -575,18 +575,19 @@ mins_vs <- do.call(rbind, lapply(seq_along(simres), function(sim_idx) {
 mins_vs <- reshape(
   mins_vs,
   direction = "long",
-  v.names = "minutes",
-  varying = list("minutes" = grep("^t_", names(mins_vs), value = TRUE)),
+  v.names = "Minutes",
+  varying = list("Minutes" = grep("^t_", names(mins_vs), value = TRUE)),
   timevar = "prj_meth",
-  times = c("aug", "lat"),
+  times = c("Augmented-data", "Latent"),
   idvar = "sim_idx_ch",
   sep = "_"
 )
 stopifnot(identical(mins_vs$sim_idx_ch, mins_vs$sim_idx))
 mins_vs$sim_idx_ch <- NULL
 gg_time <- ggplot2::ggplot(data = mins_vs,
-                           mapping = ggplot2::aes(x = prj_meth, y = minutes)) +
-  ggplot2::geom_boxplot() # + ggplot2::geom_violin()
+                           mapping = ggplot2::aes(x = prj_meth, y = Minutes)) +
+  ggplot2::geom_boxplot() + # ggplot2::geom_violin() +
+  ggplot2::labs(x = "Projection method")
 ggplot2::ggsave(file.path("figs", "time.pdf"),
                 width = 7, height = 7 * 0.618)
 
