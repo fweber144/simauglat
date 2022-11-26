@@ -787,7 +787,7 @@ for (eval_scale_lat_val in c("response")) { # , "latent"
     mapping = ggplot2::aes(x = sgg_sizes_lat_minus_aug)
   ) +
     ggplot2::geom_bar() +
-    ggplot2::labs(x = xlab_long, title = title_gg) +
+    ggplot2::labs(x = xlab_long, y = "Absolute frequency", title = title_gg) +
     ggplot2::scale_x_discrete(drop = FALSE) +
     ggplot2::scale_y_continuous(breaks = scales::breaks_pretty())
   ggplot2::ggsave(
