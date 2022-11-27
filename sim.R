@@ -535,7 +535,6 @@ gg_true_coefs_cont <- ggplot2::ggplot(data = true_coefs_cont,
   ggplot2::geom_histogram(bins = 40) # + ggplot2::geom_density()
 ggplot2::ggsave(file.path("figs", "true_coefs_cont.pdf"),
                 width = 7, height = 7 * 0.618)
-saveRDS(gg_true_coefs_cont, file.path("figs", "true_coefs_cont.rds"))
 
 ## True group-level effects -----------------------------------------------
 
@@ -591,7 +590,6 @@ gg_time <- ggplot2::ggplot(data = mins_vs,
   ggplot2::labs(x = "Projection method")
 ggplot2::ggsave(file.path("figs", "time.pdf"),
                 width = 7, height = 7 * 0.618)
-saveRDS(gg_time, file.path("figs", "time.rds"))
 
 ## Solution paths ---------------------------------------------------------
 
@@ -658,12 +656,10 @@ plotter_ovrlay <- function(prj_meth, eval_scale = "response") {
   fnm_base <- paste(y_chr, prj_meth, eval_scale, sep = "_")
   ggplot2::ggsave(file.path("figs", paste0(fnm_base, ".pdf")),
                   width = 7, height = 7 * 0.618)
-  saveRDS(ggobj, file.path("figs", paste0(fnm_base, ".rds")))
   ggobj_zoom <- ggobj +
     ggplot2::coord_cartesian(ylim = c(-0.75, 0.05))
   ggplot2::ggsave(file.path("figs", paste0(fnm_base, "_zoom.pdf")),
                   width = 7, height = 7 * 0.618)
-  saveRDS(ggobj_zoom, file.path("figs", paste0(fnm_base, "_zoom.rds")))
   return(list(succ_ind = TRUE, ggobj = ggobj, ggobj_zoom = ggobj_zoom))
 }
 comm_aug <- plotter_ovrlay(prj_meth = "aug")
@@ -725,7 +721,6 @@ plotter_ovrlay_diff <- function(eval_scale = "response") {
   fnm_base <- paste(y_chr_diff, eval_scale, sep = "_")
   ggplot2::ggsave(file.path("figs", paste0(fnm_base, ".pdf")),
                   width = 7, height = 7 * 0.618)
-  saveRDS(ggobj, file.path("figs", paste0(fnm_base, ".rds")))
   return(list(succ_ind = TRUE, ggobj = ggobj, refstats = refstats))
 }
 diff_out <- plotter_ovrlay_diff()
@@ -805,10 +800,6 @@ for (eval_scale_lat_val in c("response")) { # , "latent"
   ggplot2::ggsave(
     file.path("figs", paste0("sgg_sizes_diff_", eval_scale_lat_val, "Lat.pdf")),
     width = 7, height = 7 * 0.618
-  )
-  saveRDS(
-    gg_sgg_sizes_diff,
-    file.path("figs", paste0("sgg_sizes_diff_", eval_scale_lat_val, "Lat.rds"))
   )
   cat("----------\n")
 }
