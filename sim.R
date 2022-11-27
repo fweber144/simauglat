@@ -689,6 +689,7 @@ plotter_ovrlay_diff <- function(eval_scale = "response") {
   }))
   stopifnot(all.equal(refstats_aug, refstats_lat,
                       tolerance = .Machine$double.eps))
+  refstats <- refstats_aug
 
   smmry_nms <- names(simres[[1L]]$aug[[respOrig_nm_aug]]$smmry)
   stopifnot(identical(smmry_nms,
@@ -725,10 +726,15 @@ plotter_ovrlay_diff <- function(eval_scale = "response") {
   ggplot2::ggsave(file.path("figs", paste0(fnm_base, ".pdf")),
                   width = 7, height = 7 * 0.618)
   saveRDS(ggobj, file.path("figs", paste0(fnm_base, ".rds")))
-  return(list(succ_ind = TRUE, ggobj = ggobj))
+  return(list(succ_ind = TRUE, ggobj = ggobj, refstats = refstats))
 }
 diff_out <- plotter_ovrlay_diff()
 stopifnot(diff_out$succ_ind)
+cat("\n-----\n")
+cat("Quartiles of the reference model's performance statistic (across all",
+    "simulation iterations):\n")
+print(quantile(diff_out$refstats))
+cat("-----\n")
 
 ## Suggested sizes --------------------------------------------------------
 
