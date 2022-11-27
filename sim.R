@@ -517,6 +517,16 @@ saveRDS(simres, file = "simres.rds") # simres <- readRDS(file = "simres.rds")
 
 # Post-processing ---------------------------------------------------------
 
+source("gg_to_tikz/tikzpicture-template.R")
+ggsave_cust <- function(fname_no_ext, plot = ggplot2::last_plot(), width = 7,
+                        ...) {
+  ggplot2::ggsave(filename = paste0(fname_no_ext, ".pdf"), plot = plot,
+                  width = width, height = width * 0.618)
+  save_tikz_plot(plot = plot, filename = paste0(fname_no_ext, ".tex"),
+                 width = width, ...)
+  return(invisible(TRUE))
+}
+
 if (!dir.exists("figs")) dir.create("figs")
 
 ## True population-level coefficients -------------------------------------
@@ -533,8 +543,7 @@ cat("-----\n")
 gg_true_coefs_cont <- ggplot2::ggplot(data = true_coefs_cont,
                                       mapping = ggplot2::aes(x = coef)) +
   ggplot2::geom_histogram(bins = 40) # + ggplot2::geom_density()
-ggplot2::ggsave(file.path("figs", "true_coefs_cont.pdf"),
-                width = 7, height = 7 * 0.618)
+ggsave_cust(file.path("figs", "true_coefs_cont"))
 
 ## True group-level effects -----------------------------------------------
 
@@ -588,8 +597,7 @@ gg_time <- ggplot2::ggplot(data = mins_vs,
                            mapping = ggplot2::aes(x = prj_meth, y = Minutes)) +
   ggplot2::geom_boxplot() + # ggplot2::geom_violin() +
   ggplot2::labs(x = "Projection method")
-ggplot2::ggsave(file.path("figs", "time.pdf"),
-                width = 7, height = 7 * 0.618)
+ggsave_cust(file.path("figs", "time"))
 
 ## Solution paths ---------------------------------------------------------
 
@@ -654,12 +662,10 @@ plotter_ovrlay <- function(prj_meth, eval_scale = "response") {
                   x = "Submodel size",
                   y = bquote(Delta*.(toupper(y_chr))))
   fnm_base <- paste(y_chr, prj_meth, eval_scale, sep = "_")
-  ggplot2::ggsave(file.path("figs", paste0(fnm_base, ".pdf")),
-                  width = 7, height = 7 * 0.618)
+  ggsave_cust(file.path("figs", fnm_base))
   ggobj_zoom <- ggobj +
     ggplot2::coord_cartesian(ylim = c(-0.75, 0.05))
-  ggplot2::ggsave(file.path("figs", paste0(fnm_base, "_zoom.pdf")),
-                  width = 7, height = 7 * 0.618)
+  ggsave_cust(file.path("figs", paste0(fnm_base, "_zoom")))
   return(list(succ_ind = TRUE, ggobj = ggobj, ggobj_zoom = ggobj_zoom))
 }
 comm_aug <- plotter_ovrlay(prj_meth = "aug")
@@ -719,8 +725,7 @@ plotter_ovrlay_diff <- function(eval_scale = "response") {
                   x = "Submodel size",
                   y = bquote(.(toupper(y_chr))[lat] - .(toupper(y_chr))[aug]))
   fnm_base <- paste(y_chr_diff, eval_scale, sep = "_")
-  ggplot2::ggsave(file.path("figs", paste0(fnm_base, ".pdf")),
-                  width = 7, height = 7 * 0.618)
+  ggsave_cust(file.path("figs", fnm_base))
   return(list(succ_ind = TRUE, ggobj = ggobj, refstats = refstats))
 }
 diff_out <- plotter_ovrlay_diff()
@@ -797,9 +802,8 @@ for (eval_scale_lat_val in c("response")) { # , "latent"
     ggplot2::labs(x = xlab_long, y = "Absolute frequency", title = title_gg) +
     ggplot2::scale_x_discrete(drop = FALSE) +
     ggplot2::scale_y_continuous(breaks = scales::breaks_pretty())
-  ggplot2::ggsave(
-    file.path("figs", paste0("sgg_sizes_diff_", eval_scale_lat_val, "Lat.pdf")),
-    width = 7, height = 7 * 0.618
+  ggsave_cust(
+    file.path("figs", paste0("sgg_sizes_diff_", eval_scale_lat_val, "Lat"))
   )
   cat("----------\n")
 }
