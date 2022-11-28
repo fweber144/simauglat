@@ -518,12 +518,14 @@ saveRDS(simres, file = "simres.rds") # simres <- readRDS(file = "simres.rds")
 # Post-processing ---------------------------------------------------------
 
 source("gg_to_tikz/tikzpicture-template.R")
-ggsave_cust <- function(fname_no_ext, plot = ggplot2::last_plot(), width = 7,
+ggsave_cust <- function(fname_no_ext, plot = ggplot2::last_plot(),
+                        width = 7, height = width * 0.618,
                         timestamp = FALSE, verbose = FALSE, ...) {
   ggplot2::ggsave(filename = paste0(fname_no_ext, ".pdf"), plot = plot,
-                  width = width, height = width * 0.618)
+                  width = width, height = height)
   save_tikz_plot(plot = plot, filename = paste0(fname_no_ext, ".tex"),
-                 width = width, timestamp = timestamp, verbose = verbose, ...)
+                 width = width, height = height,
+                 timestamp = timestamp, verbose = verbose, ...)
   return(invisible(TRUE))
 }
 
@@ -597,7 +599,7 @@ gg_time <- ggplot2::ggplot(data = mins_vs,
                            mapping = ggplot2::aes(x = prj_meth, y = Minutes)) +
   ggplot2::geom_boxplot() + # ggplot2::geom_violin() +
   ggplot2::labs(x = "Projection method")
-ggsave_cust(file.path("figs", "time"))
+ggsave_cust(file.path("figs", "time"), width = 0.5 * 7, height = 7 * 0.618)
 
 ## Solution paths ---------------------------------------------------------
 
