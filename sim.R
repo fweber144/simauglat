@@ -664,9 +664,11 @@ plotter_ovrlay <- function(prj_meth, eval_scale = "response") {
     ###
     ggplot2::geom_point() +
     ggplot2::geom_line() +
-    ggplot2::labs(title = title_gg,
-                  x = "Submodel size",
-                  y = bquote(Delta*.(toupper(y_chr))))
+    ggplot2::labs(
+      # title = title_gg,
+      x = "Submodel size",
+      y = bquote(Delta*.(toupper(y_chr)))
+    )
   fnm_base <- paste(y_chr, prj_meth, eval_scale, sep = "_")
   ggsave_cust(file.path("figs", fnm_base))
   ggobj_zoom <- ggobj +
@@ -727,9 +729,11 @@ plotter_ovrlay_diff <- function(eval_scale = "response") {
                         linetype = "dotted") +
     ggplot2::geom_point() +
     ggplot2::geom_line() +
-    ggplot2::labs(title = title_gg,
-                  x = "Submodel size",
-                  y = bquote(.(toupper(y_chr))[lat] - .(toupper(y_chr))[aug]))
+    ggplot2::labs(
+      # title = title_gg,
+      x = "Submodel size",
+      y = bquote(.(toupper(y_chr))[lat] - .(toupper(y_chr))[aug])
+    )
   fnm_base <- paste(y_chr_diff, eval_scale, sep = "_")
   ggsave_cust(file.path("figs", fnm_base))
   return(list(succ_ind = TRUE, ggobj = ggobj, refstats = refstats))
@@ -806,7 +810,11 @@ for (eval_scale_lat_val in c("response")) { # , "latent"
     mapping = ggplot2::aes(x = sgg_sizes_lat_minus_aug)
   ) +
     ggplot2::geom_bar() +
-    ggplot2::labs(x = xlab_long, y = "Absolute frequency", title = title_gg) +
+    ggplot2::labs(
+      # title = title_gg,
+      x = xlab_long,
+      y = "Absolute frequency"
+    ) +
     ggplot2::scale_x_discrete(drop = FALSE) +
     ggplot2::scale_y_continuous(breaks = scales::breaks_pretty())
   ggsave_cust(
