@@ -586,8 +586,8 @@ mins_vs <- do.call(rbind, lapply(seq_along(simres), function(sim_idx) {
 mins_vs <- reshape(
   mins_vs,
   direction = "long",
-  v.names = "Minutes",
-  varying = list("Minutes" = grep("^t_", names(mins_vs), value = TRUE)),
+  v.names = "Runtime [min]",
+  varying = list("Runtime [min]" = grep("^t_", names(mins_vs), value = TRUE)),
   timevar = "prj_meth",
   times = c("Augmented-data", "Latent"),
   idvar = "sim_idx_ch",
@@ -595,11 +595,15 @@ mins_vs <- reshape(
 )
 stopifnot(identical(mins_vs$sim_idx_ch, mins_vs$sim_idx))
 mins_vs$sim_idx_ch <- NULL
-gg_time <- ggplot2::ggplot(data = mins_vs,
-                           mapping = ggplot2::aes(x = prj_meth, y = Minutes)) +
+gg_time <- ggplot2::ggplot(
+  data = mins_vs,
+  mapping = ggplot2::aes(x = prj_meth, y = `Runtime [min]`)
+) +
   ggplot2::geom_boxplot() + # ggplot2::geom_violin() +
-  ggplot2::labs(x = "Projection method")
-ggsave_cust(file.path("figs", "time"), width = 0.5 * 7, height = 7 * 0.618)
+  ggplot2::labs(x = "Projection method") +
+  ggplot2::coord_cartesian(ylim = c(0, NA)) # + ggplot2::coord_flip()
+ggsave_cust(file.path("figs", "time"),
+            width = 0.35 * 7, height = 0.5 * 7 * 0.618)
 
 ## Solution paths ---------------------------------------------------------
 
