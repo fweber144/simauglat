@@ -791,7 +791,7 @@ for (eval_scale_lat_val in c("response")) { # , "latent"
   print(sgg_sizes_tab)
   print(proportions(sgg_sizes_tab))
   cat("-----\n")
-  xlab_long <- bquote(M[lat] - M[aug])
+  xlab_long <- bquote(G[lat] - G[aug])
   title_gg <- "Suggested size diff."
   title_gg <- paste0(title_gg, " (evaluation scale for the latent projection: ",
                      eval_scale_lat_val, ")")
