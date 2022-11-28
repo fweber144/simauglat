@@ -603,7 +603,7 @@ gg_time <- ggplot2::ggplot(
   ggplot2::labs(x = "Projection method") +
   ggplot2::coord_cartesian(ylim = c(0, NA)) # + ggplot2::coord_flip()
 ggsave_cust(file.path("figs", "time"),
-            width = 0.35 * 7, height = 0.5 * 7 * 0.618)
+            width = 0.5 * 7, height = 0.75 * 7 * 0.618)
 
 ## Solution paths ---------------------------------------------------------
 
