@@ -519,11 +519,11 @@ saveRDS(simres, file = "simres.rds") # simres <- readRDS(file = "simres.rds")
 
 source("gg_to_tikz/tikzpicture-template.R")
 ggsave_cust <- function(fname_no_ext, plot = ggplot2::last_plot(), width = 7,
-                        ...) {
+                        timestamp = FALSE, verbose = FALSE, ...) {
   ggplot2::ggsave(filename = paste0(fname_no_ext, ".pdf"), plot = plot,
                   width = width, height = width * 0.618)
   save_tikz_plot(plot = plot, filename = paste0(fname_no_ext, ".tex"),
-                 width = width, ...)
+                 width = width, timestamp = timestamp, verbose = verbose, ...)
   return(invisible(TRUE))
 }
 
