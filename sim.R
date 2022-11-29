@@ -690,6 +690,9 @@ ylim_lat <- ggplot2::ggplot_build(comm_lat$ggobj)$layout$panel_scales_y[[1]]$ran
 ###
 comm_aug <- plotter_ovrlay(prj_meth = "aug", ylim_full = ylim_lat)
 stopifnot(comm_aug$succ_ind && comm_lat$succ_ind) #  && comm_lat_nonOrig$succ_ind
+library(patchwork)
+gg_aug_lat <- comm_aug$ggobj_full / comm_lat$ggobj_full
+ggsave_cust(file.path("figs", "aug_lat"), height = 2 * 7 * 0.618)
 
 plotter_ovrlay_diff <- function(eval_scale = "response") {
   stopifnot(eval_scale == "response")
