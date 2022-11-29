@@ -631,7 +631,7 @@ cat("-----\n")
 
 ## Model size selection plots ---------------------------------------------
 
-plotter_ovrlay <- function(prj_meth, eval_scale = "response") {
+plotter_ovrlay <- function(prj_meth, eval_scale = "response", ylim_full = NULL) {
   if (prj_meth == "aug") {
     title_gg <- "Augmented-data"
     stopifnot(eval_scale == "response")
@@ -671,14 +671,24 @@ plotter_ovrlay <- function(prj_meth, eval_scale = "response") {
     )
   fnm_base <- paste(y_chr, prj_meth, eval_scale, sep = "_")
   ggsave_cust(file.path("figs", fnm_base))
+  ggobj_full <- ggobj +
+    ggplot2::coord_cartesian(ylim = ylim_full)
+  ggsave_cust(file.path("figs", paste0(fnm_base, "_full")))
   ggobj_zoom <- ggobj +
     ggplot2::coord_cartesian(ylim = c(-0.75, 0.05))
   ggsave_cust(file.path("figs", paste0(fnm_base, "_zoom")))
-  return(list(succ_ind = TRUE, ggobj = ggobj, ggobj_zoom = ggobj_zoom))
+  return(list(succ_ind = TRUE, ggobj = ggobj, ggobj_full = ggobj_full,
+              ggobj_zoom = ggobj_zoom))
 }
-comm_aug <- plotter_ovrlay(prj_meth = "aug")
 comm_lat <- plotter_ovrlay(prj_meth = "lat")
 # comm_lat_nonOrig <- plotter_ovrlay(prj_meth = "lat", eval_scale = "latent")
+### Get y-axis limits from the data, not the plot:
+ylim_lat <- ggplot2::ggplot_build(comm_lat$ggobj)$layout$panel_scales_y[[1]]$range$range
+###
+### Get y-axis limits from the plot:
+# ylim_lat <- ggplot2::ggplot_build(comm_lat$ggobj)$layout$panel_params[[1]]$y.range
+###
+comm_aug <- plotter_ovrlay(prj_meth = "aug", ylim_full = ylim_lat)
 stopifnot(comm_aug$succ_ind && comm_lat$succ_ind) #  && comm_lat_nonOrig$succ_ind
 
 plotter_ovrlay_diff <- function(eval_scale = "response") {
