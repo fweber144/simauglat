@@ -826,7 +826,7 @@ for (eval_scale_lat_val in c("response")) { # , "latent"
     ggplot2::labs(
       # title = title_gg,
       x = xlab_long,
-      y = "Absolute frequency"
+      y = paste0("Number of simulation iterations (total: ", nsim, ")")
     ) +
     ggplot2::scale_x_discrete(drop = FALSE) +
     ggplot2::scale_y_continuous(breaks = scales::breaks_pretty())
