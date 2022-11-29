@@ -667,7 +667,8 @@ plotter_ovrlay <- function(prj_meth, eval_scale = "response", ylim_full = NULL) 
     ggplot2::labs(
       # title = title_gg,
       x = "Submodel size",
-      y = bquote(Delta*.(toupper(y_chr)))
+      # y = bquote(Delta*.(toupper(y_chr)))
+      y = paste0("$\\Delta$", toupper(y_chr))
     )
   fnm_base <- paste(y_chr, prj_meth, eval_scale, sep = "_")
   ggsave_cust(file.path("figs", fnm_base))
