@@ -718,7 +718,7 @@ plotter_ovrlay <- function(prj_meth, eval_scale = "response",
                                                      y = se,
                                                      alpha = I(0.4))) +
     ggplot2::geom_boxplot() +
-    ggplot2::geom_jitter() +
+    ggplot2::geom_jitter(width = 0.25, height = 0) +
     ggplot2::labs(
       x = "Submodel size",
       # y = bquote(SE(Delta*.(toupper(y_chr))))
@@ -777,11 +777,12 @@ plotter_ovrlay_diff <- function(eval_scale = "response") {
     smmry_lat <- simres[[sim_idx]]$lat[[respOrig_nm_lat]]$smmry
     stopifnot(identical(smmry_aug["size"], smmry_lat["size"]))
     cbind(sim_idx = sim_idx, smmry_aug["size"],
-          setNames(smmry_aug[y_chr], y_chr_aug),
-          setNames(smmry_lat[y_chr], y_chr_lat))
+          setNames(smmry_aug[c(y_chr, "se")], c(y_chr_aug, "se_aug")),
+          setNames(smmry_lat[c(y_chr, "se")], c(y_chr_lat, "se_lat")))
   }))
   y_chr_diff <- paste("diff", y_chr, sep = "_")
   plotdat[[y_chr_diff]] <- plotdat[[y_chr_lat]] - plotdat[[y_chr_aug]]
+  plotdat$diff_se <- plotdat[["se_lat"]] - plotdat[["se_aug"]]
   ggobj <- ggplot2::ggplot(data = plotdat,
                            mapping = ggplot2::aes(x = size,
                                                   y = .data[[y_chr_diff]],
@@ -799,7 +800,25 @@ plotter_ovrlay_diff <- function(eval_scale = "response") {
     )
   fnm_base <- paste(y_chr_diff, eval_scale, sep = "_")
   ggsave_cust(file.path("figs", fnm_base))
-  return(list(succ_ind = TRUE, ggobj = ggobj, refstats = refstats))
+  ggobj_se <- ggplot2::ggplot(data = plotdat,
+                              mapping = ggplot2::aes(x = factor(size),
+                                                     y = diff_se,
+                                                     alpha = I(0.4))) +
+    ggplot2::geom_hline(yintercept = 0,
+                        color = "gray30",
+                        linetype = "dotted") +
+    ggplot2::geom_boxplot() +
+    ggplot2::geom_jitter(width = 0.25, height = 0) +
+    ggplot2::labs(
+      x = "Submodel size",
+      y = paste0(
+        "SE($\\Delta\\mathrm{", toupper(y_chr), "}_{\\mathrm{lat}}$) - ",
+        "SE($\\Delta\\mathrm{", toupper(y_chr), "}_{\\mathrm{aug}}$)"
+      )
+    )
+  ggsave_cust(file.path("figs", paste("diff_se", eval_scale, sep = "_")))
+  return(list(succ_ind = TRUE, ggobj = ggobj, ggobj_se = ggobj_se,
+              refstats = refstats))
 }
 diff_out <- plotter_ovrlay_diff()
 stopifnot(diff_out$succ_ind)
