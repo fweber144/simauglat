@@ -1,5 +1,6 @@
 #_______________________________________________________________________________
-# simauglat: Simulation study for comparing augmented-data and latent projection in projpred
+# simauglat: Simulation study comparing augmented-data and latent projection in
+#            projpred
 # Copyright (C) 2022  Frank Weber
 #
 # This program is free software: you can redistribute it and/or modify
@@ -631,7 +632,8 @@ cat("-----\n")
 
 ## Model size selection plots ---------------------------------------------
 
-plotter_ovrlay <- function(prj_meth, eval_scale = "response", ylim_full = NULL) {
+plotter_ovrlay <- function(prj_meth, eval_scale = "response",
+                           ylim_full = NULL) {
   if (prj_meth == "aug") {
     title_gg <- "Augmented-data"
     stopifnot(eval_scale == "response")
@@ -682,15 +684,21 @@ plotter_ovrlay <- function(prj_meth, eval_scale = "response", ylim_full = NULL) 
               ggobj_zoom = ggobj_zoom))
 }
 comm_lat <- plotter_ovrlay(prj_meth = "lat")
+stopifnot(comm_lat$succ_ind)
 # comm_lat_nonOrig <- plotter_ovrlay(prj_meth = "lat", eval_scale = "latent")
+# stopifnot(comm_lat_nonOrig$succ_ind)
 ### Get y-axis limits from the data, not the plot:
-ylim_lat <- ggplot2::ggplot_build(comm_lat$ggobj)$layout$panel_scales_y[[1]]$range$range
+ylim_lat <- ggplot2::ggplot_build(
+  comm_lat$ggobj
+)$layout$panel_scales_y[[1]]$range$range
 ###
 ### Get y-axis limits from the plot:
-# ylim_lat <- ggplot2::ggplot_build(comm_lat$ggobj)$layout$panel_params[[1]]$y.range
+# ylim_lat <- ggplot2::ggplot_build(
+#   comm_lat$ggobj
+# )$layout$panel_params[[1]]$y.range
 ###
 comm_aug <- plotter_ovrlay(prj_meth = "aug", ylim_full = ylim_lat)
-stopifnot(comm_aug$succ_ind && comm_lat$succ_ind) #  && comm_lat_nonOrig$succ_ind
+stopifnot(comm_aug$succ_ind)
 library(patchwork)
 gg_aug_lat <- comm_aug$ggobj_full / comm_lat$ggobj_full
 ggsave_cust(file.path("figs", "aug_lat"), height = 2 * 6 * 0.618)
