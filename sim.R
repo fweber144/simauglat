@@ -713,8 +713,22 @@ plotter_ovrlay <- function(prj_meth, eval_scale = "response",
     ggplot2::coord_cartesian(ylim = ylim_eb)
   ggsave_cust(file.path("figs",
                         paste(y_chr, prj_meth, eval_scale, "eb", sep = "_")))
+  ggobj_se <- ggplot2::ggplot(data = plotdat,
+                              mapping = ggplot2::aes(x = factor(size),
+                                                     y = se,
+                                                     alpha = I(0.4))) +
+    ggplot2::geom_boxplot() +
+    ggplot2::geom_jitter() +
+    ggplot2::labs(
+      x = "Submodel size",
+      # y = bquote(SE(Delta*.(toupper(y_chr))))
+      y = paste0("SE($\\Delta$", toupper(y_chr), ")")
+    )
+  ggsave_cust(file.path("figs",
+                        paste(y_chr, prj_meth, eval_scale, "se", sep = "_")))
   return(list(succ_ind = TRUE, ggobj = ggobj, ggobj_full = ggobj_full,
-              ggobj_zoom = ggobj_zoom, ggobj_eb = ggobj_eb))
+              ggobj_zoom = ggobj_zoom, ggobj_eb = ggobj_eb,
+              ggobj_se = ggobj_se))
 }
 comm_lat <- plotter_ovrlay(prj_meth = "lat")
 # comm_lat_nonOrig <- plotter_ovrlay(prj_meth = "lat", eval_scale = "latent")
