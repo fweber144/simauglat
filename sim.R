@@ -633,7 +633,7 @@ cat("-----\n")
 ## Model size selection plots ---------------------------------------------
 
 plotter_ovrlay <- function(prj_meth, eval_scale = "response",
-                           ylim_full = NULL) {
+                           ylim_full = NULL, ylim_se = NULL) {
   if (prj_meth == "aug") {
     title_gg <- "Augmented-data"
     stopifnot(eval_scale == "response")
@@ -648,7 +648,9 @@ plotter_ovrlay <- function(prj_meth, eval_scale = "response",
   stopifnot(length(y_chr) == 1)
   plotdat <- do.call(rbind, lapply(seq_along(simres), function(sim_idx) {
     cbind(sim_idx = sim_idx,
-          simres[[sim_idx]][[prj_meth]][[respOrig_nm]]$smmry[c("size", y_chr)])
+          simres[[sim_idx]][[prj_meth]][[respOrig_nm]]$smmry[
+            c("size", "se", y_chr)
+          ])
   }))
   ggobj <- ggplot2::ggplot(data = plotdat,
                            mapping = ggplot2::aes(x = size,
@@ -680,25 +682,50 @@ plotter_ovrlay <- function(prj_meth, eval_scale = "response",
   ggobj_zoom <- ggobj +
     ggplot2::coord_cartesian(ylim = c(-0.75, 0.05))
   ggsave_cust(file.path("figs", paste0(fnm_base, "_zoom")))
+  nsub_se <- 5L
+  sub_idxs <- seq_len(nsub_se) # sample.int(length(simres), size = nsub_se)
+  plotdat_sub <- plotdat[plotdat$sim_idx %in% sub_idxs, ]
+  ggobj_se <- ggplot2::ggplot(data = plotdat_sub,
+                              mapping = ggplot2::aes(x = size,
+                                                     y = .data[[y_chr]],
+                                                     ymin = .data[[y_chr]] - se,
+                                                     ymax = .data[[y_chr]] + se,
+                                                     group = sim_idx,
+                                                     alpha = I(0.4))) +
+    ggplot2::geom_hline(yintercept = 0,
+                        color = "firebrick",
+                        linetype = "dashed") +
+    ### Only applicable when using the extended suggest_size() heuristics by
+    ### setting argument `thres_elpd` to `4`:
+    # ggplot2::geom_hline(yintercept = -4 / nobsv_indep,
+    #                     color = "dodgerblue",
+    #                     linetype = "dotdash") +
+    ###
+    ggplot2::geom_point() +
+    ggplot2::geom_line() +
+    ggplot2::geom_errorbar() +
+    ggplot2::labs(
+      # title = title_gg,
+      x = "Submodel size",
+      # y = bquote(Delta*.(toupper(y_chr)))
+      y = paste0("$\\Delta$", toupper(y_chr))
+    ) +
+    ggplot2::coord_cartesian(ylim = ylim_se)
+  ggsave_cust(file.path("figs",
+                        paste(y_chr, prj_meth, eval_scale, "se", sep = "_")))
   return(list(succ_ind = TRUE, ggobj = ggobj, ggobj_full = ggobj_full,
-              ggobj_zoom = ggobj_zoom))
+              ggobj_zoom = ggobj_zoom, ggobj_se = ggobj_se))
 }
 comm_lat <- plotter_ovrlay(prj_meth = "lat")
-stopifnot(comm_lat$succ_ind)
 # comm_lat_nonOrig <- plotter_ovrlay(prj_meth = "lat", eval_scale = "latent")
-# stopifnot(comm_lat_nonOrig$succ_ind)
-### Get y-axis limits from the data, not the plot:
 ylim_lat <- ggplot2::ggplot_build(
   comm_lat$ggobj
 )$layout$panel_scales_y[[1]]$range$range
-###
-### Get y-axis limits from the plot:
-# ylim_lat <- ggplot2::ggplot_build(
-#   comm_lat$ggobj
-# )$layout$panel_params[[1]]$y.range
-###
-comm_aug <- plotter_ovrlay(prj_meth = "aug", ylim_full = ylim_lat)
-stopifnot(comm_aug$succ_ind)
+ylim_lat_se <- ggplot2::ggplot_build(
+  comm_lat$ggobj_se
+)$layout$panel_scales_y[[1]]$range$range
+comm_aug <- plotter_ovrlay(prj_meth = "aug", ylim_full = ylim_lat,
+                           ylim_se = ylim_lat_se)
 library(patchwork)
 gg_aug_lat <- comm_aug$ggobj_full / comm_lat$ggobj_full
 ggsave_cust(file.path("figs", "aug_lat"), height = 2 * 6 * 0.618)
