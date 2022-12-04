@@ -818,14 +818,18 @@ plotter_ovrlay_diff <- function(eval_scale = "response") {
     )
   ggsave_cust(file.path("figs", paste("diff_se", eval_scale, sep = "_")))
   return(list(succ_ind = TRUE, ggobj = ggobj, ggobj_se = ggobj_se,
-              refstats = refstats))
+              refstats = refstats, q_diff_se = quantile(plotdat$diff_se)))
 }
 diff_out <- plotter_ovrlay_diff()
-stopifnot(diff_out$succ_ind)
 cat("\n-----\n")
 cat("Quartiles of the reference model's performance statistic (across all",
     "simulation iterations):\n")
 print(quantile(diff_out$refstats))
+cat("-----\n")
+cat("\n-----\n")
+cat("Quartiles of the SE difference (across all simulation iterations and all",
+    "submodel sizes):\n")
+print(diff_out$q_diff_se)
 cat("-----\n")
 
 ## Suggested sizes --------------------------------------------------------
