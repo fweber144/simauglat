@@ -489,10 +489,11 @@ time_vs_wide <- do.call(rbind, lapply(seq_along(simres), function(sim_idx) {
 time_vs_long <- reshape(
   time_vs_wide,
   direction = "long",
-  v.names = "Runtime [min]",
-  varying = list("Runtime [min]" = c("t_aug", "t_lat")),
+  v.names = "Runtime $t_{\\mathrm{<meth>}}$ [min]",
+  varying = list("Runtime $t_{\\mathrm{<meth>}}$ [min]" = c("t_aug", "t_lat")),
   timevar = "prj_meth",
-  times = c("Augmented-data", "Latent"),
+  times = c("$\\mathrm{<meth>} = \\mathrm{aug}$",
+            "$\\mathrm{<meth>} = \\mathrm{lat}$"),
   idvar = "sim_idx_ch",
   sep = "_"
 )
@@ -501,11 +502,12 @@ time_vs_long$sim_idx_ch <- NULL
 
 gg_time <- ggplot2::ggplot(
   data = time_vs_long,
-  mapping = ggplot2::aes(x = prj_meth, y = `Runtime [min]`)
+  mapping = ggplot2::aes(x = prj_meth,
+                         y = `Runtime $t_{\\mathrm{<meth>}}$ [min]`)
 ) +
   ggplot2::geom_boxplot() +
   ggplot2::geom_jitter(alpha = 0.4, width = 0.25, height = 0) +
-  ggplot2::labs(x = "Projection method") +
+  ggplot2::theme(axis.title.x = ggplot2::element_blank()) +
   ggplot2::coord_cartesian(ylim = c(0, NA))
 # ggsave_cust(file.path("figs", "time"),
 #             width = 0.5 * 6, height = 0.75 * 6 * 0.618)
