@@ -646,13 +646,12 @@ plotter_ovrlay_diff <- function(eval_scale = "response") {
   # SE difference plot:
   ggobj_se <- ggplot2::ggplot(data = plotdat,
                               mapping = ggplot2::aes(x = factor(size),
-                                                     y = diff_se,
-                                                     alpha = I(0.4))) +
+                                                     y = diff_se)) +
     ggplot2::geom_hline(yintercept = 0,
                         color = "gray30",
                         linetype = "dotted") +
     ggplot2::geom_boxplot() +
-    ggplot2::geom_jitter(width = 0.25, height = 0) +
+    ggplot2::geom_jitter(alpha = 0.4, width = 0.25, height = 0) +
     ggplot2::labs(
       x = xlab,
       y = paste0(
