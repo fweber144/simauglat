@@ -635,14 +635,11 @@ cat("-----\n")
 plotter_ovrlay <- function(prj_meth, eval_scale = "response",
                            ylim_full = NULL, ylim_eb = NULL) {
   if (prj_meth == "aug") {
-    title_gg <- "Augmented-data"
     stopifnot(eval_scale == "response")
     respOrig_nm <- paste0("respOrig_", TRUE)
   } else if (prj_meth == "lat") {
-    title_gg <- "Latent"
     respOrig_nm <- paste0("respOrig_", eval_scale == "response")
   }
-  title_gg <- paste0(title_gg, " (evaluation scale: ", eval_scale, ")")
   y_chr <- setdiff(names(simres[[1L]][[prj_meth]][[respOrig_nm]]$smmry),
                    c("solution_terms", "se", "lower", "upper", "size"))
   stopifnot(length(y_chr) == 1)
@@ -672,7 +669,6 @@ plotter_ovrlay <- function(prj_meth, eval_scale = "response",
     ggplot2::geom_point() +
     ggplot2::geom_line() +
     ggplot2::labs(
-      # title = title_gg,
       x = xlab,
       # y = bquote(Delta*.(toupper(y_chr)))
       y = ylab
@@ -708,7 +704,6 @@ plotter_ovrlay <- function(prj_meth, eval_scale = "response",
     ggplot2::geom_line() +
     ggplot2::geom_errorbar() +
     ggplot2::labs(
-      # title = title_gg,
       x = xlab,
       # y = bquote(Delta*.(toupper(y_chr)))
       y = ylab
@@ -751,8 +746,6 @@ plotter_ovrlay_diff <- function(eval_scale = "response") {
   stopifnot(eval_scale == "response")
   respOrig_nm_aug <- paste0("respOrig_", TRUE)
   respOrig_nm_lat <- paste0("respOrig_", eval_scale == "response")
-  title_gg <- "Performance diff."
-  title_gg <- paste0(title_gg, " (evaluation scale: ", eval_scale, ")")
 
   # Check that the reference model (performance) is the same, so that the
   # difference of the Delta MLPDs can be interpreted as the difference of the
@@ -798,7 +791,6 @@ plotter_ovrlay_diff <- function(eval_scale = "response") {
     ggplot2::geom_point() +
     ggplot2::geom_line() +
     ggplot2::labs(
-      # title = title_gg,
       x = xlab,
       y = bquote(.(toupper(y_chr))[lat] - .(toupper(y_chr))[aug])
     )
@@ -892,16 +884,12 @@ for (eval_scale_lat_val in c("response")) { # , "latent"
   print(proportions(sgg_sizes_tab))
   cat("-----\n")
   xlab_sgg <- bquote(G[lat] - G[aug])
-  title_gg <- "Suggested size diff."
-  title_gg <- paste0(title_gg, " (evaluation scale for the latent projection: ",
-                     eval_scale_lat_val, ")")
   gg_sgg_sizes_diff <- ggplot2::ggplot(
     data = data.frame(sgg_sizes_lat_minus_aug),
     mapping = ggplot2::aes(x = sgg_sizes_lat_minus_aug)
   ) +
     ggplot2::geom_bar() +
     ggplot2::labs(
-      # title = title_gg,
       x = xlab_sgg,
       y = paste0("Number of simulation iterations (total: ", nsim, ")")
     ) +
