@@ -633,7 +633,7 @@ cat("-----\n")
 ## Model size selection plots ---------------------------------------------
 
 plotter_ovrlay <- function(prj_meth, eval_scale = "response",
-                           ylim_full = NULL, ylim_eb = NULL) {
+                           ylim_full = NULL) {
   if (prj_meth == "aug") {
     stopifnot(eval_scale == "response")
     respOrig_nm <- paste0("respOrig_", TRUE)
@@ -668,52 +668,14 @@ plotter_ovrlay <- function(prj_meth, eval_scale = "response",
   ggobj_full <- ggobj +
     ggplot2::coord_cartesian(ylim = ylim_full)
   ggsave_cust(file.path("figs", paste0(fnm_base, "_full")))
-  ggobj_zoom <- ggobj +
-    ggplot2::coord_cartesian(ylim = c(-0.75, 0.05))
-  ggsave_cust(file.path("figs", paste0(fnm_base, "_zoom")))
-  nsub_eb <- 5L
-  sub_idxs <- seq_len(nsub_eb) # sample.int(length(simres), size = nsub_eb)
-  plotdat_sub <- plotdat[plotdat$sim_idx %in% sub_idxs, ]
-  ggobj_eb <- ggplot2::ggplot(data = plotdat_sub,
-                              mapping = ggplot2::aes(x = size,
-                                                     y = .data[[y_chr]],
-                                                     ymin = .data[[y_chr]] - se,
-                                                     ymax = .data[[y_chr]] + se,
-                                                     group = sim_idx,
-                                                     alpha = I(0.4))) +
-    ggplot2::geom_hline(yintercept = 0,
-                        color = "firebrick",
-                        linetype = "dashed") +
-    ggplot2::geom_point() +
-    ggplot2::geom_line() +
-    ggplot2::geom_errorbar() +
-    ggplot2::labs(x = xlab, y = ylab) +
-    ggplot2::coord_cartesian(ylim = ylim_eb)
-  ggsave_cust(file.path("figs",
-                        paste(y_chr, prj_meth, eval_scale, "eb", sep = "_")))
-  ggobj_se <- ggplot2::ggplot(data = plotdat,
-                              mapping = ggplot2::aes(x = factor(size),
-                                                     y = se,
-                                                     alpha = I(0.4))) +
-    ggplot2::geom_boxplot() +
-    ggplot2::geom_jitter(width = 0.25, height = 0) +
-    ggplot2::labs(x = xlab, y = paste0("SE(", ylab, ")"))
-  ggsave_cust(file.path("figs",
-                        paste(y_chr, prj_meth, eval_scale, "se", sep = "_")))
-  return(list(succ_ind = TRUE, ggobj = ggobj, ggobj_full = ggobj_full,
-              ggobj_zoom = ggobj_zoom, ggobj_eb = ggobj_eb,
-              ggobj_se = ggobj_se))
+  return(list(succ_ind = TRUE, ggobj = ggobj, ggobj_full = ggobj_full))
 }
 comm_lat <- plotter_ovrlay(prj_meth = "lat")
 # comm_lat_nonOrig <- plotter_ovrlay(prj_meth = "lat", eval_scale = "latent")
 ylim_lat <- ggplot2::ggplot_build(
   comm_lat$ggobj
 )$layout$panel_scales_y[[1]]$range$range
-ylim_lat_eb <- ggplot2::ggplot_build(
-  comm_lat$ggobj_eb
-)$layout$panel_scales_y[[1]]$range$range
-comm_aug <- plotter_ovrlay(prj_meth = "aug", ylim_full = ylim_lat,
-                           ylim_eb = ylim_lat_eb)
+comm_aug <- plotter_ovrlay(prj_meth = "aug", ylim_full = ylim_lat)
 library(patchwork)
 gg_aug_lat <- comm_aug$ggobj_full / comm_lat$ggobj_full
 ggsave_cust(file.path("figs", "aug_lat"), height = 2 * 6 * 0.618)
