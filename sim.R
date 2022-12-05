@@ -507,8 +507,8 @@ gg_time <- ggplot2::ggplot(
   ggplot2::geom_jitter(alpha = 0.4, width = 0.25, height = 0) +
   ggplot2::labs(x = "Projection method") +
   ggplot2::coord_cartesian(ylim = c(0, NA))
-ggsave_cust(file.path("figs", "time"),
-            width = 0.5 * 6, height = 0.75 * 6 * 0.618)
+# ggsave_cust(file.path("figs", "time"),
+#             width = 0.5 * 6, height = 0.75 * 6 * 0.618)
 
 gg_time_diff <- ggplot2::ggplot(
   data = time_vs_wide,
@@ -520,8 +520,8 @@ gg_time_diff <- ggplot2::ggplot(
   ggplot2::theme(axis.ticks.x = ggplot2::element_blank(),
                  axis.text.x = ggplot2::element_blank(),
                  axis.title.x = ggplot2::element_blank())
-ggsave_cust(file.path("figs", "time_diff"),
-            width = 0.5 * 6, height = 0.75 * 6 * 0.618)
+# ggsave_cust(file.path("figs", "time_diff"),
+#             width = 0.5 * 6, height = 0.75 * 6 * 0.618)
 
 library(patchwork)
 gg_time_all <- gg_time | gg_time_diff
@@ -589,14 +589,14 @@ plotter_ovrlay <- function(prj_meth, eval_scale = "response",
     ggplot2::geom_point() +
     ggplot2::geom_line() +
     ggplot2::labs(x = xlab, y = ylab)
-  fnm_base <- paste(y_chr, prj_meth, eval_scale, sep = "_")
-  ggsave_cust(file.path("figs", fnm_base))
+  # fnm_base <- paste(y_chr, prj_meth, eval_scale, sep = "_")
+  # ggsave_cust(file.path("figs", fnm_base))
 
   # Delta-MLPD plot with prespecified y-axis limits (employed to have the same
   # y-axis limits for augmented-data and latent projection):
   ggobj_full <- ggobj +
     ggplot2::coord_cartesian(ylim = ylim_full)
-  ggsave_cust(file.path("figs", paste0(fnm_base, "_full")))
+  # ggsave_cust(file.path("figs", paste0(fnm_base, "_full")))
 
   return(list(succ_ind = TRUE, ggobj = ggobj, ggobj_full = ggobj_full))
 }
