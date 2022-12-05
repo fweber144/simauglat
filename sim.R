@@ -479,9 +479,11 @@ ggsave_cust(file.path("figs", "true_coefs_cont"))
 ## Runtime ----------------------------------------------------------------
 
 time_vs_wide <- do.call(rbind, lapply(seq_along(simres), function(sim_idx) {
-  return(data.frame(sim_idx = sim_idx,
-                    t_aug = simres[[sim_idx]]$aug$time_vs,
-                    t_lat = simres[[sim_idx]]$lat$time_vs))
+  return(data.frame(
+    sim_idx = sim_idx,
+    t_aug = simres[[sim_idx]]$aug$time_vs,
+    t_lat = simres[[sim_idx]]$lat$time_vs
+  ))
 }))
 time_vs_long <- reshape(
   time_vs_wide,
@@ -495,6 +497,7 @@ time_vs_long <- reshape(
 )
 stopifnot(identical(time_vs_long$sim_idx_ch, time_vs_long$sim_idx))
 time_vs_long$sim_idx_ch <- NULL
+
 gg_time <- ggplot2::ggplot(
   data = time_vs_long,
   mapping = ggplot2::aes(x = prj_meth, y = `Runtime [min]`)
