@@ -500,6 +500,7 @@ gg_time <- ggplot2::ggplot(
   mapping = ggplot2::aes(x = prj_meth, y = `Runtime [min]`)
 ) +
   ggplot2::geom_boxplot() +
+  ggplot2::geom_jitter(alpha = 0.4, width = 0.25, height = 0) +
   ggplot2::labs(x = "Projection method") +
   ggplot2::coord_cartesian(ylim = c(0, NA))
 ggsave_cust(file.path("figs", "time"),
