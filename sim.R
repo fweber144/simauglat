@@ -487,9 +487,7 @@ time_vs_long <- reshape(
   time_vs_wide,
   direction = "long",
   v.names = "Runtime [min]",
-  varying = list(
-    "Runtime [min]" = grep("^t_", names(time_vs_wide), value = TRUE)
-  ),
+  varying = list("Runtime [min]" = c("t_aug", "t_lat")),
   timevar = "prj_meth",
   times = c("Augmented-data", "Latent"),
   idvar = "sim_idx_ch",
