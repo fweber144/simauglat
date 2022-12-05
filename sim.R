@@ -482,7 +482,8 @@ time_vs_wide <- do.call(rbind, lapply(seq_along(simres), function(sim_idx) {
   return(data.frame(
     sim_idx = sim_idx,
     t_aug = simres[[sim_idx]]$aug$time_vs,
-    t_lat = simres[[sim_idx]]$lat$time_vs
+    t_lat = simres[[sim_idx]]$lat$time_vs,
+    diff_t = simres[[sim_idx]]$lat$time_vs - simres[[sim_idx]]$aug$time_vs
   ))
 }))
 time_vs_long <- reshape(
@@ -508,6 +509,24 @@ gg_time <- ggplot2::ggplot(
   ggplot2::coord_cartesian(ylim = c(0, NA))
 ggsave_cust(file.path("figs", "time"),
             width = 0.5 * 6, height = 0.75 * 6 * 0.618)
+
+gg_time_diff <- ggplot2::ggplot(
+  data = time_vs_wide,
+  mapping = ggplot2::aes(x = I(0), y = diff_t)
+) +
+  ggplot2::geom_boxplot() +
+  ggplot2::geom_jitter(alpha = 0.4, width = 0.25, height = 0) +
+  ggplot2::labs(y = bquote(t[lat] - t[aug]~~paste("[min]"))) +
+  ggplot2::theme(axis.ticks.x = ggplot2::element_blank(),
+                 axis.text.x = ggplot2::element_blank(),
+                 axis.title.x = ggplot2::element_blank())
+ggsave_cust(file.path("figs", "time_diff"),
+            width = 0.5 * 6, height = 0.75 * 6 * 0.618)
+
+library(patchwork)
+gg_time_all <- gg_time | gg_time_diff
+ggsave_cust(file.path("figs", "time_all"),
+            height = 0.75 * 6 * 0.618)
 
 ## Solution paths ---------------------------------------------------------
 
@@ -586,7 +605,6 @@ ylim_lat <- ggplot2::ggplot_build(
   comm_lat$ggobj
 )$layout$panel_scales_y[[1]]$range$range
 comm_aug <- plotter_ovrlay(prj_meth = "aug", ylim_full = ylim_lat)
-library(patchwork)
 gg_aug_lat <- comm_aug$ggobj_full / comm_lat$ggobj_full
 ggsave_cust(file.path("figs", "aug_lat"), height = 2 * 6 * 0.618)
 
