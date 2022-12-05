@@ -516,7 +516,7 @@ gg_time_diff <- ggplot2::ggplot(
 ) +
   ggplot2::geom_boxplot() +
   ggplot2::geom_jitter(alpha = 0.4, width = 0.25, height = 0) +
-  ggplot2::labs(y = bquote(t[lat] - t[aug]~~paste("[min]"))) +
+  ggplot2::labs(y = "$t_{\\mathrm{lat}} - t_{\\mathrm{aug}}$ [min]") +
   ggplot2::theme(axis.ticks.x = ggplot2::element_blank(),
                  axis.text.x = ggplot2::element_blank(),
                  axis.title.x = ggplot2::element_blank())
