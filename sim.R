@@ -489,10 +489,10 @@ time_vs_wide <- do.call(rbind, lapply(seq_along(simres), function(sim_idx) {
 time_vs_long <- reshape(
   time_vs_wide,
   direction = "long",
-  v.names = "Runtime $t_{m}$ [min]",
-  varying = list("Runtime $t_{m}$ [min]" = c("t_aug", "t_lat")),
+  v.names = "Runtime [min]",
+  varying = list("Runtime [min]" = c("t_aug", "t_lat")),
   timevar = "prj_meth",
-  times = c("$m = \\mathrm{aug}$", "$m = \\mathrm{lat}$"),
+  times = c("Augmented-data", "Latent"),
   idvar = "sim_idx_ch",
   sep = "_"
 )
@@ -501,32 +501,14 @@ time_vs_long$sim_idx_ch <- NULL
 
 gg_time <- ggplot2::ggplot(
   data = time_vs_long,
-  mapping = ggplot2::aes(x = prj_meth, y = `Runtime $t_{m}$ [min]`)
+  mapping = ggplot2::aes(x = prj_meth, y = `Runtime [min]`)
 ) +
   ggplot2::geom_boxplot() +
   ggplot2::geom_jitter(alpha = 0.4, width = 0.25, height = 0) +
-  ggplot2::theme(axis.title.x = ggplot2::element_blank()) +
+  ggplot2::labs(x = "Projection method") +
   ggplot2::coord_cartesian(ylim = c(0, NA))
-# ggsave_cust(file.path("figs", "time"),
-#             width = 0.5 * 6, height = 0.75 * 6 * 0.618)
-
-gg_time_diff <- ggplot2::ggplot(
-  data = time_vs_wide,
-  mapping = ggplot2::aes(x = I(0), y = diff_t)
-) +
-  ggplot2::geom_boxplot() +
-  ggplot2::geom_jitter(alpha = 0.4, width = 0.25, height = 0) +
-  ggplot2::labs(y = "$t_{\\mathrm{lat}} - t_{\\mathrm{aug}}$ [min]") +
-  ggplot2::theme(axis.ticks.x = ggplot2::element_blank(),
-                 axis.text.x = ggplot2::element_blank(),
-                 axis.title.x = ggplot2::element_blank())
-# ggsave_cust(file.path("figs", "time_diff"),
-#             width = 0.5 * 6, height = 0.75 * 6 * 0.618)
-
-library(patchwork)
-gg_time_all <- gg_time | gg_time_diff
-ggsave_cust(file.path("figs", "time_all"),
-            height = 0.75 * 6 * 0.618)
+ggsave_cust(file.path("figs", "time"),
+            width = 0.5 * 6, height = 0.75 * 6 * 0.618)
 
 ## Solution paths ---------------------------------------------------------
 
@@ -605,6 +587,7 @@ ylim_lat <- ggplot2::ggplot_build(
   comm_lat$ggobj
 )$layout$panel_scales_y[[1]]$range$range
 comm_aug <- plotter_ovrlay(prj_meth = "aug", ylim_full = ylim_lat)
+library(patchwork)
 gg_aug_lat <- comm_aug$ggobj_full / comm_lat$ggobj_full
 ggsave_cust(file.path("figs", "aug_lat"), height = 2 * 6 * 0.618)
 
