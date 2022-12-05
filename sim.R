@@ -652,6 +652,8 @@ plotter_ovrlay <- function(prj_meth, eval_scale = "response",
             c("size", "se", y_chr)
           ])
   }))
+  ylab <- paste0("$\\Delta\\mathrm{", toupper(y_chr), "}_{\\mathrm{", prj_meth,
+                 "}}$")
   ggobj <- ggplot2::ggplot(data = plotdat,
                            mapping = ggplot2::aes(x = size,
                                                   y = .data[[y_chr]],
@@ -672,7 +674,7 @@ plotter_ovrlay <- function(prj_meth, eval_scale = "response",
       # title = title_gg,
       x = "Submodel size",
       # y = bquote(Delta*.(toupper(y_chr)))
-      y = paste0("$\\Delta$", toupper(y_chr))
+      y = ylab
     )
   fnm_base <- paste(y_chr, prj_meth, eval_scale, sep = "_")
   ggsave_cust(file.path("figs", fnm_base))
@@ -708,7 +710,7 @@ plotter_ovrlay <- function(prj_meth, eval_scale = "response",
       # title = title_gg,
       x = "Submodel size",
       # y = bquote(Delta*.(toupper(y_chr)))
-      y = paste0("$\\Delta$", toupper(y_chr))
+      y = ylab
     ) +
     ggplot2::coord_cartesian(ylim = ylim_eb)
   ggsave_cust(file.path("figs",
