@@ -50,7 +50,10 @@ warn_orig_glob <- options(warn = 1)
 only_init_fit <- F
 
 if (!only_init_fit) {
-  nsim <- 50 # The number of simulation iterations
+  # The number of simulation iterations:
+  nsim <- 50
+
+  # Parallel backend:
   par_type <- "auto"
   # par_type <- "doSeq"
   # par_type <- "doParallel"
@@ -66,7 +69,7 @@ if (!only_init_fit) {
   }
   if (par_type %in% c("doParallel")) {
     # The number of CPU cores (more generally, "workers") for the simulation:
-    ncores <- 8 # parallel::detectCores(logical = FALSE)
+    ncores <- 8
     if (nsim < ncores) {
       warning("Increasing `nsim` to `ncores = ", ncores, "`.")
       nsim <- ncores
@@ -98,7 +101,6 @@ cat("-----\n")
 
 if (!only_init_fit) {
   library(foreach)
-  # library(iterators)
   library(doRNG)
   if (par_type %in% c("doParallel")) {
     library(doParallel)
@@ -148,21 +150,8 @@ dataconstructor <- function() {
   nobsv_sim <- nobsv + nobsv_indep
 
   # The intercepts at centered predictors ("Intercept"s in brms parlance, not
-  # "b_Intercept"s); note that when switching the option, the prior in the
-  # data-fitting model should usually be adjusted:
-  ### Option 1:
-  # thres <- seq(-1.5, 1.5, length.out = nthres)
-  ###
-  ### Option 2:
-  # thres <- sort(rnorm(nthres))
-  ###
-  ### Option 3:
-  # thres <- sort(2.5 * rt(nthres, df = 3) + 0)
-  ###
-  ### Option 4:
+  # "b_Intercept"s):
   thres <- qnorm(seq_len(nthres) / ncat)
-  ###
-  # print(diff(c(0, pnorm(thres), 1)))
 
   npreds_cont <- npreds_tot
   coefs_cont <- rhorseshoe(npreds_cont,
@@ -171,66 +160,16 @@ dataconstructor <- function() {
                            N = nobsv,
                            df_slab = 100, scale_slab = 1)
 
-  npreds_grPL <- 0L # 1L
-  ngrPL <- integer() # c(3L)
-  stopifnot(identical(length(ngrPL), npreds_grPL))
-  if (npreds_grPL > 0) {
-    coefs_grPL <- list(
-      c(0, seq(-2, 2, length.out = ngrPL[1] - 1L))
-    )
-    stopifnot(identical(length(coefs_grPL), npreds_grPL))
-  }
-
-  npreds_grGL <- 0L # 1L
-  if (!exists("nobsv_per_grGL")) {
-    # Number of observations per group (only roughly; some groups might get a
-    # few observations more):
-    nobsv_per_grGL <- integer() # c(2L)
-  }
-  ngrGL <- c(nobsv %/% nobsv_per_grGL)
-  stopifnot(identical(length(ngrGL), npreds_grGL))
-  if (npreds_grGL > 0) {
-    coefs_grGL <- list(
-      list("icpt" = rnorm(ngrGL[1], sd = 0.5)) # , "Xcont1" = <...>
-    )
-    stopifnot(identical(length(coefs_grGL), npreds_grGL))
-  }
-
   ## Continuous predictors --------------------------------------------------
 
   dat_sim <- setNames(replicate(npreds_cont, {
     rnorm(nobsv_sim)
   }, simplify = FALSE), paste0("Xcont", seq_len(npreds_cont)))
   dat_sim <- as.data.frame(dat_sim)
-  # Start constructing the linear predictor:
+
+  ## Linear predictor -------------------------------------------------------
+
   eta <- drop(as.matrix(dat_sim) %*% coefs_cont)
-
-  ## Population-level (PL) categorical predictors ---------------------------
-
-  if (npreds_grPL == 1) {
-    dat_sim$XgrPL1 <- sample(
-      gl(n = ngrPL[1], k = floor(nobsv_sim / ngrPL[1]), length = nobsv_sim,
-         labels = paste0("gr", seq_len(ngrPL[1])))
-    )
-    # Continue constructing the linear predictor:
-    eta <- eta + coefs_grPL[[1]][dat_sim$XgrPL1]
-  } else if (npreds_grPL > 1) {
-    stop("This value of `npreds_grPL` is currently not supported.")
-  }
-
-  ## Group-level (GL) categorical predictors --------------------------------
-
-  if (npreds_grGL == 1) {
-    dat_sim$XgrGL1 <- sample(
-      gl(n = ngrGL[1], k = floor(nobsv_sim / ngrGL[1]), length = nobsv_sim,
-         labels = paste0("gr", seq_len(ngrGL[1])))
-    )
-    # Continue constructing the linear predictor:
-    eta <- eta + coefs_grGL[[1]]$icpt[dat_sim$XgrGL1]
-    # + coefs_grGL[[1]]$Xcont1[dat_sim$XgrGL1] * dat_sim$Xcont1
-  } else if (npreds_grGL > 1) {
-    stop("This value of `npreds_grGL` is currently not supported.")
-  }
 
   ## Construct "epred" ------------------------------------------------------
 
@@ -252,17 +191,10 @@ dataconstructor <- function() {
   ## Formula ----------------------------------------------------------------
 
   voutc <- "Y"
-  vpreds <- grep("^Xcont|^XgrPL", names(dat_sim), value = TRUE)
-  vpreds_GL <- grep("^XgrGL", names(dat_sim), value = TRUE)
-  if (length(vpreds_GL) > 0L) {
-    if (!all(lengths(coefs_grGL) == 1)) {
-      stop("Group-level slopes are currently not supported.")
-    }
-    vpreds_GL <- paste0("(1 | ", vpreds_GL, ")")
-  }
+  vpreds <- grep("^Xcont", names(dat_sim), value = TRUE)
 
   fml_sim <- as.formula(paste(
-    voutc, "~", paste(c(vpreds, vpreds_GL), collapse = " + ")
+    voutc, "~", paste(vpreds, collapse = " + ")
   ))
 
   ## Check response categories ----------------------------------------------
@@ -276,7 +208,6 @@ dataconstructor <- function() {
   ## Output -----------------------------------------------------------------
 
   return(list(true_coefs_cont = coefs_cont,
-              true_GLEs = if (npreds_grGL > 0) coefs_grGL[[1]]$icpt else NULL,
               dat = dat_train,
               fml = fml_sim,
               dat_indep = dat_test))
@@ -326,10 +257,8 @@ if (only_init_fit) {
   )
   # Check MCMC diagnostics:
   source("check_MCMC_diagn.R")
-  # debugonce(check_MCMC_diagn)
   MCMC_diagn <- check_MCMC_diagn(
     C_stanfit = bfit$fit,
-    # exclude_NAs = TRUE,
     pars = "disc",
     include = FALSE
   )
@@ -403,7 +332,7 @@ run_projpred <- function(refm_fit, dat_indep, latent = FALSE, ...) {
     soltrms = projpred::solution_terms(vs)
   )
   if (latent) {
-    respOrig_vals <- c(TRUE) # , FALSE
+    respOrig_vals <- c(TRUE)
   } else {
     respOrig_vals <- TRUE
   }
@@ -419,8 +348,6 @@ run_projpred <- function(refm_fit, dat_indep, latent = FALSE, ...) {
     return(list(
       refsmms = refsmms,
       refstat = stats_man$value[stats_man$size == Inf],
-      # plot_obj = plot(vs, deltas = TRUE, stats = "mlpd",
-      #                 respOrig = respOrig_val),
       sgg_size = projpred::suggest_size(vs, stat = "mlpd",
                                         respOrig = respOrig_val),
       smmry = summary(vs, deltas = TRUE, stats = "mlpd",
@@ -433,12 +360,10 @@ run_projpred <- function(refm_fit, dat_indep, latent = FALSE, ...) {
 
 sim_runner <- function(...) {
   foreach(
-    sit = seq_len(nsim), # Needs package "iterators": icount(nsim),
-    # .packages = c("brms", "projpred"), # , "rstanarm"
+    sit = seq_len(nsim),
     .export = c("rhorseshoe", "dataconstructor", "fit_ref", "run_projpred",
                 "nobsv", "nobsv_indep", "ncat", "yunq", "link_str", "nthres",
                 "npreds_tot", "p0", "sigti", "bfit"),
-    # .noexport = c("<object_name>"),
     .options.snow = list(attachExportEnv = TRUE)
   ) %dorng% {
     cat("\nSimulation iteration: ", sit, "\n", sep = "")
@@ -494,12 +419,10 @@ sim_runner <- function(...) {
                         projpred_lat$respOrig_TRUE$refsmms))
     projpred_aug$respOrig_TRUE$refsmms <- NULL
     projpred_lat$respOrig_TRUE$refsmms <- NULL
-    # projpred_lat$respOrig_FALSE$refsmms <- NULL
     return(list(
       aug = projpred_aug,
       lat = projpred_lat,
-      true_coefs_cont = sim_dat_etc$true_coefs_cont,
-      true_GLEs = sim_dat_etc$true_GLEs
+      true_coefs_cont = sim_dat_etc$true_coefs_cont
     ))
   }
 }
@@ -545,37 +468,8 @@ print(proportions(table(abs(true_coefs_cont$coef) > 0.5, useNA = "ifany")))
 cat("-----\n")
 gg_true_coefs_cont <- ggplot2::ggplot(data = true_coefs_cont,
                                       mapping = ggplot2::aes(x = coef)) +
-  ggplot2::geom_histogram(bins = 40) # + ggplot2::geom_density()
+  ggplot2::geom_histogram(bins = 40)
 ggsave_cust(file.path("figs", "true_coefs_cont"))
-
-## True group-level effects -----------------------------------------------
-
-if (!all(sapply(lapply(simres, "[[", "true_GLEs"), is.null))) {
-  true_GLEs <- do.call(cbind, lapply(simres, "[[", "true_GLEs"))
-  dimnames(true_GLEs) <- list(
-    grp = paste0("grp", seq_len(nrow(true_GLEs))),
-    simiter = paste0("simiter", seq_len(ncol(true_GLEs)))
-  )
-  stopifnot(!all(lengths(apply(true_GLEs, 1, unique, simplify = FALSE)) == 1))
-  cat("\n-----\n")
-  cat("Quartiles of the true group-level effects (across",
-      "all simulation iterations):\n")
-  print(quantile(true_GLEs))
-  cat("-----\n")
-  if (nsim <= 10) {
-    cat("\n-----\n")
-    cat("Empirical SDs of the true group-level effects (for",
-        "all simulation iterations):\n")
-    print(apply(true_GLEs, 2, sd))
-    cat("-----\n")
-  } else {
-    cat("\n-----\n")
-    cat("Quartiles of the empirical SDs of the true group-level effects",
-        "(across all simulation iterations):\n")
-    print(quantile(apply(true_GLEs, 2, sd)))
-    cat("-----\n")
-  }
-}
 
 ## Runtime ----------------------------------------------------------------
 
@@ -600,9 +494,9 @@ gg_time <- ggplot2::ggplot(
   data = mins_vs,
   mapping = ggplot2::aes(x = prj_meth, y = `Runtime [min]`)
 ) +
-  ggplot2::geom_boxplot() + # ggplot2::geom_violin() +
+  ggplot2::geom_boxplot() +
   ggplot2::labs(x = "Projection method") +
-  ggplot2::coord_cartesian(ylim = c(0, NA)) # + ggplot2::coord_flip()
+  ggplot2::coord_cartesian(ylim = c(0, NA))
 ggsave_cust(file.path("figs", "time"),
             width = 0.5 * 6, height = 0.75 * 6 * 0.618)
 
@@ -671,7 +565,6 @@ plotter_ovrlay <- function(prj_meth, eval_scale = "response",
   return(list(succ_ind = TRUE, ggobj = ggobj, ggobj_full = ggobj_full))
 }
 comm_lat <- plotter_ovrlay(prj_meth = "lat")
-# comm_lat_nonOrig <- plotter_ovrlay(prj_meth = "lat", eval_scale = "latent")
 ylim_lat <- ggplot2::ggplot_build(
   comm_lat$ggobj
 )$layout$panel_scales_y[[1]]$range$range
@@ -732,8 +625,7 @@ plotter_ovrlay_diff <- function(eval_scale = "response") {
       x = xlab,
       y = bquote(.(toupper(y_chr))[lat] - .(toupper(y_chr))[aug])
     )
-  fnm_base <- paste(y_chr_diff, eval_scale, sep = "_")
-  ggsave_cust(file.path("figs", fnm_base))
+  ggsave_cust(file.path("figs", paste(y_chr_diff, eval_scale, sep = "_")))
   ggobj_se <- ggplot2::ggplot(data = plotdat,
                               mapping = ggplot2::aes(x = factor(size),
                                                      y = diff_se,
@@ -776,7 +668,7 @@ sgger_size <- function(sim_idx, eval_scale_lat = "response") {
     sgg_size_lat = simres[[sim_idx]]$lat[[respOrig_nm_lat]]$sgg_size
   ))
 }
-for (eval_scale_lat_val in c("response")) { # , "latent"
+for (eval_scale_lat_val in c("response")) {
   cat("\n----------\n")
   cat("Evaluation scale for the latent projection (CAUTION: always using ",
       "response scale for the augmented-data projection): ", eval_scale_lat_val,
@@ -866,7 +758,6 @@ suppressPackageStartupMessages({
 if (!isNamespaceLoaded("rmarkdown")) loadNamespace("rmarkdown")
 if (!isNamespaceLoaded("yaml")) loadNamespace("yaml")
 
-# sessioninfo::session_info(to_file = TRUE)
 sink(file = paste0("session_info_", par_type, ".txt"))
 print(sessioninfo::session_info())
 cat("\n-----\n")
