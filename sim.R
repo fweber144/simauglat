@@ -88,6 +88,7 @@ p0 <- as.integer(ceiling(npreds_tot * 0.20))
 source("rh_sigma_tilde.R")
 sigti <- calc_sigma_tilde(ncats = ncat)
 seed_glob <- 856824715
+seed_post <- 46629794
 
 cat("-----\np0:\n")
 print(p0)
@@ -440,6 +441,10 @@ print(system.time({
 saveRDS(simres, file = "simres.rds") # simres <- readRDS(file = "simres.rds")
 
 # Post-processing ---------------------------------------------------------
+
+# Jittering requires PRNG, so set a seed here to be able to run the
+# post-processing part independently:
+set.seed(seed_post)
 
 source("gg_to_tikz/tikzpicture-template.R")
 ggsave_cust <- function(fname_no_ext, plot = ggplot2::last_plot(),
