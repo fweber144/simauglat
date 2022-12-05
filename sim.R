@@ -660,12 +660,6 @@ plotter_ovrlay <- function(prj_meth, eval_scale = "response",
     ggplot2::geom_hline(yintercept = 0,
                         color = "firebrick",
                         linetype = "dashed") +
-    ### Only applicable when using the extended suggest_size() heuristics by
-    ### setting argument `thres_elpd` to `4`:
-    # ggplot2::geom_hline(yintercept = -4 / nobsv_indep,
-    #                     color = "dodgerblue",
-    #                     linetype = "dotdash") +
-    ###
     ggplot2::geom_point() +
     ggplot2::geom_line() +
     ggplot2::labs(x = xlab, y = ylab)
@@ -690,12 +684,6 @@ plotter_ovrlay <- function(prj_meth, eval_scale = "response",
     ggplot2::geom_hline(yintercept = 0,
                         color = "firebrick",
                         linetype = "dashed") +
-    ### Only applicable when using the extended suggest_size() heuristics by
-    ### setting argument `thres_elpd` to `4`:
-    # ggplot2::geom_hline(yintercept = -4 / nobsv_indep,
-    #                     color = "dodgerblue",
-    #                     linetype = "dotdash") +
-    ###
     ggplot2::geom_point() +
     ggplot2::geom_line() +
     ggplot2::geom_errorbar() +
