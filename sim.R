@@ -652,6 +652,7 @@ plotter_ovrlay <- function(prj_meth, eval_scale = "response",
             c("size", "se", y_chr)
           ])
   }))
+  xlab <- "Submodel size"
   ylab <- paste0("$\\Delta\\mathrm{", toupper(y_chr), "}_{\\mathrm{", prj_meth,
                  "}}$")
   ggobj <- ggplot2::ggplot(data = plotdat,
@@ -672,7 +673,7 @@ plotter_ovrlay <- function(prj_meth, eval_scale = "response",
     ggplot2::geom_line() +
     ggplot2::labs(
       # title = title_gg,
-      x = "Submodel size",
+      x = xlab,
       # y = bquote(Delta*.(toupper(y_chr)))
       y = ylab
     )
@@ -708,7 +709,7 @@ plotter_ovrlay <- function(prj_meth, eval_scale = "response",
     ggplot2::geom_errorbar() +
     ggplot2::labs(
       # title = title_gg,
-      x = "Submodel size",
+      x = xlab,
       # y = bquote(Delta*.(toupper(y_chr)))
       y = ylab
     ) +
@@ -722,9 +723,9 @@ plotter_ovrlay <- function(prj_meth, eval_scale = "response",
     ggplot2::geom_boxplot() +
     ggplot2::geom_jitter(width = 0.25, height = 0) +
     ggplot2::labs(
-      x = "Submodel size",
+      x = xlab,
       # y = bquote(SE(Delta*.(toupper(y_chr))))
-      y = paste0("SE($\\Delta$", toupper(y_chr), ")")
+      y = paste0("SE(", ylab, ")")
     )
   ggsave_cust(file.path("figs",
                         paste(y_chr, prj_meth, eval_scale, "se", sep = "_")))
@@ -785,6 +786,7 @@ plotter_ovrlay_diff <- function(eval_scale = "response") {
   y_chr_diff <- paste("diff", y_chr, sep = "_")
   plotdat[[y_chr_diff]] <- plotdat[[y_chr_lat]] - plotdat[[y_chr_aug]]
   plotdat$diff_se <- plotdat[["se_lat"]] - plotdat[["se_aug"]]
+  xlab <- "Submodel size"
   ggobj <- ggplot2::ggplot(data = plotdat,
                            mapping = ggplot2::aes(x = size,
                                                   y = .data[[y_chr_diff]],
@@ -797,7 +799,7 @@ plotter_ovrlay_diff <- function(eval_scale = "response") {
     ggplot2::geom_line() +
     ggplot2::labs(
       # title = title_gg,
-      x = "Submodel size",
+      x = xlab,
       y = bquote(.(toupper(y_chr))[lat] - .(toupper(y_chr))[aug])
     )
   fnm_base <- paste(y_chr_diff, eval_scale, sep = "_")
@@ -812,7 +814,7 @@ plotter_ovrlay_diff <- function(eval_scale = "response") {
     ggplot2::geom_boxplot() +
     ggplot2::geom_jitter(width = 0.25, height = 0) +
     ggplot2::labs(
-      x = "Submodel size",
+      x = xlab,
       y = paste0(
         "SE($\\Delta\\mathrm{", toupper(y_chr), "}_{\\mathrm{lat}}$) - ",
         "SE($\\Delta\\mathrm{", toupper(y_chr), "}_{\\mathrm{aug}}$)"
@@ -889,7 +891,7 @@ for (eval_scale_lat_val in c("response")) { # , "latent"
   print(sgg_sizes_tab)
   print(proportions(sgg_sizes_tab))
   cat("-----\n")
-  xlab_long <- bquote(G[lat] - G[aug])
+  xlab_sgg <- bquote(G[lat] - G[aug])
   title_gg <- "Suggested size diff."
   title_gg <- paste0(title_gg, " (evaluation scale for the latent projection: ",
                      eval_scale_lat_val, ")")
@@ -900,7 +902,7 @@ for (eval_scale_lat_val in c("response")) { # , "latent"
     ggplot2::geom_bar() +
     ggplot2::labs(
       # title = title_gg,
-      x = xlab_long,
+      x = xlab_sgg,
       y = paste0("Number of simulation iterations (total: ", nsim, ")")
     ) +
     ggplot2::scale_x_discrete(drop = FALSE) +
