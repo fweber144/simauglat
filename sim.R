@@ -651,8 +651,9 @@ plotter_ovrlay_diff <- function(eval_scale = "response") {
     ggplot2::labs(
       x = xlab,
       y = paste0(
-        "SE($\\Delta\\mathrm{", toupper(y_chr), "}_{\\mathrm{lat}}$) - ",
-        "SE($\\Delta\\mathrm{", toupper(y_chr), "}_{\\mathrm{aug}}$)"
+        "$\\mathrm{SE}(\\Delta\\mathrm{", toupper(y_chr), "}_{\\mathrm{lat}}$)",
+        " - ",
+        "\\mathrm{SE}($\\Delta\\mathrm{", toupper(y_chr), "}_{\\mathrm{aug}})$"
       )
     )
   ggsave_cust(file.path("figs", paste("diff_se", eval_scale, sep = "_")))
