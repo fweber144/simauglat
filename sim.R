@@ -478,25 +478,27 @@ ggsave_cust(file.path("figs", "true_coefs_cont"))
 
 ## Runtime ----------------------------------------------------------------
 
-mins_vs <- do.call(rbind, lapply(seq_along(simres), function(sim_idx) {
+time_vs_wide <- do.call(rbind, lapply(seq_along(simres), function(sim_idx) {
   return(data.frame(sim_idx = sim_idx,
                     t_aug = simres[[sim_idx]]$aug$time_vs,
                     t_lat = simres[[sim_idx]]$lat$time_vs))
 }))
-mins_vs <- reshape(
-  mins_vs,
+time_vs_long <- reshape(
+  time_vs_wide,
   direction = "long",
   v.names = "Runtime [min]",
-  varying = list("Runtime [min]" = grep("^t_", names(mins_vs), value = TRUE)),
+  varying = list(
+    "Runtime [min]" = grep("^t_", names(time_vs_wide), value = TRUE)
+  ),
   timevar = "prj_meth",
   times = c("Augmented-data", "Latent"),
   idvar = "sim_idx_ch",
   sep = "_"
 )
-stopifnot(identical(mins_vs$sim_idx_ch, mins_vs$sim_idx))
-mins_vs$sim_idx_ch <- NULL
+stopifnot(identical(time_vs_long$sim_idx_ch, time_vs_long$sim_idx))
+time_vs_long$sim_idx_ch <- NULL
 gg_time <- ggplot2::ggplot(
-  data = mins_vs,
+  data = time_vs_long,
   mapping = ggplot2::aes(x = prj_meth, y = `Runtime [min]`)
 ) +
   ggplot2::geom_boxplot() +
