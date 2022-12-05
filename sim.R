@@ -534,6 +534,8 @@ plotter_ovrlay <- function(prj_meth, eval_scale = "response",
   } else if (prj_meth == "lat") {
     respOrig_nm <- paste0("respOrig_", eval_scale == "response")
   }
+
+  # Prepare the plots:
   y_chr <- setdiff(names(simres[[1L]][[prj_meth]][[respOrig_nm]]$smmry),
                    c("solution_terms", "se", "lower", "upper", "size"))
   stopifnot(length(y_chr) == 1)
@@ -546,6 +548,8 @@ plotter_ovrlay <- function(prj_meth, eval_scale = "response",
   xlab <- "Submodel size"
   ylab <- paste0("$\\Delta\\mathrm{", toupper(y_chr), "}_{\\mathrm{", prj_meth,
                  "}}$")
+
+  # Delta-MLPD plot:
   ggobj <- ggplot2::ggplot(data = plotdat,
                            mapping = ggplot2::aes(x = size,
                                                   y = .data[[y_chr]],
@@ -559,9 +563,13 @@ plotter_ovrlay <- function(prj_meth, eval_scale = "response",
     ggplot2::labs(x = xlab, y = ylab)
   fnm_base <- paste(y_chr, prj_meth, eval_scale, sep = "_")
   ggsave_cust(file.path("figs", fnm_base))
+
+  # Delta-MLPD plot with prespecified y-axis limits (employed to have the same
+  # y-axis limits for augmented-data and latent projection):
   ggobj_full <- ggobj +
     ggplot2::coord_cartesian(ylim = ylim_full)
   ggsave_cust(file.path("figs", paste0(fnm_base, "_full")))
+
   return(list(succ_ind = TRUE, ggobj = ggobj, ggobj_full = ggobj_full))
 }
 comm_lat <- plotter_ovrlay(prj_meth = "lat")
@@ -591,6 +599,7 @@ plotter_ovrlay_diff <- function(eval_scale = "response") {
                       tolerance = .Machine$double.eps))
   refstats <- refstats_aug
 
+  # Prepare the plots:
   smmry_nms <- names(simres[[1L]]$aug[[respOrig_nm_aug]]$smmry)
   stopifnot(identical(smmry_nms,
                       names(simres[[1L]]$lat[[respOrig_nm_lat]]$smmry)))
@@ -611,6 +620,8 @@ plotter_ovrlay_diff <- function(eval_scale = "response") {
   plotdat[[y_chr_diff]] <- plotdat[[y_chr_lat]] - plotdat[[y_chr_aug]]
   plotdat$diff_se <- plotdat[["se_lat"]] - plotdat[["se_aug"]]
   xlab <- "Submodel size"
+
+  # MLPD difference plot:
   ggobj <- ggplot2::ggplot(data = plotdat,
                            mapping = ggplot2::aes(x = size,
                                                   y = .data[[y_chr_diff]],
@@ -626,6 +637,8 @@ plotter_ovrlay_diff <- function(eval_scale = "response") {
       y = bquote(.(toupper(y_chr))[lat] - .(toupper(y_chr))[aug])
     )
   ggsave_cust(file.path("figs", paste(y_chr_diff, eval_scale, sep = "_")))
+
+  # SE difference plot:
   ggobj_se <- ggplot2::ggplot(data = plotdat,
                               mapping = ggplot2::aes(x = factor(size),
                                                      y = diff_se,
@@ -643,6 +656,7 @@ plotter_ovrlay_diff <- function(eval_scale = "response") {
       )
     )
   ggsave_cust(file.path("figs", paste("diff_se", eval_scale, sep = "_")))
+
   return(list(succ_ind = TRUE, ggobj = ggobj, ggobj_se = ggobj_se,
               refstats = refstats, q_diff_se = quantile(plotdat$diff_se)))
 }
