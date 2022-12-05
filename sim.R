@@ -668,11 +668,7 @@ plotter_ovrlay <- function(prj_meth, eval_scale = "response",
     ###
     ggplot2::geom_point() +
     ggplot2::geom_line() +
-    ggplot2::labs(
-      x = xlab,
-      # y = bquote(Delta*.(toupper(y_chr)))
-      y = ylab
-    )
+    ggplot2::labs(x = xlab, y = ylab)
   fnm_base <- paste(y_chr, prj_meth, eval_scale, sep = "_")
   ggsave_cust(file.path("figs", fnm_base))
   ggobj_full <- ggobj +
@@ -703,11 +699,7 @@ plotter_ovrlay <- function(prj_meth, eval_scale = "response",
     ggplot2::geom_point() +
     ggplot2::geom_line() +
     ggplot2::geom_errorbar() +
-    ggplot2::labs(
-      x = xlab,
-      # y = bquote(Delta*.(toupper(y_chr)))
-      y = ylab
-    ) +
+    ggplot2::labs(x = xlab, y = ylab) +
     ggplot2::coord_cartesian(ylim = ylim_eb)
   ggsave_cust(file.path("figs",
                         paste(y_chr, prj_meth, eval_scale, "eb", sep = "_")))
@@ -717,11 +709,7 @@ plotter_ovrlay <- function(prj_meth, eval_scale = "response",
                                                      alpha = I(0.4))) +
     ggplot2::geom_boxplot() +
     ggplot2::geom_jitter(width = 0.25, height = 0) +
-    ggplot2::labs(
-      x = xlab,
-      # y = bquote(SE(Delta*.(toupper(y_chr))))
-      y = paste0("SE(", ylab, ")")
-    )
+    ggplot2::labs(x = xlab, y = paste0("SE(", ylab, ")"))
   ggsave_cust(file.path("figs",
                         paste(y_chr, prj_meth, eval_scale, "se", sep = "_")))
   return(list(succ_ind = TRUE, ggobj = ggobj, ggobj_full = ggobj_full,
@@ -884,15 +872,13 @@ for (eval_scale_lat_val in c("response")) { # , "latent"
   print(proportions(sgg_sizes_tab))
   cat("-----\n")
   xlab_sgg <- bquote(G[lat] - G[aug])
+  ylab_sgg <- paste0("Number of simulation iterations (total: ", nsim, ")")
   gg_sgg_sizes_diff <- ggplot2::ggplot(
     data = data.frame(sgg_sizes_lat_minus_aug),
     mapping = ggplot2::aes(x = sgg_sizes_lat_minus_aug)
   ) +
     ggplot2::geom_bar() +
-    ggplot2::labs(
-      x = xlab_sgg,
-      y = paste0("Number of simulation iterations (total: ", nsim, ")")
-    ) +
+    ggplot2::labs(x = xlab_sgg, y = ylab_sgg) +
     ggplot2::scale_x_discrete(drop = FALSE) +
     ggplot2::scale_y_continuous(breaks = scales::breaks_pretty())
   ggsave_cust(
