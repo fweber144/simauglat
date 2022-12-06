@@ -88,7 +88,7 @@ p0 <- as.integer(ceiling(npreds_tot * 0.20))
 source("rh_sigma_tilde.R")
 sigti <- calc_sigma_tilde(ncats = ncat)
 seed_glob <- 856824715
-seed_post <- 46629794
+seed_jitter <- 46629794
 
 cat("-----\np0:\n")
 print(p0)
@@ -442,10 +442,6 @@ saveRDS(simres, file = "simres.rds") # simres <- readRDS(file = "simres.rds")
 
 # Post-processing ---------------------------------------------------------
 
-# Jittering requires PRNG, so set a seed here to be able to run the
-# post-processing part independently:
-set.seed(seed_post)
-
 source("gg_to_tikz/tikzpicture-template.R")
 ggsave_cust <- function(fname_no_ext, plot = ggplot2::last_plot(),
                         width = 6, height = width * 0.618,
@@ -499,6 +495,8 @@ time_vs_long <- reshape(
 stopifnot(identical(time_vs_long$sim_idx_ch, time_vs_long$sim_idx))
 time_vs_long$sim_idx_ch <- NULL
 
+Rseed <- get(".Random.seed", envir = .GlobalEnv)
+set.seed(seed_jitter)
 gg_time <- ggplot2::ggplot(
   data = time_vs_long,
   mapping = ggplot2::aes(x = prj_meth, y = `Runtime [min]`)
@@ -509,6 +507,7 @@ gg_time <- ggplot2::ggplot(
   ggplot2::coord_cartesian(ylim = c(0, NA))
 ggsave_cust(file.path("figs", "time"),
             width = 0.5 * 6, height = 0.75 * 6 * 0.618)
+assign(".Random.seed", Rseed, envir = .GlobalEnv)
 
 ## Solution paths ---------------------------------------------------------
 
@@ -649,6 +648,8 @@ plotter_ovrlay_diff <- function(eval_scale = "response") {
   ggsave_cust(file.path("figs", paste(y_chr_diff, eval_scale, sep = "_")))
 
   # SE difference plot:
+  Rseed <- get(".Random.seed", envir = .GlobalEnv)
+  set.seed(seed_jitter)
   ggobj_se <- ggplot2::ggplot(data = plotdat,
                               mapping = ggplot2::aes(x = factor(size),
                                                      y = diff_se)) +
@@ -666,6 +667,7 @@ plotter_ovrlay_diff <- function(eval_scale = "response") {
       )
     )
   ggsave_cust(file.path("figs", paste("diff_se", eval_scale, sep = "_")))
+  assign(".Random.seed", Rseed, envir = .GlobalEnv)
 
   return(list(succ_ind = TRUE, ggobj = ggobj, ggobj_se = ggobj_se,
               refstats = refstats, q_diff_se = quantile(plotdat$diff_se)))
