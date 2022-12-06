@@ -749,7 +749,7 @@ for (eval_scale_lat_val in c("response")) {
   ) +
     ggplot2::geom_bar() +
     ggplot2::labs(
-      x = bquote(G[lat] - G[aug]),
+      x = "$G_{\\mathrm{lat}} - G_{\\mathrm{aug}}$",
       y = paste0("Number of simulation iterations (total: ", nsim, ")")
     ) +
     ggplot2::scale_x_discrete(drop = FALSE) +
