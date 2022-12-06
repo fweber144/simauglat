@@ -743,14 +743,15 @@ for (eval_scale_lat_val in c("response")) {
   print(sgg_sizes_tab)
   print(proportions(sgg_sizes_tab))
   cat("-----\n")
-  xlab_sgg <- bquote(G[lat] - G[aug])
-  ylab_sgg <- paste0("Number of simulation iterations (total: ", nsim, ")")
   gg_sgg_sizes_diff <- ggplot2::ggplot(
     data = data.frame(sgg_sizes_lat_minus_aug),
     mapping = ggplot2::aes(x = sgg_sizes_lat_minus_aug)
   ) +
     ggplot2::geom_bar() +
-    ggplot2::labs(x = xlab_sgg, y = ylab_sgg) +
+    ggplot2::labs(
+      x = bquote(G[lat] - G[aug]),
+      y = paste0("Number of simulation iterations (total: ", nsim, ")")
+    ) +
     ggplot2::scale_x_discrete(drop = FALSE) +
     ggplot2::scale_y_continuous(breaks = scales::breaks_pretty())
   ggsave_cust(
