@@ -643,7 +643,11 @@ plotter_ovrlay_diff <- function(eval_scale = "response") {
     ggplot2::geom_line() +
     ggplot2::labs(
       x = xlab,
-      y = bquote(.(toupper(y_chr))[lat] - .(toupper(y_chr))[aug])
+      y = paste0(
+        "$\\mathrm{", toupper(y_chr), "}_{\\mathrm{lat}}",
+        " - ",
+        "\\mathrm{", toupper(y_chr), "}_{\\mathrm{aug}}$"
+      )
     )
   ggsave_cust(file.path("figs", paste(y_chr_diff, eval_scale, sep = "_")))
 
