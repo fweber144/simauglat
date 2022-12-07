@@ -559,6 +559,9 @@ plotter_ovrlay <- function(prj_meth, eval_scale = "response",
                  "}}$")
 
   # Delta-MLPD plot:
+  ### For the second y-axis:
+  stopifnot(identical(y_chr, "mlpd"))
+  ###
   ggobj <- ggplot2::ggplot(data = plotdat,
                            mapping = ggplot2::aes(x = size,
                                                   y = .data[[y_chr]],
@@ -570,8 +573,10 @@ plotter_ovrlay <- function(prj_meth, eval_scale = "response",
     ggplot2::geom_point() +
     ggplot2::geom_line() +
     ggplot2::scale_y_continuous(
-      # "y_left", sec.axis = ggplot2::sec_axis(~ . * 1.20, name = "y_right")
-      sec.axis = ~ exp(.)
+      sec.axis = ggplot2::sec_axis(
+        ~ exp(.),
+        name = sub("^\\$(.*)\\$$", "$\\\\exp(\\1)$", ylab)
+      )
     ) +
     ggplot2::labs(x = xlab, y = ylab)
   # fnm_base <- paste(y_chr, prj_meth, eval_scale, sep = "_")
