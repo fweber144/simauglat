@@ -681,13 +681,14 @@ plotter_ovrlay_diff <- function(eval_scale = "response") {
   assign(".Random.seed", Rseed, envir = .GlobalEnv)
 
   return(list(succ_ind = TRUE, ggobj = ggobj, ggobj_se = ggobj_se,
-              refstats = refstats, q_diff_se = quantile(plotdat$diff_se)))
+              q_refstat = quantile(refstats),
+              q_diff_se = quantile(plotdat$diff_se)))
 }
 diff_out <- plotter_ovrlay_diff()
 cat("\n-----\n")
 cat("Quartiles of the reference model's performance statistic (across all",
     "simulation iterations):\n")
-print(quantile(diff_out$refstats))
+print(diff_out$q_refstat)
 cat("-----\n")
 cat("\n-----\n")
 cat("Quartiles of the SE difference (across all simulation iterations and all",
