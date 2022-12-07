@@ -92,6 +92,7 @@ source("rh_sigma_tilde.R")
 sigti <- calc_sigma_tilde(ncats = ncat)
 seed_glob <- 856824715
 seed_jitter <- 46629794
+seed_indiv <- 255696126
 
 cat("-----\np0:\n")
 print(p0)
@@ -725,10 +726,13 @@ plotter_indiv <- function(nsub_indiv = 21L, eval_scale = "response") {
   respOrig_nm_lat <- paste0("respOrig_", eval_scale == "response")
 
   ### Option 1:
-  # sub_idxs <- sample.int(length(simres), size = nsub_indiv)
+  Rseed <- get(".Random.seed", envir = .GlobalEnv)
+  set.seed(seed_indiv)
+  sub_idxs <- sample.int(length(simres), size = nsub_indiv)
+  assign(".Random.seed", Rseed, envir = .GlobalEnv)
   ###
   ### Option 2:
-  sub_idxs <- seq_len(nsub_indiv)
+  # sub_idxs <- seq_len(nsub_indiv)
   ###
 
   # Prepare the plot:
