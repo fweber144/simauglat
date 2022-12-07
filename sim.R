@@ -561,9 +561,6 @@ plotter_ovrlay <- function(prj_meth, eval_scale = "response",
   # Delta-MLPD plot:
   ### For the second y-axis:
   stopifnot(identical(y_chr, "mlpd"))
-  # refstat_mean <- mean(do.call(c, lapply(seq_along(simres), function(sim_idx) {
-  #   simres[[sim_idx]][[prj_meth]][[respOrig_nm]]$refstat
-  # })))
   ###
   ggobj <- ggplot2::ggplot(data = plotdat,
                            mapping = ggplot2::aes(x = size,
@@ -577,7 +574,7 @@ plotter_ovrlay <- function(prj_meth, eval_scale = "response",
     ggplot2::geom_line() +
     ggplot2::scale_y_continuous(
       sec.axis = ggplot2::sec_axis(
-        ~ exp(.), #  + refstat_mean
+        ~ exp(.),
         name = sub("^\\$(.*)\\$$", "$\\\\exp(\\1)$", ylab)
       )
     ) +
