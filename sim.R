@@ -638,6 +638,9 @@ plotter_ovrlay_diff <- function(eval_scale = "response") {
   xlab <- "Submodel size"
 
   # MLPD difference plot:
+  ### For the second y-axis:
+  stopifnot(identical(y_chr, "mlpd"))
+  ###
   ggobj <- ggplot2::ggplot(data = plotdat,
                            mapping = ggplot2::aes(x = size,
                                                   y = .data[[y_chr_diff]],
@@ -648,6 +651,12 @@ plotter_ovrlay_diff <- function(eval_scale = "response") {
                         linetype = "dotted") +
     ggplot2::geom_point() +
     ggplot2::geom_line() +
+    ggplot2::scale_y_continuous(
+      sec.axis = ggplot2::sec_axis(
+        ~ exp(.),
+        name = "$\\mathrm{GMPD}_{\\mathrm{lat}} / \\mathrm{GMPD}_{\\mathrm{aug}}$"
+      )
+    ) +
     ggplot2::labs(
       x = xlab,
       y = paste0(
