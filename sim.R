@@ -42,6 +42,9 @@ cat("-----\n")
 # For source()-ing this script:
 warn_orig_glob <- options(warn = 1)
 
+# To ensure consistent output width:
+width_orig_glob <- options(width = 140)
+
 # options(projpred.warn_augdat_experimental = FALSE)
 # options(projpred.warn_latent_experimental = FALSE)
 
@@ -271,7 +274,7 @@ if (only_init_fit) {
   ## Teardown
 
   # Reset global options:
-  options(warn = warn_orig_glob$warn)
+  options(warn = warn_orig_glob$warn, width = width_orig_glob$width)
 
   # Timestamp:
   cat("\n-----\n")
@@ -824,7 +827,7 @@ sink()
 
 ## Reset global options ---------------------------------------------------
 
-options(warn = warn_orig_glob$warn)
+options(warn = warn_orig_glob$warn, width = width_orig_glob$width)
 
 ## Timestamp --------------------------------------------------------------
 
