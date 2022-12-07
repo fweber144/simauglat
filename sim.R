@@ -689,6 +689,9 @@ cat("\n-----\n")
 cat("Quartiles of the reference model's performance statistic (across all",
     "simulation iterations):\n")
 print(diff_out$q_refstat)
+cat("exp() of these quartiles (= quartiles of exp(reference model's",
+    "performance statistic)):\n")
+print(exp(diff_out$q_refstat))
 cat("-----\n")
 cat("\n-----\n")
 cat("Quartiles of the SE difference (across all simulation iterations and all",
