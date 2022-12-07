@@ -654,7 +654,11 @@ plotter_ovrlay_diff <- function(eval_scale = "response") {
     ggplot2::scale_y_continuous(
       sec.axis = ggplot2::sec_axis(
         ~ exp(.),
-        name = "$\\mathrm{GMPD}_{\\mathrm{lat}} / \\mathrm{GMPD}_{\\mathrm{aug}}$"
+        name = paste0(
+          "$\\mathrm{GMPD}_{\\mathrm{lat}}",
+          " / ",
+          "\\mathrm{GMPD}_{\\mathrm{aug}}$"
+        )
       )
     ) +
     ggplot2::labs(
