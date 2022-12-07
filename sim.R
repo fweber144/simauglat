@@ -569,6 +569,10 @@ plotter_ovrlay <- function(prj_meth, eval_scale = "response",
                         linetype = "dashed") +
     ggplot2::geom_point() +
     ggplot2::geom_line() +
+    ggplot2::scale_y_continuous(
+      # "y_left", sec.axis = ggplot2::sec_axis(~ . * 1.20, name = "y_right")
+      sec.axis = ~ exp(.)
+    ) +
     ggplot2::labs(x = xlab, y = ylab)
   # fnm_base <- paste(y_chr, prj_meth, eval_scale, sep = "_")
   # ggsave_cust(file.path("figs", fnm_base))
