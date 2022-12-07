@@ -626,19 +626,22 @@ plotter_ovrlay_diff <- function(eval_scale = "response") {
   y_chr <- setdiff(smmry_nms,
                    c("solution_terms", "se", "lower", "upper", "size"))
   stopifnot(length(y_chr) == 1)
-  y_chr_aug <- paste(y_chr, "aug", sep = "_")
-  y_chr_lat <- paste(y_chr, "lat", sep = "_")
+  smmry_cols <- c(y_chr, "se")
+  smmry_cols_aug <- setNames(paste(smmry_cols, "aug", sep = "_"), smmry_cols)
+  smmry_cols_lat <- setNames(paste(smmry_cols, "lat", sep = "_"), smmry_cols)
   plotdat <- do.call(rbind, lapply(seq_along(simres), function(sim_idx) {
     smmry_aug <- simres[[sim_idx]]$aug[[respOrig_nm_aug]]$smmry
     smmry_lat <- simres[[sim_idx]]$lat[[respOrig_nm_lat]]$smmry
     stopifnot(identical(smmry_aug["size"], smmry_lat["size"]))
     cbind(sim_idx = sim_idx, smmry_aug["size"],
-          setNames(smmry_aug[c(y_chr, "se")], c(y_chr_aug, "se_aug")),
-          setNames(smmry_lat[c(y_chr, "se")], c(y_chr_lat, "se_lat")))
+          setNames(smmry_aug[smmry_cols], smmry_cols_aug),
+          setNames(smmry_lat[smmry_cols], smmry_cols_lat))
   }))
   y_chr_diff <- paste("diff", y_chr, sep = "_")
-  plotdat[[y_chr_diff]] <- plotdat[[y_chr_lat]] - plotdat[[y_chr_aug]]
-  plotdat$diff_se <- plotdat[["se_lat"]] - plotdat[["se_aug"]]
+  plotdat[[y_chr_diff]] <- plotdat[[smmry_cols_lat[y_chr]]] -
+    plotdat[[smmry_cols_aug[y_chr]]]
+  plotdat$diff_se <- plotdat[[smmry_cols_lat["se"]]] -
+    plotdat[[smmry_cols_aug["se"]]]
   xlab <- "Submodel size"
 
   # MLPD difference plot:
@@ -715,6 +718,67 @@ cat("Quartiles of the SE difference (across all simulation iterations and all",
     "submodel sizes):\n")
 print(diff_out$q_diff_se)
 cat("-----\n")
+
+plotter_indiv <- function(sim_idx, eval_scale = "response") {
+  stopifnot(eval_scale == "response")
+  respOrig_nm_aug <- paste0("respOrig_", TRUE)
+  respOrig_nm_lat <- paste0("respOrig_", eval_scale == "response")
+
+  # Check that the reference model (performance) is the same:
+  refstat_aug <- simres[[sim_idx]]$aug[[respOrig_nm_aug]]$refstat
+  refstat_lat <- simres[[sim_idx]]$lat[[respOrig_nm_lat]]$refstat
+  stopifnot(all.equal(refstat_aug, refstat_lat,
+                      tolerance = .Machine$double.eps))
+  refstat <- refstat_aug
+
+  # Prepare the plot:
+  smmry_nms <- names(simres[[sim_idx]]$aug[[respOrig_nm_aug]]$smmry)
+  stopifnot(identical(smmry_nms,
+                      names(simres[[sim_idx]]$lat[[respOrig_nm_lat]]$smmry)))
+  y_chr <- setdiff(smmry_nms,
+                   c("solution_terms", "se", "lower", "upper", "size"))
+  stopifnot(length(y_chr) == 1)
+  smmry_cols <- c("size", y_chr, "lower", "upper")
+  smmry_aug <- simres[[sim_idx]]$aug[[respOrig_nm_aug]]$smmry
+  smmry_lat <- simres[[sim_idx]]$lat[[respOrig_nm_lat]]$smmry
+  plotdat <- rbind(cbind(Projection = "Augmented-data", smmry_aug[smmry_cols]),
+                   cbind(Projection = "Latent", smmry_lat[smmry_cols]))
+  for (col_nm in setdiff(smmry_cols, c("size", "se"))) {
+    plotdat[[col_nm]] <- plotdat[[col_nm]] + refstat
+  }
+
+  # MLPD plot:
+  ### For the second y-axis:
+  stopifnot(identical(y_chr, "mlpd"))
+  ###
+  ggobj <- ggplot2::ggplot(data = plotdat,
+                           mapping = ggplot2::aes(x = size,
+                                                  y = .data[[y_chr]],
+                                                  group = Projection,
+                                                  color = Projection)) +
+    ggplot2::geom_hline(yintercept = refstat,
+                        color = "darkred",
+                        linetype = "dashed") +
+    ggplot2::geom_linerange(ggplot2::aes(ymin = lower, ymax = upper),
+                            alpha = 0.4) +
+    ggplot2::geom_point() +
+    ggplot2::geom_line() +
+    ggplot2::scale_y_continuous(
+      sec.axis = ggplot2::sec_axis(~ exp(.), name = "$\\mathrm{GMPD}$")
+    ) +
+    ggplot2::labs(
+      x = "Submodel size",
+      y = paste0("$\\mathrm{", toupper(y_chr), "}$")
+    ) +
+    ggplot2::theme(legend.position = "top")
+  ggsave_cust(
+    file.path("figs",
+              paste(paste0("sidx", sim_idx), y_chr, eval_scale, sep = "_"))
+  )
+
+  return(list(succ_ind = TRUE, ggobj = ggobj))
+}
+indiv_out <- plotter_indiv(1L)
 
 ## Suggested sizes --------------------------------------------------------
 
