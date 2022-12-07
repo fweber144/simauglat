@@ -557,12 +557,13 @@ plotter_ovrlay <- function(prj_meth, eval_scale = "response",
   xlab <- "Submodel size"
   ylab <- paste0("$\\Delta\\mathrm{", toupper(y_chr), "}_{\\mathrm{", prj_meth,
                  "}}$")
-  ylab2 <- sub("^\\$(.*)\\$$", "$\\\\exp(\\1)$", ylab)
-
-  # Delta-MLPD plot:
   ### For the second y-axis:
   stopifnot(identical(y_chr, "mlpd"))
+  ylab2 <- paste0("$\\mathrm{GMPD}_{\\mathrm{", prj_meth, "}} / ",
+                  "\\mathrm{GMPD}^{*}$")
   ###
+
+  # Delta-MLPD plot:
   ggobj <- ggplot2::ggplot(data = plotdat,
                            mapping = ggplot2::aes(x = size,
                                                   y = .data[[y_chr]],
