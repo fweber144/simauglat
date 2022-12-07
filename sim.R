@@ -719,7 +719,7 @@ cat("Quartiles of the SE difference (across all simulation iterations and all",
 print(diff_out$q_diff_se)
 cat("-----\n")
 
-plotter_indiv <- function(nsub_indiv = 12L, eval_scale = "response") {
+plotter_indiv <- function(nsub_indiv = 21L, eval_scale = "response") {
   stopifnot(eval_scale == "response")
   respOrig_nm_aug <- paste0("respOrig_", TRUE)
   respOrig_nm_lat <- paste0("respOrig_", eval_scale == "response")
@@ -791,8 +791,9 @@ plotter_indiv <- function(nsub_indiv = 12L, eval_scale = "response") {
       y = paste0("$\\mathrm{", toupper(y_chr), "}$")
     ) +
     ggplot2::theme(legend.position = "top") +
-    ggplot2::facet_wrap(ggplot2::vars(sim_idx), scales = "free_y")
-  ggsave_cust(file.path("figs", paste("indiv", y_chr, eval_scale, sep = "_")))
+    ggplot2::facet_wrap(ggplot2::vars(sim_idx), ncol = 3, scales = "free_y")
+  ggsave_cust(file.path("figs", paste("indiv", y_chr, eval_scale, sep = "_")),
+              height = 2.5 * 6 * 0.618)
 
   return(list(succ_ind = TRUE, ggobj = ggobj))
 }
