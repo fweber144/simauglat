@@ -557,6 +557,7 @@ plotter_ovrlay <- function(prj_meth, eval_scale = "response",
   xlab <- "Submodel size"
   ylab <- paste0("$\\Delta\\mathrm{", toupper(y_chr), "}_{\\mathrm{", prj_meth,
                  "}}$")
+  ylab2 <- sub("^\\$(.*)\\$$", "$\\\\exp(\\1)$", ylab)
 
   # Delta-MLPD plot:
   ### For the second y-axis:
@@ -573,10 +574,7 @@ plotter_ovrlay <- function(prj_meth, eval_scale = "response",
     ggplot2::geom_point() +
     ggplot2::geom_line() +
     ggplot2::scale_y_continuous(
-      sec.axis = ggplot2::sec_axis(
-        ~ exp(.),
-        name = sub("^\\$(.*)\\$$", "$\\\\exp(\\1)$", ylab)
-      )
+      sec.axis = ggplot2::sec_axis(~ exp(.), name = ylab2)
     ) +
     ggplot2::labs(x = xlab, y = ylab)
   # fnm_base <- paste(y_chr, prj_meth, eval_scale, sep = "_")
