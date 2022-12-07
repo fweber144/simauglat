@@ -719,33 +719,53 @@ cat("Quartiles of the SE difference (across all simulation iterations and all",
 print(diff_out$q_diff_se)
 cat("-----\n")
 
-plotter_indiv <- function(sim_idx, eval_scale = "response") {
+plotter_indiv <- function(nsub_indiv = 12L, eval_scale = "response") {
   stopifnot(eval_scale == "response")
   respOrig_nm_aug <- paste0("respOrig_", TRUE)
   respOrig_nm_lat <- paste0("respOrig_", eval_scale == "response")
 
-  # Check that the reference model (performance) is the same:
-  refstat_aug <- simres[[sim_idx]]$aug[[respOrig_nm_aug]]$refstat
-  refstat_lat <- simres[[sim_idx]]$lat[[respOrig_nm_lat]]$refstat
-  stopifnot(all.equal(refstat_aug, refstat_lat,
-                      tolerance = .Machine$double.eps))
-  refstat <- refstat_aug
+  ### Option 1:
+  # sub_idxs <- sample.int(length(simres), size = nsub_indiv)
+  ###
+  ### Option 2:
+  sub_idxs <- seq_len(nsub_indiv)
+  ###
 
   # Prepare the plot:
-  smmry_nms <- names(simres[[sim_idx]]$aug[[respOrig_nm_aug]]$smmry)
+  smmry_nms <- names(simres[[1L]]$aug[[respOrig_nm_aug]]$smmry)
   stopifnot(identical(smmry_nms,
-                      names(simres[[sim_idx]]$lat[[respOrig_nm_lat]]$smmry)))
+                      names(simres[[1L]]$lat[[respOrig_nm_lat]]$smmry)))
   y_chr <- setdiff(smmry_nms,
                    c("solution_terms", "se", "lower", "upper", "size"))
   stopifnot(length(y_chr) == 1)
   smmry_cols <- c("size", y_chr, "lower", "upper")
-  smmry_aug <- simres[[sim_idx]]$aug[[respOrig_nm_aug]]$smmry
-  smmry_lat <- simres[[sim_idx]]$lat[[respOrig_nm_lat]]$smmry
-  plotdat <- rbind(cbind(Projection = "Augmented-data", smmry_aug[smmry_cols]),
-                   cbind(Projection = "Latent", smmry_lat[smmry_cols]))
-  for (col_nm in setdiff(smmry_cols, c("size", "se"))) {
-    plotdat[[col_nm]] <- plotdat[[col_nm]] + refstat
-  }
+  plotdat <- do.call(rbind, lapply(sub_idxs, function(sim_idx) {
+    # Check that the reference model (performance) is the same:
+    refstat_aug <- simres[[sim_idx]]$aug[[respOrig_nm_aug]]$refstat
+    refstat_lat <- simres[[sim_idx]]$lat[[respOrig_nm_lat]]$refstat
+    stopifnot(all.equal(refstat_aug, refstat_lat,
+                        tolerance = .Machine$double.eps))
+    refstat <- refstat_aug
+
+    # Check that the column names coincide:
+    stopifnot(identical(smmry_nms,
+                        names(simres[[sim_idx]]$aug[[respOrig_nm_aug]]$smmry)))
+    stopifnot(identical(smmry_nms,
+                        names(simres[[sim_idx]]$lat[[respOrig_nm_lat]]$smmry)))
+
+    smmry_aug <- simres[[sim_idx]]$aug[[respOrig_nm_aug]]$smmry
+    smmry_lat <- simres[[sim_idx]]$lat[[respOrig_nm_lat]]$smmry
+    pdat <- rbind(cbind(sim_idx = sim_idx, refstat = refstat,
+                        Projection = "Augmented-data",
+                        smmry_aug[smmry_cols]),
+                  cbind(sim_idx = sim_idx, refstat = refstat,
+                        Projection = "Latent",
+                        smmry_lat[smmry_cols]))
+    for (col_nm in setdiff(smmry_cols, c("size", "se"))) {
+      pdat[[col_nm]] <- pdat[[col_nm]] + refstat
+    }
+    return(pdat)
+  }))
 
   # MLPD plot:
   ### For the second y-axis:
@@ -756,7 +776,7 @@ plotter_indiv <- function(sim_idx, eval_scale = "response") {
                                                   y = .data[[y_chr]],
                                                   group = Projection,
                                                   color = Projection)) +
-    ggplot2::geom_hline(yintercept = refstat,
+    ggplot2::geom_hline(ggplot2::aes(yintercept = refstat),
                         color = "darkred",
                         linetype = "dashed") +
     ggplot2::geom_linerange(ggplot2::aes(ymin = lower, ymax = upper),
@@ -770,15 +790,13 @@ plotter_indiv <- function(sim_idx, eval_scale = "response") {
       x = "Submodel size",
       y = paste0("$\\mathrm{", toupper(y_chr), "}$")
     ) +
-    ggplot2::theme(legend.position = "top")
-  ggsave_cust(
-    file.path("figs",
-              paste(paste0("sidx", sim_idx), y_chr, eval_scale, sep = "_"))
-  )
+    ggplot2::theme(legend.position = "top") +
+    ggplot2::facet_wrap(ggplot2::vars(sim_idx), scales = "free_y")
+  ggsave_cust(file.path("figs", paste("indiv", y_chr, eval_scale, sep = "_")))
 
   return(list(succ_ind = TRUE, ggobj = ggobj))
 }
-indiv_out <- plotter_indiv(1L)
+indiv_out <- plotter_indiv()
 
 ## Suggested sizes --------------------------------------------------------
 
