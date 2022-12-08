@@ -775,11 +775,12 @@ plotter_indiv <- function(nsub_indiv = 21L, eval_scale = "response") {
   ### For the second y-axis:
   stopifnot(identical(y_chr, "mlpd"))
   ###
-  ggobj <- ggplot2::ggplot(data = plotdat,
-                           mapping = ggplot2::aes(x = size,
-                                                  y = .data[[y_chr]],
-                                                  group = `Projection method`,
-                                                  color = `Projection method`)) +
+  ggobj <- ggplot2::ggplot(
+    data = plotdat,
+    mapping = ggplot2::aes(x = size, y = .data[[y_chr]],
+                           group = `Projection method`,
+                           color = `Projection method`)
+  ) +
     ggplot2::geom_hline(ggplot2::aes(yintercept = refstat),
                         color = "darkred",
                         linetype = "dashed") +
