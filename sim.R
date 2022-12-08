@@ -448,7 +448,7 @@ saveRDS(simres, file = "simres.rds") # simres <- readRDS(file = "simres.rds")
 
 source("gg_to_tikz/tikzpicture-template.R")
 ggsave_cust <- function(fname_no_ext, plot = ggplot2::last_plot(),
-                        width = 6.5, height = width * 0.618,
+                        width = 6, height = width * 0.618,
                         timestamp = FALSE, verbose = FALSE, ...) {
   ggplot2::ggsave(filename = paste0(fname_no_ext, ".pdf"), plot = plot,
                   width = width, height = height)
@@ -510,7 +510,7 @@ gg_time <- ggplot2::ggplot(
   ggplot2::labs(x = "Projection method") +
   ggplot2::coord_cartesian(ylim = c(0, NA))
 ggsave_cust(file.path("figs", "time"),
-            width = 0.5 * 6.5, height = 0.75 * 6.5 * 0.618)
+            width = 0.5 * 6, height = 0.75 * 6 * 0.618)
 assign(".Random.seed", Rseed, envir = .GlobalEnv)
 
 ## Solution paths ---------------------------------------------------------
@@ -600,7 +600,7 @@ ylim_lat <- ggplot2::ggplot_build(
 comm_aug <- plotter_ovrlay(prj_meth = "aug", ylim_full = ylim_lat)
 library(patchwork)
 gg_aug_lat <- comm_aug$ggobj_full / comm_lat$ggobj_full
-ggsave_cust(file.path("figs", "aug_lat"), height = 2 * 6.5 * 0.618)
+ggsave_cust(file.path("figs", "aug_lat"), height = 2 * 6 * 0.618)
 
 plotter_ovrlay_diff <- function(eval_scale = "response") {
   stopifnot(eval_scale == "response")
@@ -798,7 +798,7 @@ plotter_indiv <- function(nsub_indiv = 21L, eval_scale = "response") {
     ggplot2::theme(legend.position = "top") +
     ggplot2::facet_wrap(ggplot2::vars(sim_idx), ncol = 3, scales = "free_y")
   ggsave_cust(file.path("figs", paste("indiv", y_chr, eval_scale, sep = "_")),
-              height = 2 * 6.5 * 0.618)
+              width = 6.5, height = 2 * 6.5 * 0.618)
 
   return(list(succ_ind = TRUE, ggobj = ggobj))
 }
