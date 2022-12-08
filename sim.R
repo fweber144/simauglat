@@ -889,7 +889,7 @@ diff_at_sgg <- function(eval_scale = "response") {
   y_chr <- setdiff(smmry_nms,
                    c("solution_terms", "se", "lower", "upper", "size"))
   stopifnot(identical(y_chr, "mlpd"))
-  maxdat <- do.call(rbind, lapply(seq_along(simres), function(sim_idx) {
+  diffdat <- do.call(rbind, lapply(seq_along(simres), function(sim_idx) {
     res_aug <- simres[[sim_idx]]$aug[[respOrig_nm_aug]]
     res_lat <- simres[[sim_idx]]$lat[[respOrig_nm_lat]]
     sgg_size <- suppressWarnings(
@@ -907,8 +907,8 @@ diff_at_sgg <- function(eval_scale = "response") {
       return(rep(NA, 4))
     }
   }))
-  maxdat <- as.data.frame(maxdat)
-  maxdat <- within(maxdat, {
+  diffdat <- as.data.frame(diffdat)
+  diffdat <- within(diffdat, {
     expaug <- exp(aug)
     explat <- exp(lat)
     diff <- lat - aug
@@ -916,26 +916,26 @@ diff_at_sgg <- function(eval_scale = "response") {
     diffexp <- explat - expaug
   })
 
-  stopifnot(!any(duplicated(na.omit(maxdat$diffexp))))
-  sim_idx_min <- which.min(maxdat$diffexp)
-  sim_idx_max <- which.max(maxdat$diffexp)
+  stopifnot(!any(duplicated(na.omit(diffdat$diffexp))))
+  sim_idx_min <- which.min(diffdat$diffexp)
+  sim_idx_max <- which.max(diffdat$diffexp)
 
   return(c(sim_idx_min = sim_idx_min,
            sim_idx_max = sim_idx_max,
-           diff_min = maxdat$diff[sim_idx_min],
-           diff_max = maxdat$diff[sim_idx_max],
-           expdiff_min = maxdat$expdiff[sim_idx_min],
-           expdiff_max = maxdat$expdiff[sim_idx_max],
-           diffexp_min = maxdat$diffexp[sim_idx_min],
-           diffexp_max = maxdat$diffexp[sim_idx_max],
-           aug_at_min = maxdat$aug[sim_idx_min],
-           aug_at_max = maxdat$aug[sim_idx_max],
-           lat_at_min = maxdat$lat[sim_idx_min],
-           lat_at_max = maxdat$lat[sim_idx_max],
-           expaug_at_min = maxdat$expaug[sim_idx_min],
-           expaug_at_max = maxdat$expaug[sim_idx_max],
-           explat_at_min = maxdat$explat[sim_idx_min],
-           explat_at_max = maxdat$explat[sim_idx_max]))
+           diff_min = diffdat$diff[sim_idx_min],
+           diff_max = diffdat$diff[sim_idx_max],
+           expdiff_min = diffdat$expdiff[sim_idx_min],
+           expdiff_max = diffdat$expdiff[sim_idx_max],
+           diffexp_min = diffdat$diffexp[sim_idx_min],
+           diffexp_max = diffdat$diffexp[sim_idx_max],
+           aug_at_min = diffdat$aug[sim_idx_min],
+           aug_at_max = diffdat$aug[sim_idx_max],
+           lat_at_min = diffdat$lat[sim_idx_min],
+           lat_at_max = diffdat$lat[sim_idx_max],
+           expaug_at_min = diffdat$expaug[sim_idx_min],
+           expaug_at_max = diffdat$expaug[sim_idx_max],
+           explat_at_min = diffdat$explat[sim_idx_min],
+           explat_at_max = diffdat$explat[sim_idx_max]))
 }
 diff_at_sgg_out <- diff_at_sgg()
 cat("\n-----\n")
