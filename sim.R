@@ -928,14 +928,14 @@ max_diff <- function(eval_scale = "response") {
            expdiff_max = maxdat$expdiff[sim_idx_max],
            diffexp_min = maxdat$diffexp[sim_idx_min],
            diffexp_max = maxdat$diffexp[sim_idx_max],
-           lat_at_min = maxdat$lat[sim_idx_min],
-           lat_at_max = maxdat$lat[sim_idx_max],
            aug_at_min = maxdat$aug[sim_idx_min],
            aug_at_max = maxdat$aug[sim_idx_max],
-           explat_at_min = maxdat$explat[sim_idx_min],
-           explat_at_max = maxdat$explat[sim_idx_max],
+           lat_at_min = maxdat$lat[sim_idx_min],
+           lat_at_max = maxdat$lat[sim_idx_max],
            expaug_at_min = maxdat$expaug[sim_idx_min],
-           expaug_at_max = maxdat$expaug[sim_idx_max]))
+           expaug_at_max = maxdat$expaug[sim_idx_max],
+           explat_at_min = maxdat$explat[sim_idx_min],
+           explat_at_max = maxdat$explat[sim_idx_max]))
 }
 max_diff_out <- max_diff()
 cat("\n-----\n")
