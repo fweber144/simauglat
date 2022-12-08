@@ -878,7 +878,7 @@ for (eval_scale_lat_val in c("response")) {
 
 ## Predictive performance at suggested size -------------------------------
 
-max_diff <- function(eval_scale = "response") {
+diff_at_sgg <- function(eval_scale = "response") {
   stopifnot(eval_scale == "response")
   respOrig_nm_aug <- paste0("respOrig_", TRUE)
   respOrig_nm_lat <- paste0("respOrig_", eval_scale == "response")
@@ -937,13 +937,13 @@ max_diff <- function(eval_scale = "response") {
            explat_at_min = maxdat$explat[sim_idx_min],
            explat_at_max = maxdat$explat[sim_idx_max]))
 }
-max_diff_out <- max_diff()
+diff_at_sgg_out <- diff_at_sgg()
 cat("\n-----\n")
 cat("Range of predictive performance difference (with exponentiated ",
     "predictive performance, i.e., the GMPD) at the suggested submodel size, ",
     "with additional information about the performance on absolute scale ",
     "(i.e., not relative to the reference model):\n")
-print(max_diff_out)
+print(diff_at_sgg_out)
 cat("-----\n")
 
 # doRNG -------------------------------------------------------------------
