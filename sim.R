@@ -798,7 +798,7 @@ plotter_indiv <- function(nsub_indiv = 21L, eval_scale = "response") {
     ggplot2::theme(legend.position = "top") +
     ggplot2::facet_wrap(ggplot2::vars(sim_idx), ncol = 3, scales = "free_y")
   ggsave_cust(file.path("figs", paste("indiv", y_chr, eval_scale, sep = "_")),
-              height = 2.5 * 6 * 0.618)
+              width = 6.5, height = 2 * 6.5 * 0.618)
 
   return(list(succ_ind = TRUE, ggobj = ggobj))
 }
