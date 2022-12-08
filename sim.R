@@ -760,10 +760,10 @@ plotter_indiv <- function(nsub_indiv = 21L, eval_scale = "response") {
     smmry_aug <- simres[[sim_idx]]$aug[[respOrig_nm_aug]]$smmry
     smmry_lat <- simres[[sim_idx]]$lat[[respOrig_nm_lat]]$smmry
     pdat <- rbind(cbind(sim_idx = sim_idx, refstat = refstat,
-                        Projection = "Augmented-data",
+                        `Projection method` = "Augmented-data",
                         smmry_aug[smmry_cols]),
                   cbind(sim_idx = sim_idx, refstat = refstat,
-                        Projection = "Latent",
+                        `Projection method` = "Latent",
                         smmry_lat[smmry_cols]))
     for (col_nm in setdiff(smmry_cols, c("size", "se"))) {
       pdat[[col_nm]] <- pdat[[col_nm]] + refstat
@@ -778,8 +778,8 @@ plotter_indiv <- function(nsub_indiv = 21L, eval_scale = "response") {
   ggobj <- ggplot2::ggplot(data = plotdat,
                            mapping = ggplot2::aes(x = size,
                                                   y = .data[[y_chr]],
-                                                  group = Projection,
-                                                  color = Projection)) +
+                                                  group = `Projection method`,
+                                                  color = `Projection method`)) +
     ggplot2::geom_hline(ggplot2::aes(yintercept = refstat),
                         color = "darkred",
                         linetype = "dashed") +
