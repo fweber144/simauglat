@@ -876,6 +876,72 @@ for (eval_scale_lat_val in c("response")) {
   cat("----------\n")
 }
 
+## Predictive performance at suggested size -------------------------------
+
+max_diff <- function(eval_scale = "response") {
+  stopifnot(eval_scale == "response")
+  respOrig_nm_aug <- paste0("respOrig_", TRUE)
+  respOrig_nm_lat <- paste0("respOrig_", eval_scale == "response")
+
+  smmry_nms <- names(simres[[1L]]$aug[[respOrig_nm_aug]]$smmry)
+  stopifnot(identical(smmry_nms,
+                      names(simres[[1L]]$lat[[respOrig_nm_lat]]$smmry)))
+  y_chr <- setdiff(smmry_nms,
+                   c("solution_terms", "se", "lower", "upper", "size"))
+  stopifnot(identical(y_chr, "mlpd"))
+  maxdat <- do.call(rbind, lapply(seq_along(simres), function(sim_idx) {
+    res_aug <- simres[[sim_idx]]$aug[[respOrig_nm_aug]]
+    res_lat <- simres[[sim_idx]]$lat[[respOrig_nm_lat]]
+    sgg_size <- suppressWarnings(
+      min(res_aug$sgg_size, res_lat$sgg_size, na.rm = TRUE)
+    )
+    if (is.finite(sgg_size)) {
+      dy <- c("daug" = res_aug$smmry[res_aug$smmry$size == sgg_size, y_chr],
+              "dlat" = res_lat$smmry[res_lat$smmry$size == sgg_size, y_chr])
+      refstat <- res_aug$refstat
+      stopifnot(identical(refstat, res_lat$refstat))
+      y <- dy + refstat
+      names(y) <- sub("^d", "", names(y))
+      return(c(dy, y))
+    } else {
+      return(rep(NA, 4))
+    }
+  }))
+  maxdat <- as.data.frame(maxdat)
+  maxdat <- within(maxdat, {
+    expaug <- exp(aug)
+    explat <- exp(lat)
+    diff <- lat - aug
+    expdiff <- exp(diff)
+  })
+
+  stopifnot(!any(duplicated(na.omit(maxdat$diff))))
+  sim_idx_min <- which.min(maxdat$diff)
+  sim_idx_max <- which.max(maxdat$diff)
+
+  return(c(sim_idx_min = sim_idx_min,
+           sim_idx_max = sim_idx_max,
+           diff_min = maxdat$diff[sim_idx_min],
+           diff_max = maxdat$diff[sim_idx_max],
+           expdiff_min = maxdat$expdiff[sim_idx_min],
+           expdiff_max = maxdat$expdiff[sim_idx_max],
+           lat_at_min = maxdat$lat[sim_idx_min],
+           lat_at_max = maxdat$lat[sim_idx_max],
+           aug_at_min = maxdat$aug[sim_idx_min],
+           aug_at_max = maxdat$aug[sim_idx_max],
+           explat_at_min = maxdat$explat[sim_idx_min],
+           explat_at_max = maxdat$explat[sim_idx_max],
+           expaug_at_min = maxdat$expaug[sim_idx_min],
+           expaug_at_max = maxdat$expaug[sim_idx_max]))
+}
+max_diff_out <- max_diff()
+cat("\n-----\n")
+cat("Range of predictive performance difference (MLPD; additionally, this is ",
+    "also exponentiated) at the suggested submodel size, with additional ",
+    "information on absolute scale:\n")
+print(max_diff_out)
+cat("-----\n")
+
 # doRNG -------------------------------------------------------------------
 
 # Information from package "doRNG" about the seeds used:
