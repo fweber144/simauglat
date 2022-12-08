@@ -913,11 +913,12 @@ max_diff <- function(eval_scale = "response") {
     explat <- exp(lat)
     diff <- lat - aug
     expdiff <- exp(diff)
+    diffexp <- explat - expaug
   })
 
-  stopifnot(!any(duplicated(na.omit(maxdat$diff))))
-  sim_idx_min <- which.min(maxdat$diff)
-  sim_idx_max <- which.max(maxdat$diff)
+  stopifnot(!any(duplicated(na.omit(maxdat$diffexp))))
+  sim_idx_min <- which.min(maxdat$diffexp)
+  sim_idx_max <- which.max(maxdat$diffexp)
 
   return(c(sim_idx_min = sim_idx_min,
            sim_idx_max = sim_idx_max,
@@ -925,6 +926,8 @@ max_diff <- function(eval_scale = "response") {
            diff_max = maxdat$diff[sim_idx_max],
            expdiff_min = maxdat$expdiff[sim_idx_min],
            expdiff_max = maxdat$expdiff[sim_idx_max],
+           diffexp_min = maxdat$diffexp[sim_idx_min],
+           diffexp_max = maxdat$diffexp[sim_idx_max],
            lat_at_min = maxdat$lat[sim_idx_min],
            lat_at_max = maxdat$lat[sim_idx_max],
            aug_at_min = maxdat$aug[sim_idx_min],
@@ -936,9 +939,10 @@ max_diff <- function(eval_scale = "response") {
 }
 max_diff_out <- max_diff()
 cat("\n-----\n")
-cat("Range of predictive performance difference (MLPD; additionally, this is ",
-    "also exponentiated) at the suggested submodel size, with additional ",
-    "information on absolute scale:\n")
+cat("Range of predictive performance difference (with exponentiated ",
+    "predictive performance, i.e., the GMPD) at the suggested submodel size, ",
+    "with additional information about the performance on absolute scale ",
+    "(i.e., not relative to the reference model):\n")
 print(max_diff_out)
 cat("-----\n")
 
