@@ -785,9 +785,9 @@ plotter_indiv <- function(nsub_indiv = 21L, eval_scale = "response") {
                         color = "darkred",
                         linetype = "dashed") +
     ggplot2::geom_linerange(ggplot2::aes(ymin = lower, ymax = upper),
-                            alpha = 0.4) +
-    ggplot2::geom_point() +
-    ggplot2::geom_line() +
+                            alpha = 0.5) + # alpha = 0.4
+    ggplot2::geom_point(alpha = 0.75) + # alpha = 0.6
+    ggplot2::geom_line(alpha = 0.75) + # alpha = 0.6
     ggplot2::scale_y_continuous(
       sec.axis = ggplot2::sec_axis(~ exp(.), name = "$\\mathrm{GMPD}$")
     ) +
