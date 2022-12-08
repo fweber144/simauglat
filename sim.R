@@ -591,7 +591,7 @@ plotter_ovrlay <- function(prj_meth, eval_scale = "response",
     ggplot2::coord_cartesian(ylim = ylim_full)
   # ggsave_cust(file.path("figs", paste0(fnm_base, "_full")))
 
-  return(list(succ_ind = TRUE, ggobj = ggobj, ggobj_full = ggobj_full))
+  return(list(ggobj = ggobj, ggobj_full = ggobj_full))
 }
 comm_lat <- plotter_ovrlay(prj_meth = "lat")
 ylim_lat <- ggplot2::ggplot_build(
@@ -701,7 +701,7 @@ plotter_ovrlay_diff <- function(eval_scale = "response") {
   ggsave_cust(file.path("figs", paste("diff_se", eval_scale, sep = "_")))
   assign(".Random.seed", Rseed, envir = .GlobalEnv)
 
-  return(list(succ_ind = TRUE, ggobj = ggobj, ggobj_se = ggobj_se,
+  return(list(ggobj = ggobj, ggobj_se = ggobj_se,
               q_refstat = quantile(refstats),
               q_diff_se = quantile(plotdat$diff_se)))
 }
@@ -800,7 +800,7 @@ plotter_indiv <- function(nsub_indiv = 21L, eval_scale = "response") {
   ggsave_cust(file.path("figs", paste("indiv", y_chr, eval_scale, sep = "_")),
               width = 6.5, height = 2 * 6.5 * 0.618)
 
-  return(list(succ_ind = TRUE, ggobj = ggobj))
+  return(list(ggobj = ggobj))
 }
 indiv_out <- plotter_indiv()
 
