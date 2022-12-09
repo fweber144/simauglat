@@ -52,6 +52,7 @@ width_orig_glob <- options(width = 140)
 
 only_init_fit <- F
 with_tikz <- T
+use_existing_res <- T
 
 if (!only_init_fit) {
   # The number of simulation iterations:
@@ -438,15 +439,19 @@ sim_runner <- function(...) {
 
 # Run simulation ----------------------------------------------------------
 
-print(system.time({
-  simres <- sim_runner(
-    ### For a faster (experimental) run:
-    nclusters_pred = 50,
-    nterms_max = 5
-    ###
-  )
-}))
-saveRDS(simres, file = "simres.rds") # simres <- readRDS(file = "simres.rds")
+if (!use_existing_res) {
+  print(system.time({
+    simres <- sim_runner(
+      ### For a faster (experimental) run:
+      nclusters_pred = 50,
+      nterms_max = 5
+      ###
+    )
+  }))
+  saveRDS(simres, file = "simres.rds")
+} else {
+  simres <- readRDS(file = "simres.rds")
+}
 
 # Post-processing ---------------------------------------------------------
 
