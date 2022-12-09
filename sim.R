@@ -51,6 +51,7 @@ width_orig_glob <- options(width = 140)
 ## User options -----------------------------------------------------------
 
 only_init_fit <- F
+with_tikz <- T
 
 if (!only_init_fit) {
   # The number of simulation iterations:
@@ -449,15 +450,19 @@ saveRDS(simres, file = "simres.rds") # simres <- readRDS(file = "simres.rds")
 
 # Post-processing ---------------------------------------------------------
 
-source("gg_to_tikz/tikzpicture-template.R")
+if (with_tikz) {
+  source("gg_to_tikz/tikzpicture-template.R")
+}
 ggsave_cust <- function(fname_no_ext, plot = ggplot2::last_plot(),
                         width = 6, height = width * 0.618,
                         timestamp = FALSE, verbose = FALSE, ...) {
   ggplot2::ggsave(filename = paste0(fname_no_ext, ".pdf"), plot = plot,
                   width = width, height = height)
-  save_tikz_plot(plot = plot, filename = paste0(fname_no_ext, ".tex"),
-                 width = width, height = height,
-                 timestamp = timestamp, verbose = verbose, ...)
+  if (with_tikz) {
+    save_tikz_plot(plot = plot, filename = paste0(fname_no_ext, ".tex"),
+                   width = width, height = height,
+                   timestamp = timestamp, verbose = verbose, ...)
+  }
   return(invisible(TRUE))
 }
 
