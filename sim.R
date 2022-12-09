@@ -357,7 +357,10 @@ run_projpred <- function(refm_fit, dat_indep, latent = FALSE, ...) {
                                         respOrig = respOrig_val),
       smmry = summary(vs, deltas = TRUE, stats = "mlpd",
                       type = c("mean", "se", "lower", "upper"),
-                      respOrig = respOrig_val)$selection
+                      respOrig = respOrig_val)$selection,
+      abs_smmry = summary(vs, deltas = FALSE, stats = "mlpd",
+                          type = c("mean", "se", "lower", "upper"),
+                          respOrig = respOrig_val)$selection
     ))
   }))
   return(out_projpred)
@@ -736,9 +739,9 @@ plotter_indiv <- function(nsub_indiv = 21L, eval_scale = "response") {
   ###
 
   # Prepare the plot:
-  smmry_nms <- names(simres[[1L]]$aug[[respOrig_nm_aug]]$smmry)
+  smmry_nms <- names(simres[[1L]]$aug[[respOrig_nm_aug]]$abs_smmry)
   stopifnot(identical(smmry_nms,
-                      names(simres[[1L]]$lat[[respOrig_nm_lat]]$smmry)))
+                      names(simres[[1L]]$lat[[respOrig_nm_lat]]$abs_smmry)))
   y_chr <- setdiff(smmry_nms,
                    c("solution_terms", "se", "lower", "upper", "size"))
   stopifnot(length(y_chr) == 1)
@@ -752,22 +755,23 @@ plotter_indiv <- function(nsub_indiv = 21L, eval_scale = "response") {
     refstat <- refstat_aug
 
     # Check that the column names coincide:
-    stopifnot(identical(smmry_nms,
-                        names(simres[[sim_idx]]$aug[[respOrig_nm_aug]]$smmry)))
-    stopifnot(identical(smmry_nms,
-                        names(simres[[sim_idx]]$lat[[respOrig_nm_lat]]$smmry)))
+    stopifnot(identical(
+      smmry_nms,
+      names(simres[[sim_idx]]$aug[[respOrig_nm_aug]]$abs_smmry)
+    ))
+    stopifnot(identical(
+      smmry_nms,
+      names(simres[[sim_idx]]$lat[[respOrig_nm_lat]]$abs_smmry)
+    ))
 
-    smmry_aug <- simres[[sim_idx]]$aug[[respOrig_nm_aug]]$smmry
-    smmry_lat <- simres[[sim_idx]]$lat[[respOrig_nm_lat]]$smmry
+    smmry_aug <- simres[[sim_idx]]$aug[[respOrig_nm_aug]]$abs_smmry
+    smmry_lat <- simres[[sim_idx]]$lat[[respOrig_nm_lat]]$abs_smmry
     pdat <- rbind(cbind(sim_idx = sim_idx, refstat = refstat,
                         `Projection method` = "Augmented-data",
                         smmry_aug[smmry_cols]),
                   cbind(sim_idx = sim_idx, refstat = refstat,
                         `Projection method` = "Latent",
                         smmry_lat[smmry_cols]))
-    for (col_nm in setdiff(smmry_cols, c("size", "se"))) {
-      pdat[[col_nm]] <- pdat[[col_nm]] + refstat
-    }
     return(pdat)
   }))
 
