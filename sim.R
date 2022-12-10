@@ -443,8 +443,8 @@ if (!use_existing_res) {
   print(system.time({
     simres <- sim_runner(
       ### For a faster (experimental) run:
-      nclusters_pred = 50,
-      nterms_max = 5
+      # nclusters_pred = 50,
+      # nterms_max = 5
       ###
     )
   }))
