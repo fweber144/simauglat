@@ -8,6 +8,7 @@ This is [R](https://www.R-project.org/) code for a simulation study comparing th
 The main file is `sim.R` which is written in a way (e.g., using explicit `print()` statements) so that it can be `source()`-d.
 In principle, this file runs the simulation itself and also performs the post-processing.
 However, there are some caveats which are described hereafter.
+The user options mentioned there can be found in section "User options" of `sim.R`.
 
 For the simulation itself, an initial `brmsfit` is needed, which is created by running once with user option `only_init_fit` set to `TRUE`.
 Afterwards, the simulation itself can be run by setting `only_init_fit <- FALSE` and `use_existing_res <- FALSE`.
