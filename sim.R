@@ -56,7 +56,7 @@ use_existing_res <- T
 
 if (!only_init_fit) {
   # The number of simulation iterations:
-  nsim <- 50
+  nsim <- 100
 
   # Parallel backend:
   par_type <- "auto"
