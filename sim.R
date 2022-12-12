@@ -714,10 +714,19 @@ plotter_ovrlay_diff <- function(eval_scale = "response") {
   ggsave_cust(file.path("figs", paste("diff_se", eval_scale, sep = "_")))
   assign(".Random.seed", Rseed, envir = .GlobalEnv)
 
+  # For the individual absolute-scale MLPD plots later:
+  max_by_idx <- aggregate(
+    plotdat[, y_chr_diff, drop = FALSE], by = list(sim_idx = plotdat$sim_idx),
+    FUN = max, simplify = TRUE, drop = FALSE
+  )
+  which_max <- head(order(max_by_idx[, y_chr_diff],
+                          decreasing = TRUE))
+
   return(list(ggobj = ggobj, ggobj_se = ggobj_se,
               q_refstat = quantile(refstats),
               q_diff_se = quantile(plotdat$diff_se),
-              p_gt0_diff_se = mean(plotdat$diff_se > 0)))
+              p_gt0_diff_se = mean(plotdat$diff_se > 0),
+              sub_maxdiff = max_by_idx[which_max, "sim_idx"]))
 }
 diff_out <- plotter_ovrlay_diff()
 cat("\n-----\n")
@@ -736,20 +745,24 @@ cat("Corresponding proportion of SE differences > 0:\n")
 print(diff_out$p_gt0_diff_se)
 cat("-----\n")
 
-plotter_indiv <- function(nsub_indiv = 21L, eval_scale = "response") {
+plotter_indiv <- function(nsub_indiv = 21L, sub_meth = "rand",
+                          eval_scale = "response") {
   stopifnot(eval_scale == "response")
   respOrig_nm_aug <- paste0("respOrig_", TRUE)
   respOrig_nm_lat <- paste0("respOrig_", eval_scale == "response")
 
-  ### Option 1:
-  Rseed <- get(".Random.seed", envir = .GlobalEnv)
-  set.seed(seed_indiv)
-  sub_idxs <- sample.int(length(simres), size = nsub_indiv)
-  assign(".Random.seed", Rseed, envir = .GlobalEnv)
-  ###
-  ### Option 2:
-  # sub_idxs <- seq_len(nsub_indiv)
-  ###
+  if (length(sub_meth) == 1 && is.character(sub_meth) && sub_meth == "rand") {
+    Rseed <- get(".Random.seed", envir = .GlobalEnv)
+    set.seed(seed_indiv)
+    sub_idxs <- sample.int(length(simres), size = nsub_indiv)
+    assign(".Random.seed", Rseed, envir = .GlobalEnv)
+  } else if (length(sub_meth) == 1 && is.character(sub_meth) &&
+             sub_meth == "head") {
+    sub_idxs <- seq_len(nsub_indiv)
+  } else {
+    sub_idxs <- sub_meth
+    sub_meth <- "custom"
+  }
 
   # Prepare the plot:
   smmry_nms <- names(simres[[1L]]$aug[[respOrig_nm_aug]]$abs_smmry)
@@ -814,12 +827,17 @@ plotter_indiv <- function(nsub_indiv = 21L, eval_scale = "response") {
     ) +
     ggplot2::theme(legend.position = "top") +
     ggplot2::facet_wrap(ggplot2::vars(sim_idx), ncol = 3, scales = "free_y")
-  ggsave_cust(file.path("figs", paste("indiv", y_chr, eval_scale, sep = "_")),
+  fnm_base <- paste("indiv", y_chr, eval_scale, sep = "_")
+  if (sub_meth != "rand") {
+    fnm_base <- paste(fnm_base, sub_meth, sep = "_")
+  }
+  ggsave_cust(file.path("figs", fnm_base),
               width = 6.5, height = 2 * 6.5 * 0.618)
 
   return(list(ggobj = ggobj))
 }
 indiv_out <- plotter_indiv()
+indiv_out_maxdiff <- plotter_indiv(sub_meth = diff_out$sub_maxdiff)
 
 ## Suggested sizes --------------------------------------------------------
 
