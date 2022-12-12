@@ -519,7 +519,7 @@ gg_time <- ggplot2::ggplot(
   mapping = ggplot2::aes(x = prj_meth, y = `Runtime [min]`)
 ) +
   ggplot2::geom_boxplot() +
-  ggplot2::geom_jitter(alpha = 0.4, width = 0.25, height = 0) +
+  ggplot2::geom_jitter(alpha = 0.25, width = 0.25, height = 0) +
   ggplot2::labs(x = "Projection method") +
   ggplot2::coord_cartesian(ylim = c(0, NA))
 ggsave_cust(file.path("figs", "time"),
@@ -585,7 +585,7 @@ plotter_ovrlay <- function(prj_meth, eval_scale = "response",
                            mapping = ggplot2::aes(x = size,
                                                   y = .data[[y_chr]],
                                                   group = sim_idx,
-                                                  alpha = I(0.4))) +
+                                                  alpha = I(0.25))) +
     ggplot2::geom_hline(yintercept = 0,
                         color = "firebrick",
                         linetype = "dashed") +
@@ -666,7 +666,7 @@ plotter_ovrlay_diff <- function(eval_scale = "response") {
                            mapping = ggplot2::aes(x = size,
                                                   y = .data[[y_chr_diff]],
                                                   group = sim_idx,
-                                                  alpha = I(0.4))) +
+                                                  alpha = I(0.25))) +
     ggplot2::geom_hline(yintercept = 0,
                         color = "gray30",
                         linetype = "dotted") +
@@ -702,7 +702,7 @@ plotter_ovrlay_diff <- function(eval_scale = "response") {
                         color = "gray30",
                         linetype = "dotted") +
     ggplot2::geom_boxplot() +
-    ggplot2::geom_jitter(alpha = 0.4, width = 0.25, height = 0) +
+    ggplot2::geom_jitter(alpha = 0.25, width = 0.25, height = 0) +
     ggplot2::labs(
       x = xlab,
       y = paste0(
