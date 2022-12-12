@@ -848,17 +848,19 @@ for (eval_scale_lat_val in c("response")) {
   sgg_sizes_lat_minus_aug <- factor(sgg_sizes_lat_minus_aug)
   sgg_sizes_NA <- apply(sgg_sizes, 2, function(x) {
     if (!is.na(x["sgg_size_lat"]) && is.na(x["sgg_size_aug"])) {
-      return("NA (aug.)")
+      return("$\\texttt{NA}_{\\mathrm{aug}}$")
     } else if (is.na(x["sgg_size_lat"]) && !is.na(x["sgg_size_aug"])) {
-      return("NA (lat.)")
+      return("$\\texttt{NA}_{\\mathrm{lat}}$")
     } else if (is.na(x["sgg_size_lat"]) && is.na(x["sgg_size_aug"])) {
-      return("NA (both)")
+      return("$\\texttt{NA}_{\\mathrm{both}}$")
     } else {
       return(NA)
     }
   })
   sgg_sizes_NA <- factor(sgg_sizes_NA,
-                         levels = c("NA (aug.)", "NA (lat.)", "NA (both)"))
+                         levels = c("$\\texttt{NA}_{\\mathrm{aug}}$",
+                                    "$\\texttt{NA}_{\\mathrm{lat}}$",
+                                    "$\\texttt{NA}_{\\mathrm{both}}$"))
   stopifnot(identical(is.na(sgg_sizes_lat_minus_aug), !is.na(sgg_sizes_NA)))
   sgg_sizes_lat_minus_aug <- factor(
     sgg_sizes_lat_minus_aug,
