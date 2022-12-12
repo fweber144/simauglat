@@ -717,7 +717,7 @@ plotter_ovrlay_diff <- function(eval_scale = "response") {
   return(list(ggobj = ggobj, ggobj_se = ggobj_se,
               q_refstat = quantile(refstats),
               q_diff_se = quantile(plotdat$diff_se),
-              p_geq0_diff_se = mean(plotdat$diff_se >= 0)))
+              p_gt0_diff_se = mean(plotdat$diff_se > 0)))
 }
 diff_out <- plotter_ovrlay_diff()
 cat("\n-----\n")
@@ -732,8 +732,8 @@ cat("\n-----\n")
 cat("Quartiles of the SE difference (across all simulation iterations and all",
     "submodel sizes):\n")
 print(diff_out$q_diff_se)
-cat("Corresponding proportion of SE differences >= 0:\n")
-print(diff_out$p_geq0_diff_se)
+cat("Corresponding proportion of SE differences > 0:\n")
+print(diff_out$p_gt0_diff_se)
 cat("-----\n")
 
 plotter_indiv <- function(nsub_indiv = 21L, eval_scale = "response") {
