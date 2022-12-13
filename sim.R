@@ -757,7 +757,8 @@ print(diff_out$p_gt0_diff_se)
 cat("-----\n")
 
 plotter_indiv <- function(nsub_indiv = 21L, sub_meth = "rand",
-                          eval_scale = "response") {
+                          eval_scale = "response",
+                          width = 6.5, height = 2 * 6.5 * 0.618) {
   stopifnot(eval_scale == "response")
   respOrig_nm_aug <- paste0("respOrig_", TRUE)
   respOrig_nm_lat <- paste0("respOrig_", eval_scale == "response")
@@ -842,13 +843,13 @@ plotter_indiv <- function(nsub_indiv = 21L, sub_meth = "rand",
   if (sub_meth != "rand") {
     fnm_base <- paste(fnm_base, sub_meth, sep = "_")
   }
-  ggsave_cust(file.path("figs", fnm_base),
-              width = 6.5, height = 2 * 6.5 * 0.618)
+  ggsave_cust(file.path("figs", fnm_base), width = width, height = height)
 
   return(list(ggobj = ggobj))
 }
 indiv_out <- plotter_indiv()
-indiv_out_maxdiff <- plotter_indiv(sub_meth = diff_out$sub_idxs_maxdiff)
+indiv_out_maxdiff <- plotter_indiv(sub_meth = diff_out$sub_idxs_maxdiff,
+                                   height = 6 * 0.618)
 
 ## Suggested sizes --------------------------------------------------------
 
