@@ -720,8 +720,8 @@ plotter_ovrlay_diff <- function(eval_scale = "response") {
     plotdat[, y_chr_diff, drop = FALSE], by = list(sim_idx = plotdat$sim_idx),
     FUN = max, simplify = TRUE, drop = FALSE
   )
-  which_max <- head(order(max_by_idx[, y_chr_diff], decreasing = TRUE), 3)
-  sub_idxs_maxdiff <- max_by_idx[which_max, "sim_idx"]
+  which_maxdiff <- head(order(max_by_idx[, y_chr_diff], decreasing = TRUE), 3)
+  sub_idxs_maxdiff <- max_by_idx[which_maxdiff, "sim_idx"]
 
   # Highlight the filtered simulation iterations with highest MLPD differences
   # between augmented-data and latent projection:
