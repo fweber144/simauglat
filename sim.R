@@ -756,9 +756,9 @@ cat("Corresponding proportion of SE differences > 0:\n")
 print(diff_out$p_gt0_diff_se)
 cat("-----\n")
 
-plotter_indiv <- function(nsub_indiv = 21L, sub_meth = "rand",
-                          eval_scale = "response",
-                          width = 6.5, height = 2 * 6.5 * 0.618) {
+plotter_indiv_abs <- function(nsub_indiv = 21L, sub_meth = "rand",
+                              eval_scale = "response",
+                              width = 6.5, height = 2 * 6.5 * 0.618) {
   stopifnot(eval_scale == "response")
   respOrig_nm_aug <- paste0("respOrig_", TRUE)
   respOrig_nm_lat <- paste0("respOrig_", eval_scale == "response")
@@ -839,7 +839,7 @@ plotter_indiv <- function(nsub_indiv = 21L, sub_meth = "rand",
     ) +
     ggplot2::theme(legend.position = "top") +
     ggplot2::facet_wrap(ggplot2::vars(sim_idx), ncol = 3, scales = "free_y")
-  fnm_base <- paste("indiv", y_chr, eval_scale, sep = "_")
+  fnm_base <- paste("indiv", y_chr, eval_scale, "abs", sep = "_")
   if (sub_meth != "rand") {
     fnm_base <- paste(fnm_base, sub_meth, sep = "_")
   }
@@ -847,9 +847,9 @@ plotter_indiv <- function(nsub_indiv = 21L, sub_meth = "rand",
 
   return(list(ggobj = ggobj))
 }
-indiv_out <- plotter_indiv()
-# indiv_out_maxdiff <- plotter_indiv(sub_meth = diff_out$sub_idxs_maxdiff,
-#                                    height = 5 * 0.618)
+indiv_abs <- plotter_indiv_abs()
+# indiv_abs_maxdiff <- plotter_indiv_abs(sub_meth = diff_out$sub_idxs_maxdiff,
+#                                        height = 5 * 0.618)
 
 plotter_indiv_rel <- function(nsub_indiv = 21L, sub_meth = "rand",
                               eval_scale = "response",
@@ -901,7 +901,7 @@ plotter_indiv_rel <- function(nsub_indiv = 21L, sub_meth = "rand",
     return(pdat)
   }))
 
-  # MLPD plot:
+  # Delta-MLPD plot:
   ### For the second y-axis:
   stopifnot(identical(y_chr, "mlpd"))
   ###
@@ -938,9 +938,9 @@ plotter_indiv_rel <- function(nsub_indiv = 21L, sub_meth = "rand",
 
   return(list(ggobj = ggobj))
 }
-# indiv_out_rel <- plotter_indiv_rel()
-indiv_out_rel_maxdiff <- plotter_indiv_rel(sub_meth = diff_out$sub_idxs_maxdiff,
-                                           height = 5 * 0.618)
+# indiv_rel <- plotter_indiv_rel()
+indiv_rel_maxdiff <- plotter_indiv_rel(sub_meth = diff_out$sub_idxs_maxdiff,
+                                       height = 5 * 0.618)
 
 ## Suggested sizes --------------------------------------------------------
 
