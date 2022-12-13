@@ -848,8 +848,8 @@ plotter_indiv <- function(nsub_indiv = 21L, sub_meth = "rand",
   return(list(ggobj = ggobj))
 }
 indiv_out <- plotter_indiv()
-indiv_out_maxdiff <- plotter_indiv(sub_meth = diff_out$sub_idxs_maxdiff,
-                                   height = 5 * 0.618)
+# indiv_out_maxdiff <- plotter_indiv(sub_meth = diff_out$sub_idxs_maxdiff,
+#                                    height = 5 * 0.618)
 
 plotter_indiv_rel <- function(nsub_indiv = 21L, sub_meth = "rand",
                               eval_scale = "response",
@@ -938,9 +938,9 @@ plotter_indiv_rel <- function(nsub_indiv = 21L, sub_meth = "rand",
 
   return(list(ggobj = ggobj))
 }
-indiv_out <- plotter_indiv_rel()
-indiv_out_maxdiff <- plotter_indiv_rel(sub_meth = diff_out$sub_idxs_maxdiff,
-                                       height = 5 * 0.618)
+# indiv_out_rel <- plotter_indiv_rel()
+indiv_out_rel_maxdiff <- plotter_indiv_rel(sub_meth = diff_out$sub_idxs_maxdiff,
+                                           height = 5 * 0.618)
 
 ## Suggested sizes --------------------------------------------------------
 
