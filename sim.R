@@ -849,7 +849,98 @@ plotter_indiv <- function(nsub_indiv = 21L, sub_meth = "rand",
 }
 indiv_out <- plotter_indiv()
 indiv_out_maxdiff <- plotter_indiv(sub_meth = diff_out$sub_idxs_maxdiff,
-                                   height = 6 * 0.618)
+                                   height = 5 * 0.618)
+
+plotter_indiv_rel <- function(nsub_indiv = 21L, sub_meth = "rand",
+                              eval_scale = "response",
+                              width = 6.5, height = 2 * 6.5 * 0.618) {
+  stopifnot(eval_scale == "response")
+  respOrig_nm_aug <- paste0("respOrig_", TRUE)
+  respOrig_nm_lat <- paste0("respOrig_", eval_scale == "response")
+
+  if (length(sub_meth) == 1 && is.character(sub_meth) && sub_meth == "rand") {
+    Rseed <- get(".Random.seed", envir = .GlobalEnv)
+    set.seed(seed_indiv)
+    sub_idxs <- sample.int(length(simres), size = nsub_indiv)
+    assign(".Random.seed", Rseed, envir = .GlobalEnv)
+  } else if (length(sub_meth) == 1 && is.character(sub_meth) &&
+             sub_meth == "head") {
+    sub_idxs <- seq_len(nsub_indiv)
+  } else {
+    sub_idxs <- sub_meth
+    sub_meth <- "custom"
+  }
+
+  # Prepare the plot:
+  smmry_nms <- names(simres[[1L]]$aug[[respOrig_nm_aug]]$smmry)
+  stopifnot(identical(smmry_nms,
+                      names(simres[[1L]]$lat[[respOrig_nm_lat]]$smmry)))
+  y_chr <- setdiff(smmry_nms,
+                   c("solution_terms", "se", "lower", "upper", "size"))
+  stopifnot(length(y_chr) == 1)
+  smmry_cols <- c("size", y_chr, "lower", "upper")
+  plotdat <- do.call(rbind, lapply(sub_idxs, function(sim_idx) {
+    # Check that the column names coincide:
+    stopifnot(identical(
+      smmry_nms,
+      names(simres[[sim_idx]]$aug[[respOrig_nm_aug]]$smmry)
+    ))
+    stopifnot(identical(
+      smmry_nms,
+      names(simres[[sim_idx]]$lat[[respOrig_nm_lat]]$smmry)
+    ))
+
+    smmry_aug <- simres[[sim_idx]]$aug[[respOrig_nm_aug]]$smmry
+    smmry_lat <- simres[[sim_idx]]$lat[[respOrig_nm_lat]]$smmry
+    pdat <- rbind(cbind(sim_idx = sim_idx,
+                        `Projection method` = "Augmented-data",
+                        smmry_aug[smmry_cols]),
+                  cbind(sim_idx = sim_idx,
+                        `Projection method` = "Latent",
+                        smmry_lat[smmry_cols]))
+    return(pdat)
+  }))
+
+  # MLPD plot:
+  ### For the second y-axis:
+  stopifnot(identical(y_chr, "mlpd"))
+  ###
+  ggobj <- ggplot2::ggplot(
+    data = plotdat,
+    mapping = ggplot2::aes(x = size, y = .data[[y_chr]],
+                           group = `Projection method`,
+                           color = `Projection method`)
+  ) +
+    ggplot2::geom_hline(yintercept = 0,
+                        color = "gray30",
+                        linetype = "dotted") +
+    ggplot2::geom_linerange(ggplot2::aes(ymin = lower, ymax = upper),
+                            alpha = 0.5) + # alpha = 0.4
+    ggplot2::geom_point(alpha = 0.75) + # alpha = 0.6
+    ggplot2::geom_line(alpha = 0.75) + # alpha = 0.6
+    ggplot2::scale_y_continuous(
+      sec.axis = ggplot2::sec_axis(
+        ~ exp(.),
+        name = "$\\mathrm{GMPD} / \\mathrm{GMPD}^{*}$"
+      )
+    ) +
+    ggplot2::labs(
+      x = "Submodel size",
+      y = paste0("$\\Delta\\mathrm{", toupper(y_chr), "}$")
+    ) +
+    ggplot2::theme(legend.position = "top") +
+    ggplot2::facet_wrap(ggplot2::vars(sim_idx), ncol = 3, scales = "free_y")
+  fnm_base <- paste("indiv", y_chr, eval_scale, "rel", sep = "_")
+  if (sub_meth != "rand") {
+    fnm_base <- paste(fnm_base, sub_meth, sep = "_")
+  }
+  ggsave_cust(file.path("figs", fnm_base), width = width, height = height)
+
+  return(list(ggobj = ggobj))
+}
+indiv_out <- plotter_indiv_rel()
+indiv_out_maxdiff <- plotter_indiv_rel(sub_meth = diff_out$sub_idxs_maxdiff,
+                                       height = 5 * 0.618)
 
 ## Suggested sizes --------------------------------------------------------
 
