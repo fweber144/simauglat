@@ -714,19 +714,31 @@ plotter_ovrlay_diff <- function(eval_scale = "response") {
   ggsave_cust(file.path("figs", paste("diff_se", eval_scale, sep = "_")))
   assign(".Random.seed", Rseed, envir = .GlobalEnv)
 
-  # For the individual absolute-scale MLPD plots later:
+  # Filter out simulation iterations with highest MLPD differences between
+  # augmented-data and latent projection:
   max_by_idx <- aggregate(
     plotdat[, y_chr_diff, drop = FALSE], by = list(sim_idx = plotdat$sim_idx),
     FUN = max, simplify = TRUE, drop = FALSE
   )
   which_max <- head(order(max_by_idx[, y_chr_diff],
                           decreasing = TRUE))
+  sub_idxs_maxdiff <- max_by_idx[which_max, "sim_idx"]
 
-  return(list(ggobj = ggobj, ggobj_se = ggobj_se,
+  # Highlight the filtered simulation iterations with highest MLPD differences
+  # between augmented-data and latent projection:
+  ggobj_maxdiff <- ggobj +
+    ggplot2::geom_point(data = plotdat[plotdat$sim_idx %in% sub_idxs_maxdiff, ],
+                        color = "green") +
+    ggplot2::geom_line(data = plotdat[plotdat$sim_idx %in% sub_idxs_maxdiff, ],
+                       color = "green")
+  ggsave_cust(file.path("figs",
+                        paste(y_chr_diff, eval_scale, "maxdiff", sep = "_")))
+
+  return(list(ggobj = ggobj, ggobj_se = ggobj_se, ggobj_maxdiff = ggobj_maxdiff,
               q_refstat = quantile(refstats),
               q_diff_se = quantile(plotdat$diff_se),
               p_gt0_diff_se = mean(plotdat$diff_se > 0),
-              sub_maxdiff = max_by_idx[which_max, "sim_idx"]))
+              sub_idxs_maxdiff = sub_idxs_maxdiff))
 }
 diff_out <- plotter_ovrlay_diff()
 cat("\n-----\n")
@@ -837,7 +849,7 @@ plotter_indiv <- function(nsub_indiv = 21L, sub_meth = "rand",
   return(list(ggobj = ggobj))
 }
 indiv_out <- plotter_indiv()
-indiv_out_maxdiff <- plotter_indiv(sub_meth = diff_out$sub_maxdiff)
+indiv_out_maxdiff <- plotter_indiv(sub_meth = diff_out$sub_idxs_maxdiff)
 
 ## Suggested sizes --------------------------------------------------------
 
