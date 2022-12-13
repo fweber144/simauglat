@@ -940,7 +940,7 @@ plotter_indiv_rel <- function(nsub_indiv = 21L, sub_meth = "rand",
 }
 # indiv_rel <- plotter_indiv_rel()
 indiv_rel_maxdiff <- plotter_indiv_rel(sub_meth = diff_out$sub_idxs_maxdiff,
-                                       height = 5 * 0.618)
+                                       height = 4 * 0.618)
 
 ## Suggested sizes --------------------------------------------------------
 
