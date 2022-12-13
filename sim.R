@@ -812,6 +812,10 @@ plotter_indiv_abs <- function(nsub_indiv = 21L, sub_meth = "rand",
                         smmry_lat[smmry_cols]))
     return(pdat)
   }))
+  plotdat$sim_idx <- factor(
+    paste("iter.", plotdat$sim_idx),
+    levels = paste("iter.", sort(unique(plotdat$sim_idx)))
+  )
 
   # MLPD plot:
   ### For the second y-axis:
@@ -900,6 +904,10 @@ plotter_indiv_rel <- function(nsub_indiv = 21L, sub_meth = "rand",
                         smmry_lat[smmry_cols]))
     return(pdat)
   }))
+  plotdat$sim_idx <- factor(
+    paste("iter.", plotdat$sim_idx),
+    levels = paste("iter.", sort(unique(plotdat$sim_idx)))
+  )
 
   # Delta-MLPD plot:
   ### For the second y-axis:
