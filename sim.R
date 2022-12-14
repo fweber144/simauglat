@@ -1071,33 +1071,41 @@ diff_at_sgg <- function(eval_scale = "response") {
   sim_idx_min3diff <- head(order_diff, 3)
   sim_idx_max3diff <- rev(tail(order_diff, 3))
 
-  return(c(sim_idx_min = sim_idx_min,
-           sim_idx_max = sim_idx_max,
-           # diff_min = diffdat$diff[sim_idx_min],
-           # diff_max = diffdat$diff[sim_idx_max],
-           # expdiff_min = diffdat$expdiff[sim_idx_min],
-           # expdiff_max = diffdat$expdiff[sim_idx_max],
-           diffexp_min = diffdat$diffexp[sim_idx_min],
-           diffexp_max = diffdat$diffexp[sim_idx_max],
-           aug_at_min = diffdat$aug[sim_idx_min],
-           aug_at_max = diffdat$aug[sim_idx_max],
-           lat_at_min = diffdat$lat[sim_idx_min],
-           lat_at_max = diffdat$lat[sim_idx_max],
-           expaug_at_min = diffdat$expaug[sim_idx_min],
-           expaug_at_max = diffdat$expaug[sim_idx_max],
-           explat_at_min = diffdat$explat[sim_idx_min],
-           explat_at_max = diffdat$explat[sim_idx_max],
-           sim_idx_min3diff = sim_idx_min3diff,
-           sim_idx_max3diff = sim_idx_max3diff))
+  return(list(diffdat = diffdat,
+              sim_idx_min = sim_idx_min,
+              sim_idx_max = sim_idx_max,
+              sim_idx_min3diff = sim_idx_min3diff,
+              sim_idx_max3diff = sim_idx_max3diff))
 }
 diff_at_sgg_out <- diff_at_sgg()
+
+printer_diffexp <- function(diffdat, sim_idx_min, sim_idx_max) {
+  c(
+    # diff_min = diffdat$diff[sim_idx_min],
+    # diff_max = diffdat$diff[sim_idx_max],
+    # expdiff_min = diffdat$expdiff[sim_idx_min],
+    # expdiff_max = diffdat$expdiff[sim_idx_max],
+    diffexp_min = diffdat$diffexp[sim_idx_min],
+    diffexp_max = diffdat$diffexp[sim_idx_max],
+    aug_at_min = diffdat$aug[sim_idx_min],
+    aug_at_max = diffdat$aug[sim_idx_max],
+    lat_at_min = diffdat$lat[sim_idx_min],
+    lat_at_max = diffdat$lat[sim_idx_max],
+    expaug_at_min = diffdat$expaug[sim_idx_min],
+    expaug_at_max = diffdat$expaug[sim_idx_max],
+    explat_at_min = diffdat$explat[sim_idx_min],
+    explat_at_max = diffdat$explat[sim_idx_max]
+  )
+}
 cat("\n-----\n")
 cat("Range of GMPD difference (latent minus augmented-data) at the suggested ",
     "submodel size, with additional information about the performance on ",
     "relative (i.e., relative to the reference model) and absolute MLPD and ",
     "GMPD scale in those simulation iterations where minimum and maximum are ",
     "attained:\n")
-print(diff_at_sgg_out)
+print(printer_diffexp(diffdat = diff_at_sgg_out$diffdat,
+                      sim_idx_min = diff_at_sgg_out$sim_idx_min,
+                      sim_idx_max = diff_at_sgg_out$sim_idx_max))
 cat("-----\n")
 
 # doRNG -------------------------------------------------------------------
