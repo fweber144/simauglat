@@ -571,11 +571,11 @@ plotter_ovrlay <- function(prj_meth, eval_scale = "response",
             c("size", "se", y_chr)
           ])
   }))
+
+  # Delta-MLPD plot:
   ### For the second y-axis:
   stopifnot(identical(y_chr, "mlpd"))
   ###
-
-  # Delta-MLPD plot:
   ggobj <- ggplot2::ggplot(data = plotdat,
                            mapping = ggplot2::aes(x = size,
                                                   y = .data[[y_chr]],
