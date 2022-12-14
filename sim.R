@@ -571,13 +571,8 @@ plotter_ovrlay <- function(prj_meth, eval_scale = "response",
             c("size", "se", y_chr)
           ])
   }))
-  xlab <- "Submodel size"
-  ylab <- paste0("$\\Delta\\mathrm{", toupper(y_chr), "}_{\\mathrm{", prj_meth,
-                 "}}$")
   ### For the second y-axis:
   stopifnot(identical(y_chr, "mlpd"))
-  ylab2 <- paste0("$\\mathrm{GMPD}_{\\mathrm{", prj_meth, "}} / ",
-                  "\\mathrm{GMPD}^{*}$")
   ###
 
   # Delta-MLPD plot:
@@ -592,9 +587,17 @@ plotter_ovrlay <- function(prj_meth, eval_scale = "response",
     ggplot2::geom_point() +
     ggplot2::geom_line() +
     ggplot2::scale_y_continuous(
-      sec.axis = ggplot2::sec_axis(~ exp(.), name = ylab2)
+      sec.axis = ggplot2::sec_axis(
+        ~ exp(.),
+        name = paste0("$\\mathrm{GMPD}_{\\mathrm{", prj_meth, "}} / ",
+                      "\\mathrm{GMPD}^{*}$")
+      )
     ) +
-    ggplot2::labs(x = xlab, y = ylab)
+    ggplot2::labs(
+      x = "Submodel size",
+      y = paste0("$\\Delta\\mathrm{", toupper(y_chr), "}_{\\mathrm{", prj_meth,
+                 "}}$")
+    )
   # fnm_base <- paste(y_chr, prj_meth, eval_scale, sep = "_")
   # ggsave_cust(file.path("figs", fnm_base))
 
@@ -656,7 +659,6 @@ plotter_ovrlay_diff <- function(eval_scale = "response") {
     plotdat[[smmry_cols_aug[y_chr]]]
   plotdat$diff_se <- plotdat[[smmry_cols_lat["se"]]] -
     plotdat[[smmry_cols_aug["se"]]]
-  xlab <- "Submodel size"
 
   # MLPD difference plot:
   ### For the second y-axis:
@@ -683,7 +685,7 @@ plotter_ovrlay_diff <- function(eval_scale = "response") {
       )
     ) +
     ggplot2::labs(
-      x = xlab,
+      x = "Submodel size",
       y = paste0(
         "$\\mathrm{", toupper(y_chr), "}_{\\mathrm{lat}}",
         " - ",
@@ -704,7 +706,7 @@ plotter_ovrlay_diff <- function(eval_scale = "response") {
     ggplot2::geom_boxplot() +
     ggplot2::geom_jitter(alpha = 0.25, width = 0.25, height = 0) +
     ggplot2::labs(
-      x = xlab,
+      x = "Submodel size",
       y = paste0(
         "$\\mathrm{SE}(\\Delta\\mathrm{", toupper(y_chr), "}_{\\mathrm{lat}})",
         " - ",
