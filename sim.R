@@ -1096,7 +1096,8 @@ da_perf_diff_at_sgg <- function(n_idxs = 3, eval_scale = "response") {
               sim_idx_min = sim_idx_min,
               sim_idx_max = sim_idx_max,
               sim_idx_min_diff = sim_idx_min_diff,
-              sim_idx_max_diff = sim_idx_max_diff))
+              sim_idx_max_diff = sim_idx_max_diff,
+              eval_scale = eval_scale))
 }
 da_perf_diff_at_sgg_out <- da_perf_diff_at_sgg()
 
@@ -1123,17 +1124,54 @@ printer_diffexp <- function(da_info) {
   ))
 }
 cat("\n-----\n")
-cat("Range of GMPD difference (latent minus augmented-data) at the suggested ",
-    "submodel size, with additional information about the performance on ",
-    "relative (i.e., relative to the reference model) and absolute MLPD and ",
-    "GMPD scale in those simulation iterations where minimum and maximum are ",
+cat("Range of GMPD difference (latent minus augmented-data) at the suggested",
+    "submodel size, with additional information about the performance on",
+    "relative (i.e., relative to the reference model) and absolute MLPD and",
+    "GMPD scale in those simulation iterations where minimum and maximum are",
     "attained:\n")
 print(printer_diffexp(da_info = da_perf_diff_at_sgg_out))
 cat("-----\n")
 
 ### Plotting functions ----------------------------------------------------
 
-# TODO
+gg_perf_diff_at_sgg <- function(da_info) {
+  da_prep <- da_info$da_prep
+  eval_scale <- da_info$eval_scale
+
+  da_prep <- da_prep[!is.na(da_prep[["diff"]]), , drop = FALSE]
+
+  # MLPD difference plot, but only at smaller suggested size:
+  ggobj <- ggplot2::ggplot(data = da_prep, mapping = ggplot2::aes(x = diff)) +
+    ggplot2::geom_vline(xintercept = 0,
+                        color = "gray30",
+                        linetype = "dotted") +
+    ggplot2::geom_histogram(bins = 35) +
+    ggplot2::scale_x_continuous(
+      sec.axis = ggplot2::sec_axis(
+        ~ exp(.),
+        name = paste0(
+          "$\\mathrm{GMPD}_{\\mathrm{lat}}",
+          " / ",
+          "\\mathrm{GMPD}_{\\mathrm{aug}}$",
+          " at smaller suggested size"
+        )
+      )
+    ) +
+    ggplot2::labs(
+      x = paste0(
+        "$\\mathrm{", toupper(perf_chr), "}_{\\mathrm{lat}}",
+        " - ",
+        "\\mathrm{", toupper(perf_chr), "}_{\\mathrm{aug}}$",
+        " at smaller suggested size"
+      ),
+      y = "Absolute frequency"
+    )
+  ggsave_cust(file.path("figs",
+                        paste(perf_chr_diff, eval_scale, "at_sgg", sep = "_")))
+
+  return(list(ggobj = ggobj))
+}
+diff_at_sgg <- gg_perf_diff_at_sgg(da_info = da_perf_diff_at_sgg_out)
 
 # doRNG -------------------------------------------------------------------
 
