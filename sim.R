@@ -1073,10 +1073,10 @@ diff_at_sgg <- function(eval_scale = "response") {
 
   return(c(sim_idx_min = sim_idx_min,
            sim_idx_max = sim_idx_max,
-           diff_min = diffdat$diff[sim_idx_min],
-           diff_max = diffdat$diff[sim_idx_max],
-           expdiff_min = diffdat$expdiff[sim_idx_min],
-           expdiff_max = diffdat$expdiff[sim_idx_max],
+           # diff_min = diffdat$diff[sim_idx_min],
+           # diff_max = diffdat$diff[sim_idx_max],
+           # expdiff_min = diffdat$expdiff[sim_idx_min],
+           # expdiff_max = diffdat$expdiff[sim_idx_max],
            diffexp_min = diffdat$diffexp[sim_idx_min],
            diffexp_max = diffdat$diffexp[sim_idx_max],
            aug_at_min = diffdat$aug[sim_idx_min],
@@ -1092,10 +1092,11 @@ diff_at_sgg <- function(eval_scale = "response") {
 }
 diff_at_sgg_out <- diff_at_sgg()
 cat("\n-----\n")
-cat("Range of predictive performance difference (with exponentiated ",
-    "predictive performance, i.e., the GMPD) at the suggested submodel size, ",
-    "with additional information about the performance on absolute scale ",
-    "(i.e., not relative to the reference model):\n")
+cat("Range of GMPD difference (latent minus augmented-data) at the suggested ",
+    "submodel size, with additional information about the performance on ",
+    "relative (i.e., relative to the reference model) and absolute MLPD and ",
+    "GMPD scale in those simulation iterations where minimum and maximum are ",
+    "attained:\n")
 print(diff_at_sgg_out)
 cat("-----\n")
 
