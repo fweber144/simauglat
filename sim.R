@@ -552,7 +552,7 @@ cat("-----\n")
 
 ## Predictive performances ------------------------------------------------
 
-### Preparations ----------------------------------------------------------
+### Preparations and printing ---------------------------------------------
 
 perf_chr_diff <- paste("diff", perf_chr, sep = "_")
 # For secondary y-axes as well as for section "Predictive performance at
@@ -756,53 +756,6 @@ da_perf_long_rel <- function(nsub_indiv = 21L, msub_indiv = "rand",
 }
 da_perf_long_rel_rand <- da_perf_long_rel()
 da_perf_long_rel_maxdiff <- da_perf_long_rel(msub_indiv = idxs_maxdiff)
-
-da_at_sgg <- function(n_idxs = 3, eval_scale = "response") {
-  stopifnot(eval_scale == "response")
-  respOrig_nm_aug <- mk_respOrig_nm(prj_meth = "aug", eval_scale = eval_scale)
-  respOrig_nm_lat <- mk_respOrig_nm(prj_meth = "lat", eval_scale = eval_scale)
-
-  da_prep <- do.call(rbind, lapply(seq_along(simres), function(sim_idx) {
-    res_aug <- simres[[sim_idx]]$aug[[respOrig_nm_aug]]
-    res_lat <- simres[[sim_idx]]$lat[[respOrig_nm_lat]]
-    sgg_size <- suppressWarnings(
-      min(res_aug$sgg_size, res_lat$sgg_size, na.rm = TRUE)
-    )
-    if (is.finite(sgg_size)) {
-      dy <- c("daug" = res_aug$smmry[res_aug$smmry$size == sgg_size, perf_chr],
-              "dlat" = res_lat$smmry[res_lat$smmry$size == sgg_size, perf_chr])
-      refstat <- res_aug$refstat
-      stopifnot(identical(refstat, res_lat$refstat))
-      y <- dy + refstat
-      names(y) <- sub("^d", "", names(y))
-      return(c(dy, y))
-    } else {
-      return(rep(NA, 4))
-    }
-  }))
-  da_prep <- as.data.frame(da_prep)
-  da_prep <- within(da_prep, {
-    expaug <- exp(aug)
-    explat <- exp(lat)
-    diff <- lat - aug
-    expdiff <- exp(diff)
-    diffexp <- explat - expaug
-  })
-
-  stopifnot(!any(duplicated(na.omit(da_prep$diffexp))))
-  sim_idx_min <- which.min(da_prep$diffexp)
-  sim_idx_max <- which.max(da_prep$diffexp)
-  order_diff <- order(da_prep$diff)
-  sim_idx_min_diff <- head(order_diff, n_idxs)
-  sim_idx_max_diff <- rev(tail(order_diff, n_idxs))
-
-  return(list(da_prep = da_prep,
-              sim_idx_min = sim_idx_min,
-              sim_idx_max = sim_idx_max,
-              sim_idx_min_diff = sim_idx_min_diff,
-              sim_idx_max_diff = sim_idx_max_diff))
-}
-da_at_sgg_out <- da_at_sgg()
 
 ### Plotting functions ----------------------------------------------------
 
@@ -1097,6 +1050,55 @@ for (eval_scale_lat_val in c("response")) {
 
 ## Predictive performances at suggested sizes -----------------------------
 
+### Preparations and printing ---------------------------------------------
+
+da_perf_diff_at_sgg <- function(n_idxs = 3, eval_scale = "response") {
+  stopifnot(eval_scale == "response")
+  respOrig_nm_aug <- mk_respOrig_nm(prj_meth = "aug", eval_scale = eval_scale)
+  respOrig_nm_lat <- mk_respOrig_nm(prj_meth = "lat", eval_scale = eval_scale)
+
+  da_prep <- do.call(rbind, lapply(seq_along(simres), function(sim_idx) {
+    res_aug <- simres[[sim_idx]]$aug[[respOrig_nm_aug]]
+    res_lat <- simres[[sim_idx]]$lat[[respOrig_nm_lat]]
+    sgg_size <- suppressWarnings(
+      min(res_aug$sgg_size, res_lat$sgg_size, na.rm = TRUE)
+    )
+    if (is.finite(sgg_size)) {
+      dy <- c("daug" = res_aug$smmry[res_aug$smmry$size == sgg_size, perf_chr],
+              "dlat" = res_lat$smmry[res_lat$smmry$size == sgg_size, perf_chr])
+      refstat <- res_aug$refstat
+      stopifnot(identical(refstat, res_lat$refstat))
+      y <- dy + refstat
+      names(y) <- sub("^d", "", names(y))
+      return(c(dy, y))
+    } else {
+      return(rep(NA, 4))
+    }
+  }))
+  da_prep <- as.data.frame(da_prep)
+  da_prep <- within(da_prep, {
+    expaug <- exp(aug)
+    explat <- exp(lat)
+    diff <- lat - aug
+    expdiff <- exp(diff)
+    diffexp <- explat - expaug
+  })
+
+  stopifnot(!any(duplicated(na.omit(da_prep$diffexp))))
+  sim_idx_min <- which.min(da_prep$diffexp)
+  sim_idx_max <- which.max(da_prep$diffexp)
+  order_diff <- order(da_prep$diff)
+  sim_idx_min_diff <- head(order_diff, n_idxs)
+  sim_idx_max_diff <- rev(tail(order_diff, n_idxs))
+
+  return(list(da_prep = da_prep,
+              sim_idx_min = sim_idx_min,
+              sim_idx_max = sim_idx_max,
+              sim_idx_min_diff = sim_idx_min_diff,
+              sim_idx_max_diff = sim_idx_max_diff))
+}
+da_perf_diff_at_sgg_out <- da_perf_diff_at_sgg()
+
 printer_diffexp <- function(da_info) {
   da_prep <- da_info$da_prep
   sim_idx_min <- da_info$sim_idx_min
@@ -1125,8 +1127,12 @@ cat("Range of GMPD difference (latent minus augmented-data) at the suggested ",
     "relative (i.e., relative to the reference model) and absolute MLPD and ",
     "GMPD scale in those simulation iterations where minimum and maximum are ",
     "attained:\n")
-print(printer_diffexp(da_info = da_at_sgg_out))
+print(printer_diffexp(da_info = da_perf_diff_at_sgg_out))
 cat("-----\n")
+
+### Plotting functions ----------------------------------------------------
+
+# TODO
 
 # doRNG -------------------------------------------------------------------
 
