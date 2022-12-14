@@ -1076,6 +1076,7 @@ da_perf_diff_at_sgg <- function(n_idxs = 3, eval_scale = "response") {
     }
   }))
   da_prep <- as.data.frame(da_prep)
+  da_prep$sim_idx <- seq_along(simres)
   da_prep <- within(da_prep, {
     expaug <- exp(aug)
     explat <- exp(lat)
