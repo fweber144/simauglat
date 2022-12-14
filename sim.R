@@ -1067,6 +1067,9 @@ diff_at_sgg <- function(eval_scale = "response") {
   stopifnot(!any(duplicated(na.omit(diffdat$diffexp))))
   sim_idx_min <- which.min(diffdat$diffexp)
   sim_idx_max <- which.max(diffdat$diffexp)
+  order_diff <- order(diffdat$diff)
+  sim_idx_min3diff <- head(order_diff, 3)
+  sim_idx_max3diff <- rev(tail(order_diff, 3))
 
   return(c(sim_idx_min = sim_idx_min,
            sim_idx_max = sim_idx_max,
@@ -1083,7 +1086,9 @@ diff_at_sgg <- function(eval_scale = "response") {
            expaug_at_min = diffdat$expaug[sim_idx_min],
            expaug_at_max = diffdat$expaug[sim_idx_max],
            explat_at_min = diffdat$explat[sim_idx_min],
-           explat_at_max = diffdat$explat[sim_idx_max]))
+           explat_at_max = diffdat$explat[sim_idx_max],
+           sim_idx_min3diff = sim_idx_min3diff,
+           sim_idx_max3diff = sim_idx_max3diff))
 }
 diff_at_sgg_out <- diff_at_sgg()
 cat("\n-----\n")
