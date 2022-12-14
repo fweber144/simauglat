@@ -92,6 +92,8 @@ npreds_tot <- 50L
 p0 <- as.integer(ceiling(npreds_tot * 0.20))
 source("rh_sigma_tilde.R")
 sigti <- calc_sigma_tilde(ncats = ncat)
+perf_chr <- "mlpd"
+types_smmry <- c("mean", "se", "lower", "upper")
 seed_glob <- 856824715
 seed_jitter <- 46629794
 seed_indiv <- 255696126
@@ -348,21 +350,19 @@ run_projpred <- function(refm_fit, dat_indep, latent = FALSE, ...) {
   out_projpred <- c(out_projpred, lapply(respOrig_vals, function(respOrig_val) {
     # Currently, we need to use the internal projpred function .tabulate_stats()
     # to obtain the reference model's performance:
-    stats_man <- projpred:::.tabulate_stats(vs, stats = "mlpd",
+    stats_man <- projpred:::.tabulate_stats(vs, stats = perf_chr,
                                             respOrig = respOrig_val)
     refsmms <- vs$summaries$ref
     if (latent && respOrig_val) refsmms <- refsmms$Orig
     return(list(
       refsmms = refsmms,
       refstat = stats_man$value[stats_man$size == Inf],
-      sgg_size = projpred::suggest_size(vs, stat = "mlpd",
+      sgg_size = projpred::suggest_size(vs, stat = perf_chr,
                                         respOrig = respOrig_val),
-      smmry = summary(vs, deltas = TRUE, stats = "mlpd",
-                      type = c("mean", "se", "lower", "upper"),
+      smmry = summary(vs, deltas = TRUE, stats = perf_chr, type = types_smmry,
                       respOrig = respOrig_val)$selection,
-      abs_smmry = summary(vs, deltas = FALSE, stats = "mlpd",
-                          type = c("mean", "se", "lower", "upper"),
-                          respOrig = respOrig_val)$selection
+      abs_smmry = summary(vs, deltas = FALSE, stats = perf_chr,
+                          type = types_smmry, respOrig = respOrig_val)$selection
     ))
   }))
   return(out_projpred)
@@ -373,7 +373,7 @@ sim_runner <- function(...) {
     sit = seq_len(nsim),
     .export = c("rhorseshoe", "dataconstructor", "fit_ref", "run_projpred",
                 "nobsv", "nobsv_indep", "ncat", "yunq", "link_str", "nthres",
-                "npreds_tot", "p0", "sigti", "bfit"),
+                "npreds_tot", "p0", "sigti", "perf_chr", "types_smmry", "bfit"),
     .options.snow = list(attachExportEnv = TRUE)
   ) %dorng% {
     cat("\nSimulation iteration: ", sit, "\n", sep = "")
@@ -489,7 +489,7 @@ gg_true_coefs_cont <- ggplot2::ggplot(data = true_coefs_cont,
   ggplot2::geom_histogram(bins = 40)
 ggsave_cust(file.path("figs", "true_coefs_cont"))
 
-## Runtime ----------------------------------------------------------------
+## Timings ----------------------------------------------------------------
 
 time_vs_wide <- do.call(rbind, lapply(seq_along(simres), function(sim_idx) {
   return(data.frame(
@@ -550,35 +550,271 @@ for (sim_idx in head(seq_along(simres)[!same_solpths], 10)) {
 }
 cat("-----\n")
 
-## Model size selection plots ---------------------------------------------
+## Predictive performances ------------------------------------------------
 
-plotter_ovrlay <- function(prj_meth, eval_scale = "response",
-                           ylim_full = NULL) {
+### Preparations ----------------------------------------------------------
+
+perf_chr_diff <- paste("diff", perf_chr, sep = "_")
+# For secondary y-axes as well as for section "Predictive performance at
+# suggested size":
+stopifnot(identical(perf_chr, "mlpd"))
+
+mk_respOrig_nm <- function(prj_meth, eval_scale = "response") {
   if (prj_meth == "aug") {
     stopifnot(eval_scale == "response")
     respOrig_nm <- paste0("respOrig_", TRUE)
   } else if (prj_meth == "lat") {
     respOrig_nm <- paste0("respOrig_", eval_scale == "response")
   }
+  return(respOrig_nm)
+}
 
-  # Prepare the plots:
-  y_chr <- setdiff(names(simres[[1L]][[prj_meth]][[respOrig_nm]]$smmry),
-                   c("solution_terms", "se", "lower", "upper", "size"))
-  stopifnot(length(y_chr) == 1)
-  plotdat <- do.call(rbind, lapply(seq_along(simres), function(sim_idx) {
+da_perf_sep_rel <- function(prj_meth, eval_scale = "response") {
+  respOrig_nm <- mk_respOrig_nm(prj_meth = prj_meth, eval_scale = eval_scale)
+
+  da_prep <- do.call(rbind, lapply(seq_along(simres), function(sim_idx) {
     cbind(sim_idx = sim_idx,
           simres[[sim_idx]][[prj_meth]][[respOrig_nm]]$smmry[
-            c("size", "se", y_chr)
+            c("size", perf_chr, "se")
           ])
   }))
+  return(list(da_prep = da_prep, prj_meth = prj_meth, eval_scale = eval_scale))
+}
+da_perf_aug_rel <- da_perf_sep_rel(prj_meth = "aug")
+da_perf_lat_rel <- da_perf_sep_rel(prj_meth = "lat")
+
+da_perf_diff <- function(eval_scale = "response") {
+  stopifnot(eval_scale == "response")
+  respOrig_nm_aug <- mk_respOrig_nm(prj_meth = "aug", eval_scale = eval_scale)
+  respOrig_nm_lat <- mk_respOrig_nm(prj_meth = "lat", eval_scale = eval_scale)
+
+  smmry_cols <- c(perf_chr, "se")
+  smmry_cols_aug <- setNames(paste(smmry_cols, "aug", sep = "_"), smmry_cols)
+  smmry_cols_lat <- setNames(paste(smmry_cols, "lat", sep = "_"), smmry_cols)
+
+  da_prep <- do.call(rbind, lapply(seq_along(simres), function(sim_idx) {
+    smmry_aug <- simres[[sim_idx]]$aug[[respOrig_nm_aug]]$smmry
+    smmry_lat <- simres[[sim_idx]]$lat[[respOrig_nm_lat]]$smmry
+    stopifnot(identical(smmry_aug["size"], smmry_lat["size"]))
+    cbind(sim_idx = sim_idx, smmry_aug["size"],
+          setNames(smmry_aug[smmry_cols], smmry_cols_aug),
+          setNames(smmry_lat[smmry_cols], smmry_cols_lat))
+  }))
+  da_prep[[perf_chr_diff]] <- da_prep[[smmry_cols_lat[perf_chr]]] -
+    da_prep[[smmry_cols_aug[perf_chr]]]
+  da_prep$diff_se <- da_prep[[smmry_cols_lat["se"]]] -
+    da_prep[[smmry_cols_aug["se"]]]
+  return(list(da_prep = da_prep, eval_scale = eval_scale))
+}
+da_perf_diff_out <- da_perf_diff()
+cat("\n-----\n")
+cat("Quartiles of the SE difference (across all simulation iterations and all",
+    "submodel sizes):\n")
+print(quantile(da_perf_diff_out$da_prep$diff_se))
+cat("Corresponding proportion of SE difference > 0:\n")
+print(mean(da_perf_diff_out$da_prep$diff_se > 0))
+cat("-----\n")
+
+vec_ref <- function(eval_scale = "response") {
+  stopifnot(eval_scale == "response")
+  respOrig_nm_aug <- mk_respOrig_nm(prj_meth = "aug", eval_scale = eval_scale)
+  respOrig_nm_lat <- mk_respOrig_nm(prj_meth = "lat", eval_scale = eval_scale)
+
+  refstats_aug <- do.call(c, lapply(seq_along(simres), function(sim_idx) {
+    simres[[sim_idx]]$aug[[respOrig_nm_aug]]$refstat
+  }))
+  refstats_lat <- do.call(c, lapply(seq_along(simres), function(sim_idx) {
+    simres[[sim_idx]]$lat[[respOrig_nm_lat]]$refstat
+  }))
+
+  # Check that the reference model (performance) is the same, so that in
+  # particular, the difference of the Delta MLPDs can be interpreted as the
+  # difference of the submodel MLPDs (i.e., the reference model MLPD cancels
+  # out):
+  stopifnot(all.equal(refstats_aug, refstats_lat,
+                      tolerance = .Machine$double.eps))
+
+  refstats <- refstats_aug
+  return(refstats)
+}
+refstats <- vec_ref()
+q_refstat <- quantile(refstats)
+cat("\n-----\n")
+cat("Quartiles of the reference model's performance statistic (across all",
+    "simulation iterations):\n")
+print(q_refstat)
+cat("exp() of these quartiles (= quartiles of exp(reference model's",
+    "performance statistic)):\n")
+print(exp(q_refstat))
+cat("-----\n")
+
+# Filter out simulation iterations with highest MLPD differences between
+# augmented-data and latent projection:
+find_idxs_maxdiff <- function(da_prep, n_idxs = 3) {
+  maxdiffs <- aggregate(
+    da_prep[, perf_chr_diff, drop = FALSE],
+    by = list(sim_idx = da_prep$sim_idx), FUN = max, drop = FALSE
+  )
+  which_maxdiff <- head(order(maxdiffs[, perf_chr_diff], decreasing = TRUE),
+                        n_idxs)
+  idxs_maxdiff <- maxdiffs[which_maxdiff, "sim_idx"]
+  return(idxs_maxdiff)
+}
+idxs_maxdiff <- find_idxs_maxdiff(da_prep = da_perf_diff_out$da_prep)
+cat("\n-----\n")
+cat("Simulation iterations with highest MLPD differences between ",
+    "augmented-data and latent projection:\n")
+print(idxs_maxdiff)
+cat("-----\n")
+
+da_perf_long_abs <- function(nsub_indiv = 21L, msub_indiv = "rand",
+                             eval_scale = "response") {
+  stopifnot(eval_scale == "response")
+  respOrig_nm_aug <- mk_respOrig_nm(prj_meth = "aug", eval_scale = eval_scale)
+  respOrig_nm_lat <- mk_respOrig_nm(prj_meth = "lat", eval_scale = eval_scale)
+
+  if (identical(msub_indiv, "rand")) {
+    Rseed <- get(".Random.seed", envir = .GlobalEnv)
+    set.seed(seed_indiv)
+    sub_idxs <- sample.int(length(simres), size = nsub_indiv)
+    assign(".Random.seed", Rseed, envir = .GlobalEnv)
+  } else if (identical(msub_indiv, "head")) {
+    sub_idxs <- seq_len(nsub_indiv)
+  } else {
+    sub_idxs <- msub_indiv
+    msub_indiv <- "custom"
+  }
+
+  smmry_cols <- c("size", perf_chr, "lower", "upper")
+
+  da_prep <- do.call(rbind, lapply(sub_idxs, function(sim_idx) {
+    refstat_aug <- simres[[sim_idx]]$aug[[respOrig_nm_aug]]$refstat
+    refstat_lat <- simres[[sim_idx]]$lat[[respOrig_nm_lat]]$refstat
+    stopifnot(all.equal(refstat_aug, refstat_lat,
+                        tolerance = .Machine$double.eps))
+    refstat <- refstat_aug
+
+    smmry_aug <- simres[[sim_idx]]$aug[[respOrig_nm_aug]]$abs_smmry
+    smmry_lat <- simres[[sim_idx]]$lat[[respOrig_nm_lat]]$abs_smmry
+    pdat <- rbind(cbind(sim_idx = sim_idx, refstat = refstat,
+                        `Projection method` = "Augmented-data",
+                        smmry_aug[smmry_cols]),
+                  cbind(sim_idx = sim_idx, refstat = refstat,
+                        `Projection method` = "Latent",
+                        smmry_lat[smmry_cols]))
+    return(pdat)
+  }))
+  da_prep$sim_idx <- factor(
+    paste("iter.", da_prep$sim_idx),
+    levels = paste("iter.", sort(unique(da_prep$sim_idx)))
+  )
+
+  return(list(da_prep = da_prep, msub_indiv = msub_indiv,
+              eval_scale = eval_scale))
+}
+da_perf_long_abs_rand <- da_perf_long_abs()
+da_perf_long_abs_maxdiff <- da_perf_long_abs(msub_indiv = idxs_maxdiff)
+
+da_perf_long_rel <- function(nsub_indiv = 21L, msub_indiv = "rand",
+                             eval_scale = "response") {
+  stopifnot(eval_scale == "response")
+  respOrig_nm_aug <- mk_respOrig_nm(prj_meth = "aug", eval_scale = eval_scale)
+  respOrig_nm_lat <- mk_respOrig_nm(prj_meth = "lat", eval_scale = eval_scale)
+
+  if (identical(msub_indiv, "rand")) {
+    Rseed <- get(".Random.seed", envir = .GlobalEnv)
+    set.seed(seed_indiv)
+    sub_idxs <- sample.int(length(simres), size = nsub_indiv)
+    assign(".Random.seed", Rseed, envir = .GlobalEnv)
+  } else if (identical(msub_indiv, "head")) {
+    sub_idxs <- seq_len(nsub_indiv)
+  } else {
+    sub_idxs <- msub_indiv
+    msub_indiv <- "custom"
+  }
+
+  smmry_cols <- c("size", perf_chr, "lower", "upper")
+
+  da_prep <- do.call(rbind, lapply(sub_idxs, function(sim_idx) {
+    smmry_aug <- simres[[sim_idx]]$aug[[respOrig_nm_aug]]$smmry
+    smmry_lat <- simres[[sim_idx]]$lat[[respOrig_nm_lat]]$smmry
+    pdat <- rbind(cbind(sim_idx = sim_idx,
+                        `Projection method` = "Augmented-data",
+                        smmry_aug[smmry_cols]),
+                  cbind(sim_idx = sim_idx,
+                        `Projection method` = "Latent",
+                        smmry_lat[smmry_cols]))
+    return(pdat)
+  }))
+  da_prep$sim_idx <- factor(
+    paste("iter.", da_prep$sim_idx),
+    levels = paste("iter.", sort(unique(da_prep$sim_idx)))
+  )
+
+  return(list(da_prep = da_prep, msub_indiv = msub_indiv,
+              eval_scale = eval_scale))
+}
+da_perf_long_rel_rand <- da_perf_long_rel()
+da_perf_long_rel_maxdiff <- da_perf_long_rel(msub_indiv = idxs_maxdiff)
+
+da_at_sgg <- function(n_idxs = 3, eval_scale = "response") {
+  stopifnot(eval_scale == "response")
+  respOrig_nm_aug <- mk_respOrig_nm(prj_meth = "aug", eval_scale = eval_scale)
+  respOrig_nm_lat <- mk_respOrig_nm(prj_meth = "lat", eval_scale = eval_scale)
+
+  da_prep <- do.call(rbind, lapply(seq_along(simres), function(sim_idx) {
+    res_aug <- simres[[sim_idx]]$aug[[respOrig_nm_aug]]
+    res_lat <- simres[[sim_idx]]$lat[[respOrig_nm_lat]]
+    sgg_size <- suppressWarnings(
+      min(res_aug$sgg_size, res_lat$sgg_size, na.rm = TRUE)
+    )
+    if (is.finite(sgg_size)) {
+      dy <- c("daug" = res_aug$smmry[res_aug$smmry$size == sgg_size, perf_chr],
+              "dlat" = res_lat$smmry[res_lat$smmry$size == sgg_size, perf_chr])
+      refstat <- res_aug$refstat
+      stopifnot(identical(refstat, res_lat$refstat))
+      y <- dy + refstat
+      names(y) <- sub("^d", "", names(y))
+      return(c(dy, y))
+    } else {
+      return(rep(NA, 4))
+    }
+  }))
+  da_prep <- as.data.frame(da_prep)
+  da_prep <- within(da_prep, {
+    expaug <- exp(aug)
+    explat <- exp(lat)
+    diff <- lat - aug
+    expdiff <- exp(diff)
+    diffexp <- explat - expaug
+  })
+
+  stopifnot(!any(duplicated(na.omit(da_prep$diffexp))))
+  sim_idx_min <- which.min(da_prep$diffexp)
+  sim_idx_max <- which.max(da_prep$diffexp)
+  order_diff <- order(da_prep$diff)
+  sim_idx_min_diff <- head(order_diff, n_idxs)
+  sim_idx_max_diff <- rev(tail(order_diff, n_idxs))
+
+  return(list(da_prep = da_prep,
+              sim_idx_min = sim_idx_min,
+              sim_idx_max = sim_idx_max,
+              sim_idx_min_diff = sim_idx_min_diff,
+              sim_idx_max_diff = sim_idx_max_diff))
+}
+da_at_sgg_out <- da_at_sgg()
+
+### Plotting functions ----------------------------------------------------
+
+gg_perf_sep_rel <- function(da_info, ylim_full = NULL) {
+  da_prep <- da_info$da_prep
+  prj_meth <- da_info$prj_meth
+  eval_scale <- da_info$eval_scale
 
   # Delta-MLPD plot:
-  ### For the second y-axis:
-  stopifnot(identical(y_chr, "mlpd"))
-  ###
-  ggobj <- ggplot2::ggplot(data = plotdat,
+  ggobj <- ggplot2::ggplot(data = da_prep,
                            mapping = ggplot2::aes(x = size,
-                                                  y = .data[[y_chr]],
+                                                  y = .data[[perf_chr]],
                                                   group = sim_idx,
                                                   alpha = I(0.25))) +
     ggplot2::geom_hline(yintercept = 0,
@@ -595,10 +831,10 @@ plotter_ovrlay <- function(prj_meth, eval_scale = "response",
     ) +
     ggplot2::labs(
       x = "Submodel size",
-      y = paste0("$\\Delta\\mathrm{", toupper(y_chr), "}_{\\mathrm{", prj_meth,
-                 "}}$")
+      y = paste0("$\\Delta\\mathrm{", toupper(perf_chr), "}_{\\mathrm{",
+                 prj_meth, "}}$")
     )
-  # fnm_base <- paste(y_chr, prj_meth, eval_scale, sep = "_")
+  # fnm_base <- paste(perf_chr, prj_meth, eval_scale, sep = "_")
   # ggsave_cust(file.path("figs", fnm_base))
 
   # Delta-MLPD plot with prespecified y-axis limits (employed to have the same
@@ -609,64 +845,23 @@ plotter_ovrlay <- function(prj_meth, eval_scale = "response",
 
   return(list(ggobj = ggobj, ggobj_full = ggobj_full))
 }
-comm_lat <- plotter_ovrlay(prj_meth = "lat")
+lat_rel <- gg_perf_sep_rel(da_info = da_perf_lat_rel)
 ylim_lat <- ggplot2::ggplot_build(
-  comm_lat$ggobj
+  lat_rel$ggobj
 )$layout$panel_scales_y[[1]]$range$range
-comm_aug <- plotter_ovrlay(prj_meth = "aug", ylim_full = ylim_lat)
+aug_rel <- gg_perf_sep_rel(da_info = da_perf_aug_rel, ylim_full = ylim_lat)
 library(patchwork)
-gg_aug_lat <- comm_aug$ggobj_full / comm_lat$ggobj_full
+gg_aug_lat <- aug_rel$ggobj_full / lat_rel$ggobj_full
 ggsave_cust(file.path("figs", "aug_lat"), height = 2 * 6 * 0.618)
 
-plotter_ovrlay_diff <- function(eval_scale = "response") {
-  stopifnot(eval_scale == "response")
-  respOrig_nm_aug <- paste0("respOrig_", TRUE)
-  respOrig_nm_lat <- paste0("respOrig_", eval_scale == "response")
-
-  # Check that the reference model (performance) is the same, so that the
-  # difference of the Delta MLPDs can be interpreted as the difference of the
-  # submodel MLPDs (i.e., the reference model MLPD cancels out):
-  refstats_aug <- do.call(c, lapply(seq_along(simres), function(sim_idx) {
-    simres[[sim_idx]]$aug[[respOrig_nm_aug]]$refstat
-  }))
-  refstats_lat <- do.call(c, lapply(seq_along(simres), function(sim_idx) {
-    simres[[sim_idx]]$lat[[respOrig_nm_lat]]$refstat
-  }))
-  stopifnot(all.equal(refstats_aug, refstats_lat,
-                      tolerance = .Machine$double.eps))
-  refstats <- refstats_aug
-
-  # Prepare the plots:
-  smmry_nms <- names(simres[[1L]]$aug[[respOrig_nm_aug]]$smmry)
-  stopifnot(identical(smmry_nms,
-                      names(simres[[1L]]$lat[[respOrig_nm_lat]]$smmry)))
-  y_chr <- setdiff(smmry_nms,
-                   c("solution_terms", "se", "lower", "upper", "size"))
-  stopifnot(length(y_chr) == 1)
-  smmry_cols <- c(y_chr, "se")
-  smmry_cols_aug <- setNames(paste(smmry_cols, "aug", sep = "_"), smmry_cols)
-  smmry_cols_lat <- setNames(paste(smmry_cols, "lat", sep = "_"), smmry_cols)
-  plotdat <- do.call(rbind, lapply(seq_along(simres), function(sim_idx) {
-    smmry_aug <- simres[[sim_idx]]$aug[[respOrig_nm_aug]]$smmry
-    smmry_lat <- simres[[sim_idx]]$lat[[respOrig_nm_lat]]$smmry
-    stopifnot(identical(smmry_aug["size"], smmry_lat["size"]))
-    cbind(sim_idx = sim_idx, smmry_aug["size"],
-          setNames(smmry_aug[smmry_cols], smmry_cols_aug),
-          setNames(smmry_lat[smmry_cols], smmry_cols_lat))
-  }))
-  y_chr_diff <- paste("diff", y_chr, sep = "_")
-  plotdat[[y_chr_diff]] <- plotdat[[smmry_cols_lat[y_chr]]] -
-    plotdat[[smmry_cols_aug[y_chr]]]
-  plotdat$diff_se <- plotdat[[smmry_cols_lat["se"]]] -
-    plotdat[[smmry_cols_aug["se"]]]
+gg_perf_diff <- function(da_info) {
+  da_prep <- da_info$da_prep
+  eval_scale <- da_info$eval_scale
 
   # MLPD difference plot:
-  ### For the second y-axis:
-  stopifnot(identical(y_chr, "mlpd"))
-  ###
-  ggobj <- ggplot2::ggplot(data = plotdat,
+  ggobj <- ggplot2::ggplot(data = da_prep,
                            mapping = ggplot2::aes(x = size,
-                                                  y = .data[[y_chr_diff]],
+                                                  y = .data[[perf_chr_diff]],
                                                   group = sim_idx,
                                                   alpha = I(0.25))) +
     ggplot2::geom_hline(yintercept = 0,
@@ -687,17 +882,17 @@ plotter_ovrlay_diff <- function(eval_scale = "response") {
     ggplot2::labs(
       x = "Submodel size",
       y = paste0(
-        "$\\mathrm{", toupper(y_chr), "}_{\\mathrm{lat}}",
+        "$\\mathrm{", toupper(perf_chr), "}_{\\mathrm{lat}}",
         " - ",
-        "\\mathrm{", toupper(y_chr), "}_{\\mathrm{aug}}$"
+        "\\mathrm{", toupper(perf_chr), "}_{\\mathrm{aug}}$"
       )
     )
-  ggsave_cust(file.path("figs", paste(y_chr_diff, eval_scale, sep = "_")))
+  ggsave_cust(file.path("figs", paste(perf_chr_diff, eval_scale, sep = "_")))
 
   # SE difference plot:
   Rseed <- get(".Random.seed", envir = .GlobalEnv)
   set.seed(seed_jitter)
-  ggobj_se <- ggplot2::ggplot(data = plotdat,
+  ggobj_se <- ggplot2::ggplot(data = da_prep,
                               mapping = ggplot2::aes(x = factor(size),
                                                      y = diff_se)) +
     ggplot2::geom_hline(yintercept = 0,
@@ -708,124 +903,40 @@ plotter_ovrlay_diff <- function(eval_scale = "response") {
     ggplot2::labs(
       x = "Submodel size",
       y = paste0(
-        "$\\mathrm{SE}(\\Delta\\mathrm{", toupper(y_chr), "}_{\\mathrm{lat}})",
+        "$\\mathrm{SE}(\\Delta\\mathrm{", toupper(perf_chr),
+        "}_{\\mathrm{lat}})",
         " - ",
-        "\\mathrm{SE}(\\Delta\\mathrm{", toupper(y_chr), "}_{\\mathrm{aug}})$"
+        "\\mathrm{SE}(\\Delta\\mathrm{", toupper(perf_chr),
+        "}_{\\mathrm{aug}})$"
       )
     )
   ggsave_cust(file.path("figs", paste("diff_se", eval_scale, sep = "_")))
   assign(".Random.seed", Rseed, envir = .GlobalEnv)
 
-  # Filter out simulation iterations with highest MLPD differences between
-  # augmented-data and latent projection:
-  maxdiffs <- aggregate(
-    plotdat[, y_chr_diff, drop = FALSE], by = list(sim_idx = plotdat$sim_idx),
-    FUN = max, simplify = TRUE, drop = FALSE
-  )
-  which_maxdiff <- head(order(maxdiffs[, y_chr_diff], decreasing = TRUE), 3)
-  sub_idxs_maxdiff <- maxdiffs[which_maxdiff, "sim_idx"]
-
-  # Highlight the filtered simulation iterations with highest MLPD differences
-  # between augmented-data and latent projection:
+  # MLPD difference plot with highlighted simulation iterations where the MLPD
+  # difference between augmented-data and latent projection is the highest:
   ggobj_maxdiff <- ggobj +
-    ggplot2::geom_point(data = plotdat[plotdat$sim_idx %in% sub_idxs_maxdiff, ],
+    ggplot2::geom_point(data = da_prep[da_prep$sim_idx %in% idxs_maxdiff, ],
                         color = "green") +
-    ggplot2::geom_line(data = plotdat[plotdat$sim_idx %in% sub_idxs_maxdiff, ],
+    ggplot2::geom_line(data = da_prep[da_prep$sim_idx %in% idxs_maxdiff, ],
                        color = "green")
   ggsave_cust(file.path("figs",
-                        paste(y_chr_diff, eval_scale, "maxdiff", sep = "_")))
+                        paste(perf_chr_diff, eval_scale, "maxdiff", sep = "_")))
 
-  return(list(ggobj = ggobj, ggobj_se = ggobj_se, ggobj_maxdiff = ggobj_maxdiff,
-              q_refstat = quantile(refstats),
-              q_diff_se = quantile(plotdat$diff_se),
-              p_gt0_diff_se = mean(plotdat$diff_se > 0),
-              sub_idxs_maxdiff = sub_idxs_maxdiff))
+  return(list(ggobj = ggobj, ggobj_se = ggobj_se,
+              ggobj_maxdiff = ggobj_maxdiff))
 }
-diff_out <- plotter_ovrlay_diff()
-cat("\n-----\n")
-cat("Quartiles of the reference model's performance statistic (across all",
-    "simulation iterations):\n")
-print(diff_out$q_refstat)
-cat("exp() of these quartiles (= quartiles of exp(reference model's",
-    "performance statistic)):\n")
-print(exp(diff_out$q_refstat))
-cat("-----\n")
-cat("\n-----\n")
-cat("Quartiles of the SE difference (across all simulation iterations and all",
-    "submodel sizes):\n")
-print(diff_out$q_diff_se)
-cat("Corresponding proportion of SE differences > 0:\n")
-print(diff_out$p_gt0_diff_se)
-cat("-----\n")
+diff_out <- gg_perf_diff(da_info = da_perf_diff_out)
 
-plotter_indiv_abs <- function(nsub_indiv = 21L, sub_meth = "rand",
-                              eval_scale = "response",
-                              width = 6.5, height = 2 * 6.5 * 0.618) {
-  stopifnot(eval_scale == "response")
-  respOrig_nm_aug <- paste0("respOrig_", TRUE)
-  respOrig_nm_lat <- paste0("respOrig_", eval_scale == "response")
-
-  if (length(sub_meth) == 1 && is.character(sub_meth) && sub_meth == "rand") {
-    Rseed <- get(".Random.seed", envir = .GlobalEnv)
-    set.seed(seed_indiv)
-    sub_idxs <- sample.int(length(simres), size = nsub_indiv)
-    assign(".Random.seed", Rseed, envir = .GlobalEnv)
-  } else if (length(sub_meth) == 1 && is.character(sub_meth) &&
-             sub_meth == "head") {
-    sub_idxs <- seq_len(nsub_indiv)
-  } else {
-    sub_idxs <- sub_meth
-    sub_meth <- "custom"
-  }
-
-  # Prepare the plot:
-  smmry_nms <- names(simres[[1L]]$aug[[respOrig_nm_aug]]$abs_smmry)
-  stopifnot(identical(smmry_nms,
-                      names(simres[[1L]]$lat[[respOrig_nm_lat]]$abs_smmry)))
-  y_chr <- setdiff(smmry_nms,
-                   c("solution_terms", "se", "lower", "upper", "size"))
-  stopifnot(length(y_chr) == 1)
-  smmry_cols <- c("size", y_chr, "lower", "upper")
-  plotdat <- do.call(rbind, lapply(sub_idxs, function(sim_idx) {
-    # Check that the reference model (performance) is the same:
-    refstat_aug <- simres[[sim_idx]]$aug[[respOrig_nm_aug]]$refstat
-    refstat_lat <- simres[[sim_idx]]$lat[[respOrig_nm_lat]]$refstat
-    stopifnot(all.equal(refstat_aug, refstat_lat,
-                        tolerance = .Machine$double.eps))
-    refstat <- refstat_aug
-
-    # Check that the column names coincide:
-    stopifnot(identical(
-      smmry_nms,
-      names(simres[[sim_idx]]$aug[[respOrig_nm_aug]]$abs_smmry)
-    ))
-    stopifnot(identical(
-      smmry_nms,
-      names(simres[[sim_idx]]$lat[[respOrig_nm_lat]]$abs_smmry)
-    ))
-
-    smmry_aug <- simres[[sim_idx]]$aug[[respOrig_nm_aug]]$abs_smmry
-    smmry_lat <- simres[[sim_idx]]$lat[[respOrig_nm_lat]]$abs_smmry
-    pdat <- rbind(cbind(sim_idx = sim_idx, refstat = refstat,
-                        `Projection method` = "Augmented-data",
-                        smmry_aug[smmry_cols]),
-                  cbind(sim_idx = sim_idx, refstat = refstat,
-                        `Projection method` = "Latent",
-                        smmry_lat[smmry_cols]))
-    return(pdat)
-  }))
-  plotdat$sim_idx <- factor(
-    paste("iter.", plotdat$sim_idx),
-    levels = paste("iter.", sort(unique(plotdat$sim_idx)))
-  )
+gg_perf_indiv_abs <- function(da_info, width = 6.5, height = 2 * 6.5 * 0.618) {
+  da_prep <- da_info$da_prep
+  msub_indiv <- da_info$msub_indiv
+  eval_scale <- da_info$eval_scale
 
   # MLPD plot:
-  ### For the second y-axis:
-  stopifnot(identical(y_chr, "mlpd"))
-  ###
   ggobj <- ggplot2::ggplot(
-    data = plotdat,
-    mapping = ggplot2::aes(x = size, y = .data[[y_chr]],
+    data = da_prep,
+    mapping = ggplot2::aes(x = size, y = .data[[perf_chr]],
                            group = `Projection method`,
                            color = `Projection method`)
   ) +
@@ -841,83 +952,31 @@ plotter_indiv_abs <- function(nsub_indiv = 21L, sub_meth = "rand",
     ) +
     ggplot2::labs(
       x = "Submodel size",
-      y = paste0("$\\mathrm{", toupper(y_chr), "}$")
+      y = paste0("$\\mathrm{", toupper(perf_chr), "}$")
     ) +
     ggplot2::theme(legend.position = "top") +
     ggplot2::facet_wrap(ggplot2::vars(sim_idx), ncol = 3, scales = "free_y")
-  fnm_base <- paste("indiv", y_chr, eval_scale, "abs", sep = "_")
-  if (sub_meth != "rand") {
-    fnm_base <- paste(fnm_base, sub_meth, sep = "_")
+  fnm_base <- paste("indiv", perf_chr, eval_scale, "abs", sep = "_")
+  if (msub_indiv != "rand") {
+    fnm_base <- paste(fnm_base, msub_indiv, sep = "_")
   }
   ggsave_cust(file.path("figs", fnm_base), width = width, height = height)
 
   return(list(ggobj = ggobj))
 }
-indiv_abs <- plotter_indiv_abs()
-# indiv_abs_maxdiff <- plotter_indiv_abs(sub_meth = diff_out$sub_idxs_maxdiff,
+indiv_abs_rand <- gg_perf_indiv_abs(da_info = da_perf_long_abs_rand)
+# indiv_abs_maxdiff <- gg_perf_indiv_abs(da_info = da_perf_long_abs_maxdiff,
 #                                        height = 5 * 0.618)
 
-plotter_indiv_rel <- function(nsub_indiv = 21L, sub_meth = "rand",
-                              eval_scale = "response",
-                              width = 6.5, height = 2 * 6.5 * 0.618) {
-  stopifnot(eval_scale == "response")
-  respOrig_nm_aug <- paste0("respOrig_", TRUE)
-  respOrig_nm_lat <- paste0("respOrig_", eval_scale == "response")
-
-  if (length(sub_meth) == 1 && is.character(sub_meth) && sub_meth == "rand") {
-    Rseed <- get(".Random.seed", envir = .GlobalEnv)
-    set.seed(seed_indiv)
-    sub_idxs <- sample.int(length(simres), size = nsub_indiv)
-    assign(".Random.seed", Rseed, envir = .GlobalEnv)
-  } else if (length(sub_meth) == 1 && is.character(sub_meth) &&
-             sub_meth == "head") {
-    sub_idxs <- seq_len(nsub_indiv)
-  } else {
-    sub_idxs <- sub_meth
-    sub_meth <- "custom"
-  }
-
-  # Prepare the plot:
-  smmry_nms <- names(simres[[1L]]$aug[[respOrig_nm_aug]]$smmry)
-  stopifnot(identical(smmry_nms,
-                      names(simres[[1L]]$lat[[respOrig_nm_lat]]$smmry)))
-  y_chr <- setdiff(smmry_nms,
-                   c("solution_terms", "se", "lower", "upper", "size"))
-  stopifnot(length(y_chr) == 1)
-  smmry_cols <- c("size", y_chr, "lower", "upper")
-  plotdat <- do.call(rbind, lapply(sub_idxs, function(sim_idx) {
-    # Check that the column names coincide:
-    stopifnot(identical(
-      smmry_nms,
-      names(simres[[sim_idx]]$aug[[respOrig_nm_aug]]$smmry)
-    ))
-    stopifnot(identical(
-      smmry_nms,
-      names(simres[[sim_idx]]$lat[[respOrig_nm_lat]]$smmry)
-    ))
-
-    smmry_aug <- simres[[sim_idx]]$aug[[respOrig_nm_aug]]$smmry
-    smmry_lat <- simres[[sim_idx]]$lat[[respOrig_nm_lat]]$smmry
-    pdat <- rbind(cbind(sim_idx = sim_idx,
-                        `Projection method` = "Augmented-data",
-                        smmry_aug[smmry_cols]),
-                  cbind(sim_idx = sim_idx,
-                        `Projection method` = "Latent",
-                        smmry_lat[smmry_cols]))
-    return(pdat)
-  }))
-  plotdat$sim_idx <- factor(
-    paste("iter.", plotdat$sim_idx),
-    levels = paste("iter.", sort(unique(plotdat$sim_idx)))
-  )
+gg_perf_indiv_rel <- function(da_info, width = 6.5, height = 2 * 6.5 * 0.618) {
+  da_prep <- da_info$da_prep
+  msub_indiv <- da_info$msub_indiv
+  eval_scale <- da_info$eval_scale
 
   # Delta-MLPD plot:
-  ### For the second y-axis:
-  stopifnot(identical(y_chr, "mlpd"))
-  ###
   ggobj <- ggplot2::ggplot(
-    data = plotdat,
-    mapping = ggplot2::aes(x = size, y = .data[[y_chr]],
+    data = da_prep,
+    mapping = ggplot2::aes(x = size, y = .data[[perf_chr]],
                            group = `Projection method`,
                            color = `Projection method`)
   ) +
@@ -936,46 +995,53 @@ plotter_indiv_rel <- function(nsub_indiv = 21L, sub_meth = "rand",
     ) +
     ggplot2::labs(
       x = "Submodel size",
-      y = paste0("$\\Delta\\mathrm{", toupper(y_chr), "}$")
+      y = paste0("$\\Delta\\mathrm{", toupper(perf_chr), "}$")
     ) +
     ggplot2::theme(legend.position = "top") +
     ggplot2::facet_wrap(ggplot2::vars(sim_idx), ncol = 3, scales = "free_y")
-  fnm_base <- paste("indiv", y_chr, eval_scale, "rel", sep = "_")
-  if (sub_meth != "rand") {
-    fnm_base <- paste(fnm_base, sub_meth, sep = "_")
+  fnm_base <- paste("indiv", perf_chr, eval_scale, "rel", sep = "_")
+  if (msub_indiv != "rand") {
+    fnm_base <- paste(fnm_base, msub_indiv, sep = "_")
   }
   ggsave_cust(file.path("figs", fnm_base), width = width, height = height)
 
   return(list(ggobj = ggobj))
 }
-# indiv_rel <- plotter_indiv_rel()
-indiv_rel_maxdiff <- plotter_indiv_rel(sub_meth = diff_out$sub_idxs_maxdiff,
+# indiv_rel_rand <- gg_perf_indiv_rel(da_info = da_perf_long_rel_rand)
+indiv_rel_maxdiff <- gg_perf_indiv_rel(da_info = da_perf_long_rel_maxdiff,
                                        height = 4 * 0.618)
 
 ## Suggested sizes --------------------------------------------------------
 
 sgger_size <- function(sim_idx, eval_scale_lat = "response") {
-  respOrig_nm_aug <- paste0("respOrig_", TRUE)
-  respOrig_nm_lat <- paste0("respOrig_", eval_scale_lat == "response")
+  respOrig_nm_aug <- mk_respOrig_nm(prj_meth = "aug",
+                                    eval_scale = "response")
+  respOrig_nm_lat <- mk_respOrig_nm(prj_meth = "lat",
+                                    eval_scale = eval_scale_lat)
   return(c(
     sgg_size_aug = simres[[sim_idx]]$aug[[respOrig_nm_aug]]$sgg_size,
     sgg_size_lat = simres[[sim_idx]]$lat[[respOrig_nm_lat]]$sgg_size
   ))
 }
+
 for (eval_scale_lat_val in c("response")) {
   cat("\n----------\n")
   cat("Evaluation scale for the latent projection (CAUTION: always using ",
       "response scale for the augmented-data projection): ", eval_scale_lat_val,
       "\n", sep = "")
+
   sgg_sizes <- sapply(seq_along(simres), sgger_size,
                       eval_scale_lat = eval_scale_lat_val)
+
   cat("\n-----\n")
   cat("Suggested sizes (printing only the first 10 simulation iterations):\n")
   print(sgg_sizes[, head(seq_len(ncol(sgg_sizes)), 10), drop = FALSE])
   cat("-----\n")
+
   if (anyNA(sgg_sizes)) {
     warning("Found suggested sizes which are `NA`.")
   }
+
   sgg_sizes_lat_minus_aug <- apply(sgg_sizes, 2, function(x) {
     x["sgg_size_lat"] - x["sgg_size_aug"]
   })
@@ -1003,12 +1069,14 @@ for (eval_scale_lat_val in c("response")) {
   sgg_sizes_lat_minus_aug[is.na(sgg_sizes_lat_minus_aug)] <- sgg_sizes_NA[
     !is.na(sgg_sizes_NA)
   ]
+
   cat("\n-----\n")
   cat("Differences of the suggested sizes (latent minus augmented-data):\n")
   sgg_sizes_tab <- table(sgg_sizes_lat_minus_aug, useNA = "ifany")
   print(sgg_sizes_tab)
   print(proportions(sgg_sizes_tab))
   cat("-----\n")
+
   gg_sgg_sizes_diff <- ggplot2::ggplot(
     data = data.frame(sgg_sizes_lat_minus_aug),
     mapping = ggplot2::aes(x = sgg_sizes_lat_minus_aug)
@@ -1023,81 +1091,33 @@ for (eval_scale_lat_val in c("response")) {
   ggsave_cust(
     file.path("figs", paste0("sgg_sizes_diff_", eval_scale_lat_val, "Lat"))
   )
+
   cat("----------\n")
 }
 
-## Predictive performance at suggested size -------------------------------
+## Predictive performances at suggested sizes -----------------------------
 
-diff_at_sgg <- function(eval_scale = "response") {
-  stopifnot(eval_scale == "response")
-  respOrig_nm_aug <- paste0("respOrig_", TRUE)
-  respOrig_nm_lat <- paste0("respOrig_", eval_scale == "response")
+printer_diffexp <- function(da_info) {
+  da_prep <- da_info$da_prep
+  sim_idx_min <- da_info$sim_idx_min
+  sim_idx_max <- da_info$sim_idx_max
 
-  smmry_nms <- names(simres[[1L]]$aug[[respOrig_nm_aug]]$smmry)
-  stopifnot(identical(smmry_nms,
-                      names(simres[[1L]]$lat[[respOrig_nm_lat]]$smmry)))
-  y_chr <- setdiff(smmry_nms,
-                   c("solution_terms", "se", "lower", "upper", "size"))
-  stopifnot(identical(y_chr, "mlpd"))
-  diffdat <- do.call(rbind, lapply(seq_along(simres), function(sim_idx) {
-    res_aug <- simres[[sim_idx]]$aug[[respOrig_nm_aug]]
-    res_lat <- simres[[sim_idx]]$lat[[respOrig_nm_lat]]
-    sgg_size <- suppressWarnings(
-      min(res_aug$sgg_size, res_lat$sgg_size, na.rm = TRUE)
-    )
-    if (is.finite(sgg_size)) {
-      dy <- c("daug" = res_aug$smmry[res_aug$smmry$size == sgg_size, y_chr],
-              "dlat" = res_lat$smmry[res_lat$smmry$size == sgg_size, y_chr])
-      refstat <- res_aug$refstat
-      stopifnot(identical(refstat, res_lat$refstat))
-      y <- dy + refstat
-      names(y) <- sub("^d", "", names(y))
-      return(c(dy, y))
-    } else {
-      return(rep(NA, 4))
-    }
-  }))
-  diffdat <- as.data.frame(diffdat)
-  diffdat <- within(diffdat, {
-    expaug <- exp(aug)
-    explat <- exp(lat)
-    diff <- lat - aug
-    expdiff <- exp(diff)
-    diffexp <- explat - expaug
-  })
-
-  stopifnot(!any(duplicated(na.omit(diffdat$diffexp))))
-  sim_idx_min <- which.min(diffdat$diffexp)
-  sim_idx_max <- which.max(diffdat$diffexp)
-  order_diff <- order(diffdat$diff)
-  sim_idx_min3diff <- head(order_diff, 3)
-  sim_idx_max3diff <- rev(tail(order_diff, 3))
-
-  return(list(diffdat = diffdat,
-              sim_idx_min = sim_idx_min,
-              sim_idx_max = sim_idx_max,
-              sim_idx_min3diff = sim_idx_min3diff,
-              sim_idx_max3diff = sim_idx_max3diff))
-}
-diff_at_sgg_out <- diff_at_sgg()
-
-printer_diffexp <- function(diffdat, sim_idx_min, sim_idx_max) {
-  c(
-    # diff_min = diffdat$diff[sim_idx_min],
-    # diff_max = diffdat$diff[sim_idx_max],
-    # expdiff_min = diffdat$expdiff[sim_idx_min],
-    # expdiff_max = diffdat$expdiff[sim_idx_max],
-    diffexp_min = diffdat$diffexp[sim_idx_min],
-    diffexp_max = diffdat$diffexp[sim_idx_max],
-    aug_at_min = diffdat$aug[sim_idx_min],
-    aug_at_max = diffdat$aug[sim_idx_max],
-    lat_at_min = diffdat$lat[sim_idx_min],
-    lat_at_max = diffdat$lat[sim_idx_max],
-    expaug_at_min = diffdat$expaug[sim_idx_min],
-    expaug_at_max = diffdat$expaug[sim_idx_max],
-    explat_at_min = diffdat$explat[sim_idx_min],
-    explat_at_max = diffdat$explat[sim_idx_max]
-  )
+  return(c(
+    # diff_min = da_prep$diff[sim_idx_min],
+    # diff_max = da_prep$diff[sim_idx_max],
+    # expdiff_min = da_prep$expdiff[sim_idx_min],
+    # expdiff_max = da_prep$expdiff[sim_idx_max],
+    diffexp_min = da_prep$diffexp[sim_idx_min],
+    diffexp_max = da_prep$diffexp[sim_idx_max],
+    aug_at_min = da_prep$aug[sim_idx_min],
+    aug_at_max = da_prep$aug[sim_idx_max],
+    lat_at_min = da_prep$lat[sim_idx_min],
+    lat_at_max = da_prep$lat[sim_idx_max],
+    expaug_at_min = da_prep$expaug[sim_idx_min],
+    expaug_at_max = da_prep$expaug[sim_idx_max],
+    explat_at_min = da_prep$explat[sim_idx_min],
+    explat_at_max = da_prep$explat[sim_idx_max]
+  ))
 }
 cat("\n-----\n")
 cat("Range of GMPD difference (latent minus augmented-data) at the suggested ",
@@ -1105,9 +1125,7 @@ cat("Range of GMPD difference (latent minus augmented-data) at the suggested ",
     "relative (i.e., relative to the reference model) and absolute MLPD and ",
     "GMPD scale in those simulation iterations where minimum and maximum are ",
     "attained:\n")
-print(printer_diffexp(diffdat = diff_at_sgg_out$diffdat,
-                      sim_idx_min = diff_at_sgg_out$sim_idx_min,
-                      sim_idx_max = diff_at_sgg_out$sim_idx_max))
+print(printer_diffexp(da_info = da_at_sgg_out))
 cat("-----\n")
 
 # doRNG -------------------------------------------------------------------
