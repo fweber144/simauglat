@@ -654,8 +654,8 @@ cat("-----\n")
 #                          c("sim_idx", "diff_se")]
 ###
 
-# Filter out simulation iterations with highest MLPD differences between
-# augmented-data and latent projection:
+# Filter out simulation iterations with the largest MLPD advantages of the
+# latent projection:
 find_idxs_maxdiff <- function(da_prep, n_idxs = 3) {
   maxdiffs <- aggregate(
     da_prep[, perf_chr_diff, drop = FALSE],
@@ -668,8 +668,8 @@ find_idxs_maxdiff <- function(da_prep, n_idxs = 3) {
 }
 idxs_maxdiff <- find_idxs_maxdiff(da_prep = da_perf_diff_out$da_prep)
 cat("\n-----\n")
-cat("Simulation iterations with highest MLPD differences between ",
-    "augmented-data and latent projection:\n")
+cat("Simulation iterations with the largest MLPD advantages of the latent",
+    "projection:\n")
 print(idxs_maxdiff)
 cat("-----\n")
 
@@ -922,7 +922,7 @@ gg_perf_diff <- function(da_info) {
   assign(".Random.seed", Rseed, envir = .GlobalEnv)
 
   # MLPD difference plot with highlighted simulation iterations where the MLPD
-  # difference between augmented-data and latent projection is the highest:
+  # advantage of the latent projection is the largest:
   ggobj_maxdiff <- ggobj +
     ggplot2::geom_point(data = da_prep[da_prep$sim_idx %in% idxs_maxdiff, ],
                         color = "green") +
