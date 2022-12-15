@@ -668,7 +668,7 @@ print(idxs_maxdiff)
 cat("-----\n")
 
 # At the smaller one of the 2 suggested sizes:
-da_perf_diff_at_sgg <- function(n_idxs = 3, eval_scale = "response") {
+da_perf_at_sgg <- function(eval_scale = "response") {
   stopifnot(eval_scale == "response")
   respOrig_nm_aug <- mk_respOrig_nm(prj_meth = "aug", eval_scale = eval_scale)
   respOrig_nm_lat <- mk_respOrig_nm(prj_meth = "lat", eval_scale = eval_scale)
@@ -700,142 +700,111 @@ da_perf_diff_at_sgg <- function(n_idxs = 3, eval_scale = "response") {
     expdiff <- exp(diff)
     diffexp <- explat - expaug
   })
-
-  stopifnot(!any(duplicated(na.omit(da_prep$diffexp))))
-  sim_idx_min <- which.min(da_prep$diffexp)
-  sim_idx_max <- which.max(da_prep$diffexp)
-  order_diff <- order(da_prep$diff)
-  sim_idx_min_diff <- head(order_diff, n_idxs)
-  sim_idx_max_diff <- rev(tail(order_diff, n_idxs))
-
-  return(list(da_prep = da_prep,
-              sim_idx_min = sim_idx_min,
-              sim_idx_max = sim_idx_max,
-              sim_idx_min_diff = sim_idx_min_diff,
-              sim_idx_max_diff = sim_idx_max_diff,
-              eval_scale = eval_scale))
+  return(list(da_prep = da_prep, eval_scale = eval_scale))
 }
-da_perf_diff_at_sgg_out <- da_perf_diff_at_sgg()
-printer_diffexp <- function(da_info) {
-  da_prep <- da_info$da_prep
-  sim_idx_min <- da_info$sim_idx_min
-  sim_idx_max <- da_info$sim_idx_max
+da_perf_at_sgg_out <- da_perf_at_sgg()
 
-  return(c(
-    # diff_min = da_prep$diff[sim_idx_min],
-    # diff_max = da_prep$diff[sim_idx_max],
-    # expdiff_min = da_prep$expdiff[sim_idx_min],
-    # expdiff_max = da_prep$expdiff[sim_idx_max],
-    diffexp_min = da_prep$diffexp[sim_idx_min],
-    diffexp_max = da_prep$diffexp[sim_idx_max],
-    aug_at_min = da_prep$aug[sim_idx_min],
-    aug_at_max = da_prep$aug[sim_idx_max],
-    lat_at_min = da_prep$lat[sim_idx_min],
-    lat_at_max = da_prep$lat[sim_idx_max],
-    expaug_at_min = da_prep$expaug[sim_idx_min],
-    expaug_at_max = da_prep$expaug[sim_idx_max],
-    explat_at_min = da_prep$explat[sim_idx_min],
-    explat_at_max = da_prep$explat[sim_idx_max]
+find_idxs_extrdiff <- function(da_prep, n_idxs = 3, difftype = "diff") {
+  sim_order <- da_prep[order(da_prep[[difftype]], na.last = NA), "sim_idx"]
+  return(list(
+    da_prep = da_prep,
+    difftype = difftype,
+    idxs = c(sim_idx_min = head(sim_order, n_idxs),
+             sim_idx_max = rev(tail(sim_order, n_idxs)))
   ))
 }
+extrdiff_out <- find_idxs_extrdiff(da_prep = da_perf_at_sgg_out$da_prep)
+extrdiffexp_out <- find_idxs_extrdiff(da_prep = da_perf_at_sgg_out$da_prep,
+                                      difftype = "diffexp")
+idxs_extrdiff <- extrdiff_out[["idxs"]]
+idxs_extrdiffexp <- extrdiffexp_out[["idxs"]]
 cat("\n-----\n")
-cat("Range of GMPD difference (latent minus augmented-data) at the suggested",
-    "submodel size, with additional information about the performance on",
-    "relative (i.e., relative to the reference model) and absolute MLPD and",
-    "GMPD scale in those simulation iterations where minimum and maximum are",
-    "attained:\n")
-print(printer_diffexp(da_info = da_perf_diff_at_sgg_out))
+cat("Content of `idxs_extrdiff`:\n")
+print(idxs_extrdiff)
+cat("Content of `idxs_extrdiffexp`:\n")
+print(idxs_extrdiffexp)
 cat("-----\n")
 
-da_perf_long_abs <- function(nsub_indiv = 21L, msub_indiv = "rand",
-                             eval_scale = "response") {
+printer_extrdiff <- function(extrdiff_info) {
+  da_prep <- extrdiff_info$da_prep
+  difftype <- extrdiff_info$difftype
+  idxs <- extrdiff_info$idxs
+  cat("\n----------\n")
+  cat("`difftype`: ", difftype, "\n", sep = "")
+  for (idxx in seq_along(idxs)) {
+    cat("\n-----\n")
+    cat("Simulation iteration:\n")
+    print(idxs[idxx])
+    cat("Performance statistic and corresponding transformations in this",
+        "simulation iteration:\n")
+    print(da_prep[idxs[idxx], ])
+    cat("-----\n")
+  }
+  cat("----------\n")
+  return(invisible(TRUE))
+}
+printer_extrdiff(extrdiff_info = extrdiff_out)
+printer_extrdiff(extrdiff_info = extrdiffexp_out)
+
+da_perf_indiv <- function(sub_idxs, sub_txt, perf_scale,
+                          eval_scale = "response") {
   stopifnot(eval_scale == "response")
   respOrig_nm_aug <- mk_respOrig_nm(prj_meth = "aug", eval_scale = eval_scale)
   respOrig_nm_lat <- mk_respOrig_nm(prj_meth = "lat", eval_scale = eval_scale)
 
-  if (identical(msub_indiv, "rand")) {
-    Rseed <- get(".Random.seed", envir = .GlobalEnv)
-    set.seed(seed_indiv)
-    sub_idxs <- sample.int(length(simres), size = nsub_indiv)
-    assign(".Random.seed", Rseed, envir = .GlobalEnv)
-  } else if (identical(msub_indiv, "head")) {
-    sub_idxs <- seq_len(nsub_indiv)
+  smmry_cols <- c("size", perf_chr, "lower", "upper")
+  if (perf_scale == "abs") {
+    one_idx <- function(sim_idx) {
+      refstat_aug <- simres[[sim_idx]]$aug[[respOrig_nm_aug]]$refstat
+      refstat_lat <- simres[[sim_idx]]$lat[[respOrig_nm_lat]]$refstat
+      stopifnot(all.equal(refstat_aug, refstat_lat,
+                          tolerance = .Machine$double.eps))
+      refstat <- refstat_aug
+
+      smmry_aug <- simres[[sim_idx]]$aug[[respOrig_nm_aug]]$abs_smmry
+      smmry_lat <- simres[[sim_idx]]$lat[[respOrig_nm_lat]]$abs_smmry
+      pdat <- rbind(cbind(sim_idx = sim_idx, refstat = refstat,
+                          `Projection method` = "Augmented-data",
+                          smmry_aug[smmry_cols]),
+                    cbind(sim_idx = sim_idx, refstat = refstat,
+                          `Projection method` = "Latent",
+                          smmry_lat[smmry_cols]))
+      return(pdat)
+    }
+  } else if (perf_scale == "rel") {
+    one_idx <- function(sim_idx) {
+      smmry_aug <- simres[[sim_idx]]$aug[[respOrig_nm_aug]]$smmry
+      smmry_lat <- simres[[sim_idx]]$lat[[respOrig_nm_lat]]$smmry
+      pdat <- rbind(cbind(sim_idx = sim_idx,
+                          `Projection method` = "Augmented-data",
+                          smmry_aug[smmry_cols]),
+                    cbind(sim_idx = sim_idx,
+                          `Projection method` = "Latent",
+                          smmry_lat[smmry_cols]))
+      return(pdat)
+    }
   } else {
-    sub_idxs <- msub_indiv
-    msub_indiv <- "custom"
+    stop("Unknown `perf_scale`.")
   }
 
-  smmry_cols <- c("size", perf_chr, "lower", "upper")
-
-  da_prep <- do.call(rbind, lapply(sub_idxs, function(sim_idx) {
-    refstat_aug <- simres[[sim_idx]]$aug[[respOrig_nm_aug]]$refstat
-    refstat_lat <- simres[[sim_idx]]$lat[[respOrig_nm_lat]]$refstat
-    stopifnot(all.equal(refstat_aug, refstat_lat,
-                        tolerance = .Machine$double.eps))
-    refstat <- refstat_aug
-
-    smmry_aug <- simres[[sim_idx]]$aug[[respOrig_nm_aug]]$abs_smmry
-    smmry_lat <- simres[[sim_idx]]$lat[[respOrig_nm_lat]]$abs_smmry
-    pdat <- rbind(cbind(sim_idx = sim_idx, refstat = refstat,
-                        `Projection method` = "Augmented-data",
-                        smmry_aug[smmry_cols]),
-                  cbind(sim_idx = sim_idx, refstat = refstat,
-                        `Projection method` = "Latent",
-                        smmry_lat[smmry_cols]))
-    return(pdat)
-  }))
+  da_prep <- do.call(rbind, lapply(sub_idxs, one_idx))
   da_prep$sim_idx <- factor(
     paste("iter.", da_prep$sim_idx),
     levels = paste("iter.", sort(unique(da_prep$sim_idx)))
   )
 
-  return(list(da_prep = da_prep, msub_indiv = msub_indiv,
+  return(list(da_prep = da_prep, sub_txt = sub_txt, perf_scale = perf_scale,
               eval_scale = eval_scale))
 }
-da_perf_long_abs_rand <- da_perf_long_abs()
-da_perf_long_abs_maxdiff <- da_perf_long_abs(msub_indiv = idxs_maxdiff)
-
-da_perf_long_rel <- function(nsub_indiv = 21L, msub_indiv = "rand",
-                             eval_scale = "response") {
-  stopifnot(eval_scale == "response")
-  respOrig_nm_aug <- mk_respOrig_nm(prj_meth = "aug", eval_scale = eval_scale)
-  respOrig_nm_lat <- mk_respOrig_nm(prj_meth = "lat", eval_scale = eval_scale)
-
-  if (identical(msub_indiv, "rand")) {
-    Rseed <- get(".Random.seed", envir = .GlobalEnv)
-    set.seed(seed_indiv)
-    sub_idxs <- sample.int(length(simres), size = nsub_indiv)
-    assign(".Random.seed", Rseed, envir = .GlobalEnv)
-  } else if (identical(msub_indiv, "head")) {
-    sub_idxs <- seq_len(nsub_indiv)
-  } else {
-    sub_idxs <- msub_indiv
-    msub_indiv <- "custom"
-  }
-
-  smmry_cols <- c("size", perf_chr, "lower", "upper")
-
-  da_prep <- do.call(rbind, lapply(sub_idxs, function(sim_idx) {
-    smmry_aug <- simres[[sim_idx]]$aug[[respOrig_nm_aug]]$smmry
-    smmry_lat <- simres[[sim_idx]]$lat[[respOrig_nm_lat]]$smmry
-    pdat <- rbind(cbind(sim_idx = sim_idx,
-                        `Projection method` = "Augmented-data",
-                        smmry_aug[smmry_cols]),
-                  cbind(sim_idx = sim_idx,
-                        `Projection method` = "Latent",
-                        smmry_lat[smmry_cols]))
-    return(pdat)
-  }))
-  da_prep$sim_idx <- factor(
-    paste("iter.", da_prep$sim_idx),
-    levels = paste("iter.", sort(unique(da_prep$sim_idx)))
-  )
-
-  return(list(da_prep = da_prep, msub_indiv = msub_indiv,
-              eval_scale = eval_scale))
-}
-da_perf_long_rel_rand <- da_perf_long_rel()
-da_perf_long_rel_maxdiff <- da_perf_long_rel(msub_indiv = idxs_maxdiff)
+da_perf_extrdiff_abs <- da_perf_indiv(sub_idxs = idxs_extrdiff,
+                                      sub_txt = "extrdiff",
+                                      perf_scale = "abs")
+da_perf_extrdiffexp_abs <- da_perf_indiv(sub_idxs = idxs_extrdiffexp,
+                                         sub_txt = "extrdiffexp",
+                                         perf_scale = "abs")
+da_perf_maxdiff_rel <- da_perf_indiv(sub_idxs = idxs_maxdiff,
+                                     sub_txt = "maxdiff",
+                                     perf_scale = "rel")
 
 ### Plotting functions ----------------------------------------------------
 
@@ -998,11 +967,13 @@ gg_perf_diff_at_sgg <- function(da_info) {
 
   return(list(ggobj = ggobj))
 }
-diff_at_sgg <- gg_perf_diff_at_sgg(da_info = da_perf_diff_at_sgg_out)
+diff_at_sgg <- gg_perf_diff_at_sgg(da_info = da_perf_at_sgg_out)
 
 gg_perf_indiv_abs <- function(da_info, width = 6.5, height = 2 * 6.5 * 0.618) {
   da_prep <- da_info$da_prep
-  msub_indiv <- da_info$msub_indiv
+  sub_txt <- da_info$sub_txt
+  perf_scale <- da_info$perf_scale
+  stopifnot(identical(perf_scale, "abs"))
   eval_scale <- da_info$eval_scale
 
   # MLPD plot:
@@ -1028,21 +999,22 @@ gg_perf_indiv_abs <- function(da_info, width = 6.5, height = 2 * 6.5 * 0.618) {
     ) +
     ggplot2::theme(legend.position = "top") +
     ggplot2::facet_wrap(ggplot2::vars(sim_idx), ncol = 3, scales = "free_y")
-  fnm_base <- paste("indiv", perf_chr, eval_scale, "abs", sep = "_")
-  if (msub_indiv != "rand") {
-    fnm_base <- paste(fnm_base, msub_indiv, sep = "_")
-  }
-  ggsave_cust(file.path("figs", fnm_base), width = width, height = height)
+  ggsave_cust(file.path("figs", paste("indiv", perf_chr, eval_scale, sub_txt,
+                                      perf_scale, sep = "_")),
+              width = width, height = height)
 
   return(list(ggobj = ggobj))
 }
-indiv_abs_rand <- gg_perf_indiv_abs(da_info = da_perf_long_abs_rand)
-# indiv_abs_maxdiff <- gg_perf_indiv_abs(da_info = da_perf_long_abs_maxdiff,
-#                                        height = 5 * 0.618)
+indiv_extrdiff_abs <- gg_perf_indiv_abs(da_info = da_perf_extrdiff_abs,
+                                        height = 5 * 0.618)
+indiv_extrdiffexp_abs <- gg_perf_indiv_abs(da_info = da_perf_extrdiffexp_abs,
+                                           height = 5 * 0.618)
 
 gg_perf_indiv_rel <- function(da_info, width = 6.5, height = 2 * 6.5 * 0.618) {
   da_prep <- da_info$da_prep
-  msub_indiv <- da_info$msub_indiv
+  sub_txt <- da_info$sub_txt
+  perf_scale <- da_info$perf_scale
+  stopifnot(identical(perf_scale, "rel"))
   eval_scale <- da_info$eval_scale
 
   # Delta-MLPD plot:
@@ -1071,16 +1043,13 @@ gg_perf_indiv_rel <- function(da_info, width = 6.5, height = 2 * 6.5 * 0.618) {
     ) +
     ggplot2::theme(legend.position = "top") +
     ggplot2::facet_wrap(ggplot2::vars(sim_idx), ncol = 3, scales = "free_y")
-  fnm_base <- paste("indiv", perf_chr, eval_scale, "rel", sep = "_")
-  if (msub_indiv != "rand") {
-    fnm_base <- paste(fnm_base, msub_indiv, sep = "_")
-  }
-  ggsave_cust(file.path("figs", fnm_base), width = width, height = height)
+  ggsave_cust(file.path("figs", paste("indiv", perf_chr, eval_scale, sub_txt,
+                                      perf_scale, sep = "_")),
+              width = width, height = height)
 
   return(list(ggobj = ggobj))
 }
-# indiv_rel_rand <- gg_perf_indiv_rel(da_info = da_perf_long_rel_rand)
-indiv_rel_maxdiff <- gg_perf_indiv_rel(da_info = da_perf_long_rel_maxdiff,
+indiv_maxdiff_rel <- gg_perf_indiv_rel(da_info = da_perf_maxdiff_rel,
                                        height = 4 * 0.618)
 
 ## Suggested sizes --------------------------------------------------------
