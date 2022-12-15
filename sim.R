@@ -667,6 +667,86 @@ cat("Simulation iterations with highest MLPD differences between ",
 print(idxs_maxdiff)
 cat("-----\n")
 
+# At the smaller one of the 2 suggested sizes:
+da_perf_diff_at_sgg <- function(n_idxs = 3, eval_scale = "response") {
+  stopifnot(eval_scale == "response")
+  respOrig_nm_aug <- mk_respOrig_nm(prj_meth = "aug", eval_scale = eval_scale)
+  respOrig_nm_lat <- mk_respOrig_nm(prj_meth = "lat", eval_scale = eval_scale)
+
+  da_prep <- do.call(rbind, lapply(seq_along(simres), function(sim_idx) {
+    res_aug <- simres[[sim_idx]]$aug[[respOrig_nm_aug]]
+    res_lat <- simres[[sim_idx]]$lat[[respOrig_nm_lat]]
+    sgg_size <- suppressWarnings(
+      min(res_aug$sgg_size, res_lat$sgg_size, na.rm = TRUE)
+    )
+    if (is.finite(sgg_size)) {
+      dy <- c("daug" = res_aug$smmry[res_aug$smmry$size == sgg_size, perf_chr],
+              "dlat" = res_lat$smmry[res_lat$smmry$size == sgg_size, perf_chr])
+      refstat <- res_aug$refstat
+      stopifnot(identical(refstat, res_lat$refstat))
+      y <- dy + refstat
+      names(y) <- sub("^d", "", names(y))
+      return(c(dy, y))
+    } else {
+      return(rep(NA, 4))
+    }
+  }))
+  da_prep <- as.data.frame(da_prep)
+  da_prep$sim_idx <- seq_along(simres)
+  da_prep <- within(da_prep, {
+    expaug <- exp(aug)
+    explat <- exp(lat)
+    diff <- lat - aug
+    expdiff <- exp(diff)
+    diffexp <- explat - expaug
+  })
+
+  stopifnot(!any(duplicated(na.omit(da_prep$diffexp))))
+  sim_idx_min <- which.min(da_prep$diffexp)
+  sim_idx_max <- which.max(da_prep$diffexp)
+  order_diff <- order(da_prep$diff)
+  sim_idx_min_diff <- head(order_diff, n_idxs)
+  sim_idx_max_diff <- rev(tail(order_diff, n_idxs))
+
+  return(list(da_prep = da_prep,
+              sim_idx_min = sim_idx_min,
+              sim_idx_max = sim_idx_max,
+              sim_idx_min_diff = sim_idx_min_diff,
+              sim_idx_max_diff = sim_idx_max_diff,
+              eval_scale = eval_scale))
+}
+da_perf_diff_at_sgg_out <- da_perf_diff_at_sgg()
+printer_diffexp <- function(da_info) {
+  da_prep <- da_info$da_prep
+  sim_idx_min <- da_info$sim_idx_min
+  sim_idx_max <- da_info$sim_idx_max
+
+  return(c(
+    # diff_min = da_prep$diff[sim_idx_min],
+    # diff_max = da_prep$diff[sim_idx_max],
+    # expdiff_min = da_prep$expdiff[sim_idx_min],
+    # expdiff_max = da_prep$expdiff[sim_idx_max],
+    diffexp_min = da_prep$diffexp[sim_idx_min],
+    diffexp_max = da_prep$diffexp[sim_idx_max],
+    aug_at_min = da_prep$aug[sim_idx_min],
+    aug_at_max = da_prep$aug[sim_idx_max],
+    lat_at_min = da_prep$lat[sim_idx_min],
+    lat_at_max = da_prep$lat[sim_idx_max],
+    expaug_at_min = da_prep$expaug[sim_idx_min],
+    expaug_at_max = da_prep$expaug[sim_idx_max],
+    explat_at_min = da_prep$explat[sim_idx_min],
+    explat_at_max = da_prep$explat[sim_idx_max]
+  ))
+}
+cat("\n-----\n")
+cat("Range of GMPD difference (latent minus augmented-data) at the suggested",
+    "submodel size, with additional information about the performance on",
+    "relative (i.e., relative to the reference model) and absolute MLPD and",
+    "GMPD scale in those simulation iterations where minimum and maximum are",
+    "attained:\n")
+print(printer_diffexp(da_info = da_perf_diff_at_sgg_out))
+cat("-----\n")
+
 da_perf_long_abs <- function(nsub_indiv = 21L, msub_indiv = "rand",
                              eval_scale = "response") {
   stopifnot(eval_scale == "response")
@@ -881,6 +961,45 @@ gg_perf_diff <- function(da_info) {
 }
 diff_out <- gg_perf_diff(da_info = da_perf_diff_out)
 
+gg_perf_diff_at_sgg <- function(da_info) {
+  da_prep <- da_info$da_prep
+  eval_scale <- da_info$eval_scale
+
+  da_prep <- da_prep[!is.na(da_prep[["diff"]]), , drop = FALSE]
+
+  # MLPD difference plot, but only at the smaller one of the 2 suggested sizes:
+  ggobj <- ggplot2::ggplot(data = da_prep, mapping = ggplot2::aes(x = diff)) +
+    ggplot2::geom_vline(xintercept = 0,
+                        color = "gray30",
+                        linetype = "dotted") +
+    ggplot2::geom_histogram(bins = 35) +
+    ggplot2::scale_x_continuous(
+      sec.axis = ggplot2::sec_axis(
+        ~ exp(.),
+        name = paste0(
+          "$\\mathrm{GMPD}_{\\mathrm{lat}}",
+          " / ",
+          "\\mathrm{GMPD}_{\\mathrm{aug}}$",
+          " at smaller suggested size"
+        )
+      )
+    ) +
+    ggplot2::labs(
+      x = paste0(
+        "$\\mathrm{", toupper(perf_chr), "}_{\\mathrm{lat}}",
+        " - ",
+        "\\mathrm{", toupper(perf_chr), "}_{\\mathrm{aug}}$",
+        " at smaller suggested size"
+      ),
+      y = paste0("Number of simulation iterations (total: ", nrow(da_prep), ")")
+    )
+  ggsave_cust(file.path("figs",
+                        paste(perf_chr_diff, eval_scale, "at_sgg", sep = "_")))
+
+  return(list(ggobj = ggobj))
+}
+diff_at_sgg <- gg_perf_diff_at_sgg(da_info = da_perf_diff_at_sgg_out)
+
 gg_perf_indiv_abs <- function(da_info, width = 6.5, height = 2 * 6.5 * 0.618) {
   da_prep <- da_info$da_prep
   msub_indiv <- da_info$msub_indiv
@@ -1047,131 +1166,6 @@ for (eval_scale_lat_val in c("response")) {
 
   cat("----------\n")
 }
-
-## Predictive performances at suggested sizes -----------------------------
-
-### Preparations and printing ---------------------------------------------
-
-da_perf_diff_at_sgg <- function(n_idxs = 3, eval_scale = "response") {
-  stopifnot(eval_scale == "response")
-  respOrig_nm_aug <- mk_respOrig_nm(prj_meth = "aug", eval_scale = eval_scale)
-  respOrig_nm_lat <- mk_respOrig_nm(prj_meth = "lat", eval_scale = eval_scale)
-
-  da_prep <- do.call(rbind, lapply(seq_along(simres), function(sim_idx) {
-    res_aug <- simres[[sim_idx]]$aug[[respOrig_nm_aug]]
-    res_lat <- simres[[sim_idx]]$lat[[respOrig_nm_lat]]
-    sgg_size <- suppressWarnings(
-      min(res_aug$sgg_size, res_lat$sgg_size, na.rm = TRUE)
-    )
-    if (is.finite(sgg_size)) {
-      dy <- c("daug" = res_aug$smmry[res_aug$smmry$size == sgg_size, perf_chr],
-              "dlat" = res_lat$smmry[res_lat$smmry$size == sgg_size, perf_chr])
-      refstat <- res_aug$refstat
-      stopifnot(identical(refstat, res_lat$refstat))
-      y <- dy + refstat
-      names(y) <- sub("^d", "", names(y))
-      return(c(dy, y))
-    } else {
-      return(rep(NA, 4))
-    }
-  }))
-  da_prep <- as.data.frame(da_prep)
-  da_prep$sim_idx <- seq_along(simres)
-  da_prep <- within(da_prep, {
-    expaug <- exp(aug)
-    explat <- exp(lat)
-    diff <- lat - aug
-    expdiff <- exp(diff)
-    diffexp <- explat - expaug
-  })
-
-  stopifnot(!any(duplicated(na.omit(da_prep$diffexp))))
-  sim_idx_min <- which.min(da_prep$diffexp)
-  sim_idx_max <- which.max(da_prep$diffexp)
-  order_diff <- order(da_prep$diff)
-  sim_idx_min_diff <- head(order_diff, n_idxs)
-  sim_idx_max_diff <- rev(tail(order_diff, n_idxs))
-
-  return(list(da_prep = da_prep,
-              sim_idx_min = sim_idx_min,
-              sim_idx_max = sim_idx_max,
-              sim_idx_min_diff = sim_idx_min_diff,
-              sim_idx_max_diff = sim_idx_max_diff,
-              eval_scale = eval_scale))
-}
-da_perf_diff_at_sgg_out <- da_perf_diff_at_sgg()
-
-printer_diffexp <- function(da_info) {
-  da_prep <- da_info$da_prep
-  sim_idx_min <- da_info$sim_idx_min
-  sim_idx_max <- da_info$sim_idx_max
-
-  return(c(
-    # diff_min = da_prep$diff[sim_idx_min],
-    # diff_max = da_prep$diff[sim_idx_max],
-    # expdiff_min = da_prep$expdiff[sim_idx_min],
-    # expdiff_max = da_prep$expdiff[sim_idx_max],
-    diffexp_min = da_prep$diffexp[sim_idx_min],
-    diffexp_max = da_prep$diffexp[sim_idx_max],
-    aug_at_min = da_prep$aug[sim_idx_min],
-    aug_at_max = da_prep$aug[sim_idx_max],
-    lat_at_min = da_prep$lat[sim_idx_min],
-    lat_at_max = da_prep$lat[sim_idx_max],
-    expaug_at_min = da_prep$expaug[sim_idx_min],
-    expaug_at_max = da_prep$expaug[sim_idx_max],
-    explat_at_min = da_prep$explat[sim_idx_min],
-    explat_at_max = da_prep$explat[sim_idx_max]
-  ))
-}
-cat("\n-----\n")
-cat("Range of GMPD difference (latent minus augmented-data) at the suggested",
-    "submodel size, with additional information about the performance on",
-    "relative (i.e., relative to the reference model) and absolute MLPD and",
-    "GMPD scale in those simulation iterations where minimum and maximum are",
-    "attained:\n")
-print(printer_diffexp(da_info = da_perf_diff_at_sgg_out))
-cat("-----\n")
-
-### Plotting functions ----------------------------------------------------
-
-gg_perf_diff_at_sgg <- function(da_info) {
-  da_prep <- da_info$da_prep
-  eval_scale <- da_info$eval_scale
-
-  da_prep <- da_prep[!is.na(da_prep[["diff"]]), , drop = FALSE]
-
-  # MLPD difference plot, but only at smaller suggested size:
-  ggobj <- ggplot2::ggplot(data = da_prep, mapping = ggplot2::aes(x = diff)) +
-    ggplot2::geom_vline(xintercept = 0,
-                        color = "gray30",
-                        linetype = "dotted") +
-    ggplot2::geom_histogram(bins = 35) +
-    ggplot2::scale_x_continuous(
-      sec.axis = ggplot2::sec_axis(
-        ~ exp(.),
-        name = paste0(
-          "$\\mathrm{GMPD}_{\\mathrm{lat}}",
-          " / ",
-          "\\mathrm{GMPD}_{\\mathrm{aug}}$",
-          " at smaller suggested size"
-        )
-      )
-    ) +
-    ggplot2::labs(
-      x = paste0(
-        "$\\mathrm{", toupper(perf_chr), "}_{\\mathrm{lat}}",
-        " - ",
-        "\\mathrm{", toupper(perf_chr), "}_{\\mathrm{aug}}$",
-        " at smaller suggested size"
-      ),
-      y = paste0("Number of simulation iterations (total: ", nrow(da_prep), ")")
-    )
-  ggsave_cust(file.path("figs",
-                        paste(perf_chr_diff, eval_scale, "at_sgg", sep = "_")))
-
-  return(list(ggobj = ggobj))
-}
-diff_at_sgg <- gg_perf_diff_at_sgg(da_info = da_perf_diff_at_sgg_out)
 
 # doRNG -------------------------------------------------------------------
 
