@@ -1164,7 +1164,7 @@ gg_perf_diff_at_sgg <- function(da_info) {
         "\\mathrm{", toupper(perf_chr), "}_{\\mathrm{aug}}$",
         " at smaller suggested size"
       ),
-      y = "Absolute frequency"
+      y = paste0("Number of simulation iterations (total: ", nrow(da_prep), ")")
     )
   ggsave_cust(file.path("figs",
                         paste(perf_chr_diff, eval_scale, "at_sgg", sep = "_")))
