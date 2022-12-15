@@ -614,6 +614,12 @@ print(quantile(da_perf_diff_out$da_prep$diff_se))
 cat("Corresponding proportion of SE difference > 0:\n")
 print(mean(da_perf_diff_out$da_prep$diff_se > 0))
 cat("-----\n")
+### For investigating SEs that are smaller in case of the latent projection:
+# unique(da_perf_diff_out$da_prep[da_perf_diff_out$da_prep$diff_se < 0,
+#                                 "sim_idx"])
+# da_perf_diff_out$da_prep[head(order(da_perf_diff_out$da_prep$diff_se), 25),
+#                          c("sim_idx", "diff_se")]
+###
 
 vec_ref <- function(eval_scale = "response") {
   stopifnot(eval_scale == "response")
