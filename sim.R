@@ -621,7 +621,7 @@ cat("-----\n")
 #                          c("sim_idx", "diff_se")]
 ###
 
-vec_ref <- function(eval_scale = "response") {
+vec_perf_ref <- function(eval_scale = "response") {
   stopifnot(eval_scale == "response")
   respOrig_nm_aug <- mk_respOrig_nm(prj_meth = "aug", eval_scale = eval_scale)
   respOrig_nm_lat <- mk_respOrig_nm(prj_meth = "lat", eval_scale = eval_scale)
@@ -643,7 +643,7 @@ vec_ref <- function(eval_scale = "response") {
   refstats <- refstats_aug
   return(refstats)
 }
-refstats <- vec_ref()
+refstats <- vec_perf_ref()
 q_refstat <- quantile(refstats)
 cat("\n-----\n")
 cat("Quartiles of the reference model's performance statistic (across all",
