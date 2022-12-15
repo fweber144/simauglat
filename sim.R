@@ -794,9 +794,10 @@ da_perf_indiv <- function(sub_idxs, sub_txt, perf_scale,
   }
 
   da_prep <- do.call(rbind, lapply(sub_idxs, one_idx))
+  prefix_sim_idx <- "Sim. iter."
   da_prep$sim_idx <- factor(
-    paste("iter.", da_prep$sim_idx),
-    levels = paste("iter.", unique(da_prep$sim_idx))
+    paste(prefix_sim_idx, da_prep$sim_idx),
+    levels = paste(prefix_sim_idx, unique(da_prep$sim_idx))
   )
 
   return(list(da_prep = da_prep, sub_txt = sub_txt, perf_scale = perf_scale,
