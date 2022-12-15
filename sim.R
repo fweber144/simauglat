@@ -743,6 +743,7 @@ printer_extrdiff <- function(extrdiff_info) {
     print(idxs[idxx])
     cat("Performance statistic and corresponding transformations in this",
         "simulation iteration:\n")
+    stopifnot(identical(da_prep$sim_idx, seq_len(nrow(da_prep))))
     print(da_prep[idxs[idxx], ])
     cat("-----\n")
   }
