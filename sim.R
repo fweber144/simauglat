@@ -710,7 +710,7 @@ da_perf_at_sgg <- function(eval_scale = "response") {
 }
 da_perf_at_sgg_out <- da_perf_at_sgg()
 
-find_idxs_extrdiff <- function(da_prep, n_idxs = 3, difftype = "diff") {
+find_idxs_extrdiff <- function(da_prep, n_idxs = 3, difftype = "diffexp") {
   sim_order <- da_prep[order(da_prep[[difftype]], na.last = NA), "sim_idx"]
   return(list(
     da_prep = da_prep,
@@ -719,14 +719,9 @@ find_idxs_extrdiff <- function(da_prep, n_idxs = 3, difftype = "diff") {
              sim_idx_max = rev(tail(sim_order, n_idxs)))
   ))
 }
-extrdiff_out <- find_idxs_extrdiff(da_prep = da_perf_at_sgg_out$da_prep)
-extrdiffexp_out <- find_idxs_extrdiff(da_prep = da_perf_at_sgg_out$da_prep,
-                                      difftype = "diffexp")
-idxs_extrdiff <- extrdiff_out[["idxs"]]
+extrdiffexp_out <- find_idxs_extrdiff(da_prep = da_perf_at_sgg_out$da_prep)
 idxs_extrdiffexp <- extrdiffexp_out[["idxs"]]
 cat("\n-----\n")
-cat("Content of `idxs_extrdiff`:\n")
-print(idxs_extrdiff)
 cat("Content of `idxs_extrdiffexp`:\n")
 print(idxs_extrdiffexp)
 cat("-----\n")
@@ -750,7 +745,6 @@ printer_extrdiff <- function(extrdiff_info) {
   cat("----------\n")
   return(invisible(TRUE))
 }
-printer_extrdiff(extrdiff_info = extrdiff_out)
 printer_extrdiff(extrdiff_info = extrdiffexp_out)
 
 da_perf_indiv <- function(sub_idxs, sub_txt, perf_scale,
@@ -804,9 +798,6 @@ da_perf_indiv <- function(sub_idxs, sub_txt, perf_scale,
   return(list(da_prep = da_prep, sub_txt = sub_txt, perf_scale = perf_scale,
               eval_scale = eval_scale))
 }
-da_perf_extrdiff_abs <- da_perf_indiv(sub_idxs = idxs_extrdiff,
-                                      sub_txt = "extrdiff",
-                                      perf_scale = "abs")
 da_perf_extrdiffexp_abs <- da_perf_indiv(sub_idxs = idxs_extrdiffexp,
                                          sub_txt = "extrdiffexp",
                                          perf_scale = "abs")
@@ -1013,8 +1004,6 @@ gg_perf_indiv_abs <- function(da_info, width = 6.5, height = width * 0.618) {
 
   return(list(ggobj = ggobj))
 }
-indiv_extrdiff_abs <- gg_perf_indiv_abs(da_info = da_perf_extrdiff_abs,
-                                        height = 5 * 0.618)
 indiv_extrdiffexp_abs <- gg_perf_indiv_abs(da_info = da_perf_extrdiffexp_abs,
                                            height = 5 * 0.618)
 
