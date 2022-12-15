@@ -569,6 +569,39 @@ mk_respOrig_nm <- function(prj_meth, eval_scale = "response") {
   return(respOrig_nm)
 }
 
+vec_perf_ref <- function(eval_scale = "response") {
+  stopifnot(eval_scale == "response")
+  respOrig_nm_aug <- mk_respOrig_nm(prj_meth = "aug", eval_scale = eval_scale)
+  respOrig_nm_lat <- mk_respOrig_nm(prj_meth = "lat", eval_scale = eval_scale)
+
+  refstats_aug <- do.call(c, lapply(seq_along(simres), function(sim_idx) {
+    simres[[sim_idx]]$aug[[respOrig_nm_aug]]$refstat
+  }))
+  refstats_lat <- do.call(c, lapply(seq_along(simres), function(sim_idx) {
+    simres[[sim_idx]]$lat[[respOrig_nm_lat]]$refstat
+  }))
+
+  # Check that the reference model (performance) is the same, so that in
+  # particular, the difference of the Delta MLPDs can be interpreted as the
+  # difference of the submodel MLPDs (i.e., the reference model MLPD cancels
+  # out):
+  stopifnot(all.equal(refstats_aug, refstats_lat,
+                      tolerance = .Machine$double.eps))
+
+  refstats <- refstats_aug
+  return(refstats)
+}
+refstats <- vec_perf_ref()
+q_refstat <- quantile(refstats)
+cat("\n-----\n")
+cat("Quartiles of the reference model's performance statistic (across all",
+    "simulation iterations):\n")
+print(q_refstat)
+cat("exp() of these quartiles (= quartiles of exp(reference model's",
+    "performance statistic)):\n")
+print(exp(q_refstat))
+cat("-----\n")
+
 da_perf_sep_rel <- function(prj_meth, eval_scale = "response") {
   respOrig_nm <- mk_respOrig_nm(prj_meth = prj_meth, eval_scale = eval_scale)
 
@@ -620,39 +653,6 @@ cat("-----\n")
 # da_perf_diff_out$da_prep[head(order(da_perf_diff_out$da_prep$diff_se), 25),
 #                          c("sim_idx", "diff_se")]
 ###
-
-vec_perf_ref <- function(eval_scale = "response") {
-  stopifnot(eval_scale == "response")
-  respOrig_nm_aug <- mk_respOrig_nm(prj_meth = "aug", eval_scale = eval_scale)
-  respOrig_nm_lat <- mk_respOrig_nm(prj_meth = "lat", eval_scale = eval_scale)
-
-  refstats_aug <- do.call(c, lapply(seq_along(simres), function(sim_idx) {
-    simres[[sim_idx]]$aug[[respOrig_nm_aug]]$refstat
-  }))
-  refstats_lat <- do.call(c, lapply(seq_along(simres), function(sim_idx) {
-    simres[[sim_idx]]$lat[[respOrig_nm_lat]]$refstat
-  }))
-
-  # Check that the reference model (performance) is the same, so that in
-  # particular, the difference of the Delta MLPDs can be interpreted as the
-  # difference of the submodel MLPDs (i.e., the reference model MLPD cancels
-  # out):
-  stopifnot(all.equal(refstats_aug, refstats_lat,
-                      tolerance = .Machine$double.eps))
-
-  refstats <- refstats_aug
-  return(refstats)
-}
-refstats <- vec_perf_ref()
-q_refstat <- quantile(refstats)
-cat("\n-----\n")
-cat("Quartiles of the reference model's performance statistic (across all",
-    "simulation iterations):\n")
-print(q_refstat)
-cat("exp() of these quartiles (= quartiles of exp(reference model's",
-    "performance statistic)):\n")
-print(exp(q_refstat))
-cat("-----\n")
 
 # Filter out simulation iterations with highest MLPD differences between
 # augmented-data and latent projection:
