@@ -969,7 +969,7 @@ gg_perf_diff_at_sgg <- function(da_info) {
 }
 diff_at_sgg <- gg_perf_diff_at_sgg(da_info = da_perf_at_sgg_out)
 
-gg_perf_indiv_abs <- function(da_info, width = 6.5, height = 2 * 6.5 * 0.618) {
+gg_perf_indiv_abs <- function(da_info, width = 6.5, height = width * 0.618) {
   da_prep <- da_info$da_prep
   sub_txt <- da_info$sub_txt
   perf_scale <- da_info$perf_scale
@@ -1010,7 +1010,7 @@ indiv_extrdiff_abs <- gg_perf_indiv_abs(da_info = da_perf_extrdiff_abs,
 indiv_extrdiffexp_abs <- gg_perf_indiv_abs(da_info = da_perf_extrdiffexp_abs,
                                            height = 5 * 0.618)
 
-gg_perf_indiv_rel <- function(da_info, width = 6.5, height = 2 * 6.5 * 0.618) {
+gg_perf_indiv_rel <- function(da_info, width = 6.5, height = width * 0.618) {
   da_prep <- da_info$da_prep
   sub_txt <- da_info$sub_txt
   perf_scale <- da_info$perf_scale
@@ -1050,7 +1050,7 @@ gg_perf_indiv_rel <- function(da_info, width = 6.5, height = 2 * 6.5 * 0.618) {
   return(list(ggobj = ggobj))
 }
 indiv_maxdiff_rel <- gg_perf_indiv_rel(da_info = da_perf_maxdiff_rel,
-                                       height = 4 * 0.618)
+                                       height = 3.25 * 0.618)
 
 ## Suggested sizes --------------------------------------------------------
 
