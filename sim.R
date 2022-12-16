@@ -525,7 +525,7 @@ gg_time <- ggplot2::ggplot(
   data = time_vs_long,
   mapping = ggplot2::aes(x = prj_meth, y = `Runtime [min]`)
 ) +
-  ggplot2::geom_boxplot() +
+  ggplot2::geom_boxplot(outlier.shape = NA) +
   ggplot2::geom_jitter(alpha = 0.25, width = 0.25, height = 0) +
   ggplot2::labs(x = "Projection method") +
   ggplot2::coord_cartesian(ylim = c(0, NA))
@@ -906,7 +906,7 @@ gg_perf_diff <- function(da_info) {
     ggplot2::geom_hline(yintercept = 0,
                         color = "gray30",
                         linetype = "dotted") +
-    ggplot2::geom_boxplot() +
+    ggplot2::geom_boxplot(outlier.shape = NA) +
     ggplot2::geom_jitter(alpha = 0.25, width = 0.25, height = 0) +
     ggplot2::labs(
       x = "Submodel size",
