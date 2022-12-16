@@ -512,6 +512,13 @@ time_vs_long <- reshape(
 stopifnot(identical(time_vs_long$sim_idx_ch, time_vs_long$sim_idx))
 time_vs_long$sim_idx_ch <- NULL
 
+time_med <- tapply(time_vs_long$`Runtime [min]`, INDEX = time_vs_long$prj_meth,
+                   FUN = median)
+cat("\n-----\n")
+cat("Median runtime:\n")
+print(time_med)
+cat("-----\n")
+
 Rseed <- get(".Random.seed", envir = .GlobalEnv)
 set.seed(seed_jitter)
 gg_time <- ggplot2::ggplot(
