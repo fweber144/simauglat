@@ -680,7 +680,7 @@ cat("Simulation iterations with the largest MLPD advantages of the latent",
 print(idxs_maxdiff)
 cat("-----\n")
 
-# At the smaller one of the 2 suggested sizes:
+# At the minimum of the 2 suggested sizes:
 da_perf_at_sgg <- function(eval_scale = "response") {
   stopifnot(eval_scale == "response")
   respOrig_nm_aug <- mk_respOrig_nm(prj_meth = "aug", eval_scale = eval_scale)
@@ -942,7 +942,7 @@ gg_perf_diff_at_sgg <- function(da_info) {
 
   da_prep <- da_prep[!is.na(da_prep[["diff"]]), , drop = FALSE]
 
-  # MLPD difference plot, but only at the smaller one of the 2 suggested sizes:
+  # MLPD difference plot, but only at the minimum of the 2 suggested sizes:
   ggobj <- ggplot2::ggplot(data = da_prep, mapping = ggplot2::aes(x = diff)) +
     ggplot2::geom_vline(xintercept = 0,
                         color = "gray30",
