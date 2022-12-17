@@ -294,7 +294,7 @@ if (only_init_fit) {
   }
   stop("Exiting cleanly (only throwing an error to stop source()-ing the ",
        "script).")
-} else {
+} else if (!use_existing_res) {
   bfit <- readRDS("bfit.rds")
 }
 
