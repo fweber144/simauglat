@@ -955,7 +955,7 @@ gg_perf_diff_at_sgg <- function(da_info) {
           "$\\mathrm{GMPD}_{\\mathrm{lat}}",
           " / ",
           "\\mathrm{GMPD}_{\\mathrm{aug}}$",
-          " at smaller suggested size"
+          " at size $G_{\\mathrm{min}}$"
         )
       )
     ) +
@@ -964,7 +964,7 @@ gg_perf_diff_at_sgg <- function(da_info) {
         "$\\mathrm{", toupper(perf_chr), "}_{\\mathrm{lat}}",
         " - ",
         "\\mathrm{", toupper(perf_chr), "}_{\\mathrm{aug}}$",
-        " at smaller suggested size"
+        " at size $G_{\\mathrm{min}}$"
       ),
       y = paste0("Number of simulation iterations (total: ", nrow(da_prep), ")")
     )
