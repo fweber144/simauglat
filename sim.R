@@ -884,9 +884,15 @@ xtab_perf_at_sgg_indiv <- function(da_info) {
     "Rows are sorted from most extreme (top) to least extreme (bottom)."
   )
   lab_dir <- paste0("tab:indiv-", indiv_txt)
-  xtab_obj <- xtable::xtable(da_prep, caption = c(capt_long, capt_short),
-                             label = lab_dir, auto = TRUE)
-  xtable::align(xtab_obj) <- c("l", rep("r", ncol(xtab_obj)))
+  xtab_obj <- xtable::xtable(
+    da_prep,
+    caption = c(capt_long, capt_short),
+    label = lab_dir,
+    align = c("l", rep("r", ncol(da_prep))),
+    digits = c(rep(ceiling(log10(abs(nsim))) + 1, 2),
+               rep(2, ncol(da_prep) - 1)),
+    display = c(rep("d", 2), rep("fg", ncol(da_prep) - 1))
+  )
   fnm_base <- paste("indiv", perf_chr, eval_scale, indiv_txt, perf_scale,
                     sep = "_")
   fnm_base <- paste0(fnm_base, ".tex")
