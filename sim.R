@@ -737,19 +737,13 @@ printer_extrdiff <- function(extrdiff_info) {
   da_prep <- extrdiff_info$da_prep
   difftype <- extrdiff_info$difftype
   idxs <- extrdiff_info$idxs
-  cat("\n----------\n")
+
+  stopifnot(identical(da_prep$sim_idx, seq_len(nrow(da_prep))))
+
+  cat("\n-----\n")
   cat("`difftype`: ", difftype, "\n", sep = "")
-  for (idxx in seq_along(idxs)) {
-    cat("\n-----\n")
-    cat("Simulation iteration:\n")
-    print(idxs[idxx])
-    cat("Performance statistic and corresponding transformations in this",
-        "simulation iteration:\n")
-    stopifnot(identical(da_prep$sim_idx, seq_len(nrow(da_prep))))
-    print(da_prep[idxs[idxx], ])
-    cat("-----\n")
-  }
-  cat("----------\n")
+  print(da_prep[idxs, , drop = FALSE])
+  cat("-----\n")
   return(invisible(TRUE))
 }
 printer_extrdiff(extrdiff_info = extrdiffexp_out)
