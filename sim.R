@@ -890,8 +890,9 @@ xtab_perf_at_sgg_indiv <- function(da_info) {
     label = lab_dir,
     align = c("l", rep("r", ncol(da_prep))),
     digits = c(rep(ceiling(log10(abs(nsim))) + 1, 2),
-               rep(2, ncol(da_prep) - 1)),
-    display = c(rep("d", 2), rep("fg", ncol(da_prep) - 1))
+               rep(2, ncol(da_prep) - 2),
+               3),
+    display = c(rep("d", 2), rep("f", ncol(da_prep) - 1))
   )
   fnm_base <- paste("indiv", perf_chr, eval_scale, indiv_txt, perf_scale,
                     sep = "_")
