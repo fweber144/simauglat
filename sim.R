@@ -472,6 +472,9 @@ ggsave_cust <- function(fname_no_ext, plot = ggplot2::last_plot(),
 }
 
 if (!dir.exists("figs")) dir.create("figs")
+if (!dir.exists("tabs")) dir.create("tabs")
+
+aug_lat_chr <- c("aug", "lat")
 
 ## True population-level coefficients -------------------------------------
 ## (i.e., the draws from the regularized horseshoe distribution)
@@ -562,8 +565,7 @@ cat("-----\n")
 ### Preparations and printing ---------------------------------------------
 
 perf_chr_diff <- paste("diff", perf_chr, sep = "_")
-# For secondary y-axes as well as for section "Predictive performance at
-# suggested size":
+# For secondary y-axes as well as some other analyses:
 stopifnot(identical(perf_chr, "mlpd"))
 
 mk_respOrig_nm <- function(prj_meth, eval_scale = "response") {
@@ -663,20 +665,27 @@ cat("-----\n")
 
 # Filter out simulation iterations with the largest MLPD advantages of the
 # latent projection:
-find_idxs_maxdiff <- function(da_prep, n_idxs = 3) {
+find_idxs_maxdiff <- function(da_info, n_idxs = 3) {
+  da_prep <- da_info$da_prep
+  eval_scale <- da_info$eval_scale
+
   maxdiffs <- aggregate(
     da_prep[, perf_chr_diff, drop = FALSE],
     by = list(sim_idx = da_prep$sim_idx), FUN = max, drop = FALSE
   )
   which_maxdiff <- head(order(maxdiffs[, perf_chr_diff], decreasing = TRUE),
                         n_idxs)
-  idxs_maxdiff <- maxdiffs[which_maxdiff, "sim_idx"]
-  return(idxs_maxdiff)
+  return(structure(
+    list(da_prep = da_prep, eval_scale = eval_scale,
+         idxs = maxdiffs[which_maxdiff, "sim_idx"], txt = "maxdiff"),
+    class = "indiv_info"
+  ))
 }
-idxs_maxdiff <- find_idxs_maxdiff(da_prep = da_perf_diff_out$da_prep)
+maxdiff_info <- find_idxs_maxdiff(da_info = da_perf_diff_out)
+idxs_maxdiff <- maxdiff_info[["idxs"]]
 cat("\n-----\n")
 cat("Simulation iterations with the largest MLPD advantages of the latent",
-    "projection:\n")
+    "projection (object `idxs_maxdiff`):\n")
 print(idxs_maxdiff)
 cat("-----\n")
 
@@ -693,63 +702,65 @@ da_perf_at_sgg <- function(eval_scale = "response") {
       min(res_aug$sgg_size, res_lat$sgg_size, na.rm = TRUE)
     )
     if (is.finite(sgg_size)) {
-      dy <- c("daug" = res_aug$smmry[res_aug$smmry$size == sgg_size, perf_chr],
-              "dlat" = res_lat$smmry[res_lat$smmry$size == sgg_size, perf_chr])
+      # Note: We also could have used `$abs_smmry` instead of `$smmry` here.
+      dperf <- setNames(
+        c(res_aug$smmry[res_aug$smmry$size == sgg_size, perf_chr],
+          res_lat$smmry[res_lat$smmry$size == sgg_size, perf_chr]),
+        paste0("d", aug_lat_chr)
+      )
       refstat <- res_aug$refstat
       stopifnot(identical(refstat, res_lat$refstat))
-      y <- dy + refstat
-      names(y) <- sub("^d", "", names(y))
-      return(c(dy, y))
+      refstat <- setNames(refstat, "refstat")
+      perf <- setNames(dperf + refstat, aug_lat_chr)
+      return(c(refstat, dperf, perf))
     } else {
-      return(rep(NA, 4))
+      return(rep(NA, 1 + 2 + 2))
     }
   }))
   da_prep <- as.data.frame(da_prep)
-  da_prep$sim_idx <- seq_along(simres)
   da_prep <- within(da_prep, {
+    sim_idx <- seq_along(simres)
+    exprefstat <- exp(refstat)
     expaug <- exp(aug)
     explat <- exp(lat)
     diff <- lat - aug
     expdiff <- exp(diff)
     diffexp <- explat - expaug
   })
+  new_col_nms <- c("sim_idx", "refstat", aug_lat_chr, paste0("d", aug_lat_chr),
+                   "diff", "expdiff", paste0("exp", c("refstat", aug_lat_chr)),
+                   "diffexp")
+  stopifnot(setequal(names(da_prep), new_col_nms))
+  da_prep <- da_prep[, new_col_nms, drop = FALSE]
   return(list(da_prep = da_prep, eval_scale = eval_scale))
 }
 da_perf_at_sgg_out <- da_perf_at_sgg()
 
-find_idxs_extrdiff <- function(da_prep, n_idxs = 3, difftype = "diffexp") {
+find_idxs_extrdiff <- function(da_info, n_idxs = 3, difftype = "diffexp") {
+  da_prep <- da_info$da_prep
+  eval_scale <- da_info$eval_scale
+
   sim_order <- da_prep[order(da_prep[[difftype]], na.last = NA), "sim_idx"]
-  return(list(
-    da_prep = da_prep,
-    difftype = difftype,
-    idxs = c(sim_idx_min = head(sim_order, n_idxs),
-             sim_idx_max = rev(tail(sim_order, n_idxs)))
+  return(structure(
+    list(da_prep = da_prep, eval_scale = eval_scale, difftype = difftype,
+         idxs = c(sim_idx_min = head(sim_order, n_idxs),
+                  sim_idx_max = rev(tail(sim_order, n_idxs))),
+         txt = paste0("extr", difftype)),
+    class = "indiv_info"
   ))
 }
-extrdiffexp_out <- find_idxs_extrdiff(da_prep = da_perf_at_sgg_out$da_prep)
-idxs_extrdiffexp <- extrdiffexp_out[["idxs"]]
+extrdiffexp_info <- find_idxs_extrdiff(da_info = da_perf_at_sgg_out)
+idxs_extrdiffexp <- extrdiffexp_info[["idxs"]]
 cat("\n-----\n")
-cat("Content of `idxs_extrdiffexp`:\n")
+cat("Simulation iterations with the largest GMPD advantages of both, the",
+    "augmented-data and the latent projection (object `idxs_extrdiffexp`):\n")
 print(idxs_extrdiffexp)
 cat("-----\n")
 
-printer_extrdiff <- function(extrdiff_info) {
-  da_prep <- extrdiff_info$da_prep
-  difftype <- extrdiff_info$difftype
-  idxs <- extrdiff_info$idxs
-
-  stopifnot(identical(da_prep$sim_idx, seq_len(nrow(da_prep))))
-
-  cat("\n-----\n")
-  cat("`difftype`: ", difftype, "\n", sep = "")
-  print(da_prep[idxs, , drop = FALSE])
-  cat("-----\n")
-  return(invisible(TRUE))
-}
-printer_extrdiff(extrdiff_info = extrdiffexp_out)
-
-da_perf_indiv <- function(sub_idxs, sub_txt, perf_scale,
-                          eval_scale = "response") {
+da_perf_indiv <- function(indiv_info, perf_scale = "abs") {
+  indiv_idxs <- indiv_info[["idxs"]]
+  indiv_txt <- indiv_info[["txt"]]
+  eval_scale <- indiv_info[["eval_scale"]]
   stopifnot(eval_scale == "response")
   respOrig_nm_aug <- mk_respOrig_nm(prj_meth = "aug", eval_scale = eval_scale)
   respOrig_nm_lat <- mk_respOrig_nm(prj_meth = "lat", eval_scale = eval_scale)
@@ -789,22 +800,92 @@ da_perf_indiv <- function(sub_idxs, sub_txt, perf_scale,
     stop("Unknown `perf_scale`.")
   }
 
-  da_prep <- do.call(rbind, lapply(sub_idxs, one_idx))
+  da_prep <- do.call(rbind, lapply(indiv_idxs, one_idx))
   prefix_sim_idx <- "Sim. iter."
   da_prep$sim_idx <- factor(
     paste(prefix_sim_idx, da_prep$sim_idx),
     levels = paste(prefix_sim_idx, unique(da_prep$sim_idx))
   )
 
-  return(list(da_prep = da_prep, sub_txt = sub_txt, perf_scale = perf_scale,
-              eval_scale = eval_scale))
+  return(list(da_prep = da_prep, indiv_txt = indiv_txt, eval_scale = eval_scale,
+              perf_scale = perf_scale))
 }
-da_perf_extrdiffexp_abs <- da_perf_indiv(sub_idxs = idxs_extrdiffexp,
-                                         sub_txt = "extrdiffexp",
-                                         perf_scale = "abs")
-da_perf_maxdiff_rel <- da_perf_indiv(sub_idxs = idxs_maxdiff,
-                                     sub_txt = "maxdiff",
+da_perf_extrdiffexp_abs <- da_perf_indiv(indiv_info = extrdiffexp_info)
+da_perf_maxdiff_rel <- da_perf_indiv(indiv_info = maxdiff_info,
                                      perf_scale = "rel")
+
+da_perf_at_sgg_indiv <- function(indiv_info, perf_scale = "abs") {
+  da_prep <- indiv_info[["da_prep"]]
+  indiv_idxs <- indiv_info[["idxs"]]
+  indiv_txt <- indiv_info[["txt"]]
+  eval_scale <- indiv_info[["eval_scale"]]
+  stopifnot(eval_scale == "response")
+  stopifnot(perf_scale == "abs")
+
+  # Object `indiv_idxs` contains values from column `sim_idx`, so perform the
+  # following check before indexing by `sim_idx` instead of by row indices:
+  stopifnot(identical(da_prep$sim_idx, seq_len(nrow(da_prep))))
+
+  # Restrict the columns:
+  col_nms <- c("sim_idx", "refstat", aug_lat_chr,
+               paste0("exp", c("refstat", aug_lat_chr)), "diffexp")
+
+  da_prep <- da_prep[indiv_idxs, col_nms, drop = FALSE]
+
+  return(list(da_prep = da_prep, indiv_txt = indiv_txt, eval_scale = eval_scale,
+              perf_scale = perf_scale))
+}
+da_perf_at_sgg_extrdiffexp_abs <- da_perf_at_sgg_indiv(
+  indiv_info = extrdiffexp_info
+)
+cat("\n-----\n")
+cat("Content of `da_perf_at_sgg_extrdiffexp_abs$da_prep`:\n")
+print(da_perf_at_sgg_extrdiffexp_abs$da_prep)
+cat("-----\n")
+
+xtab_perf_at_sgg_indiv <- function(da_info) {
+  da_prep <- da_info[["da_prep"]]
+  indiv_txt <- da_info[["indiv_txt"]]
+  eval_scale <- da_info[["eval_scale"]]
+  stopifnot(eval_scale == "response")
+  perf_scale <- da_info[["perf_scale"]]
+  stopifnot(perf_scale == "abs")
+
+  capt_short <- paste(
+    "Predictive performance at the minimum of the two suggested sizes for",
+    "individual simulation iterations"
+  )
+  capt_long <- paste(
+    "Predictive performance (as well as",
+    "$\\mathrm{GMPD}_{\\mathrm{lat}} - \\mathrm{GMPD}_{\\mathrm{aug}}$)",
+    "at size $G_{\\mathrm{min}} = \\min(G_{\\mathrm{aug}},",
+    "G_{\\mathrm{lat}})$ for those simulation iterations where",
+    "$\\mathrm{GMPD}_{\\mathrm{lat}} - \\mathrm{GMPD}_{\\mathrm{aug}}$ at",
+    "size $G_{\\mathrm{min}}$ is either extremely small (top three rows) or",
+    "extremely large (bottom three rows).",
+    "Both blocks of rows are sorted from most extreme (top) to least extreme",
+    "(bottom)."
+  )
+  xtab_obj <- xtable::xtable(da_prep, caption = c(capt_long, capt_short),
+                             label = "tab:indiv-diffexp", auto = TRUE)
+  xtable::align(xtab_obj) <- c("l", rep("r", ncol(xtab_obj)))
+  fnm_base <- paste("indiv", perf_chr, eval_scale, indiv_txt, perf_scale,
+                    sep = "_")
+  fnm_base <- paste0(fnm_base, ".tex")
+  xtab_printed <- print(
+    xtab_obj,
+    file = file.path("tabs", fnm_base),
+    caption.placement = "top",
+    include.rownames = FALSE,
+    latex.environments = "center",
+    booktabs = TRUE,
+    timestamp = NULL
+  )
+  return(xtab_printed)
+}
+xtab_perf_at_sgg_extrdiffexp_abs <- xtab_perf_at_sgg_indiv(
+  da_info = da_perf_at_sgg_extrdiffexp_abs
+)
 
 ### Plotting functions ----------------------------------------------------
 
@@ -971,10 +1052,10 @@ diff_at_sgg <- gg_perf_diff_at_sgg(da_info = da_perf_at_sgg_out)
 
 gg_perf_indiv_abs <- function(da_info, width = 6.5, height = width * 0.618) {
   da_prep <- da_info$da_prep
-  sub_txt <- da_info$sub_txt
+  indiv_txt <- da_info$indiv_txt
+  eval_scale <- da_info$eval_scale
   perf_scale <- da_info$perf_scale
   stopifnot(identical(perf_scale, "abs"))
-  eval_scale <- da_info$eval_scale
 
   # MLPD plot:
   ggobj <- ggplot2::ggplot(
@@ -999,7 +1080,7 @@ gg_perf_indiv_abs <- function(da_info, width = 6.5, height = width * 0.618) {
     ) +
     ggplot2::theme(legend.position = "top") +
     ggplot2::facet_wrap(ggplot2::vars(sim_idx), ncol = 3, scales = "free_y")
-  ggsave_cust(file.path("figs", paste("indiv", perf_chr, eval_scale, sub_txt,
+  ggsave_cust(file.path("figs", paste("indiv", perf_chr, eval_scale, indiv_txt,
                                       perf_scale, sep = "_")),
               width = width, height = height)
 
@@ -1010,10 +1091,10 @@ indiv_extrdiffexp_abs <- gg_perf_indiv_abs(da_info = da_perf_extrdiffexp_abs,
 
 gg_perf_indiv_rel <- function(da_info, width = 6.5, height = width * 0.618) {
   da_prep <- da_info$da_prep
-  sub_txt <- da_info$sub_txt
+  indiv_txt <- da_info$indiv_txt
+  eval_scale <- da_info$eval_scale
   perf_scale <- da_info$perf_scale
   stopifnot(identical(perf_scale, "rel"))
-  eval_scale <- da_info$eval_scale
 
   # Delta-MLPD plot:
   ggobj <- ggplot2::ggplot(
@@ -1041,7 +1122,7 @@ gg_perf_indiv_rel <- function(da_info, width = 6.5, height = width * 0.618) {
     ) +
     ggplot2::theme(legend.position = "top") +
     ggplot2::facet_wrap(ggplot2::vars(sim_idx), ncol = 3, scales = "free_y")
-  ggsave_cust(file.path("figs", paste("indiv", perf_chr, eval_scale, sub_txt,
+  ggsave_cust(file.path("figs", paste("indiv", perf_chr, eval_scale, indiv_txt,
                                       perf_scale, sep = "_")),
               width = width, height = height)
 
