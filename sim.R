@@ -881,7 +881,8 @@ xtab_perf_at_sgg_indiv <- function(da_info) {
     direction_pretty, "values for",
     "$\\mathrm{GMPD}_{\\mathrm{lat}} - \\mathrm{GMPD}_{\\mathrm{aug}}$",
     "at size $G_{\\mathrm{min}}$.",
-    "Rows are sorted from most extreme (top) to least extreme (bottom)."
+    "Rows are sorted from most extreme (top) to least extreme (bottom).",
+    "Column ``Iter.'' is the simulation iteration."
   )
   lab_dir <- paste0("tab:indiv-", indiv_txt)
   xtab_obj <- xtable::xtable(
@@ -903,6 +904,21 @@ xtab_perf_at_sgg_indiv <- function(da_info) {
     caption.placement = "top",
     include.rownames = FALSE,
     latex.environments = "center",
+    sanitize.colnames.function = function(nms) {
+      nms[nms == "sim_idx"] <- "Iter."
+      nms[nms == "refstat"] <- paste0("$\\mathrm{", toupper(perf_chr), "}^{*}$")
+      nms[nms == "aug"] <- paste0("$\\mathrm{", toupper(perf_chr),
+                                  "}_{\\mathrm{aug}}$")
+      nms[nms == "lat"] <- paste0("$\\mathrm{", toupper(perf_chr),
+                                  "}_{\\mathrm{lat}}$")
+      nms[nms == "exprefstat"] <- "$\\mathrm{GMPD}^{*}$"
+      nms[nms == "expaug"] <- "$\\mathrm{GMPD}_{\\mathrm{aug}}$"
+      nms[nms == "explat"] <- "$\\mathrm{GMPD}_{\\mathrm{lat}}$"
+      nms[nms == "diffexp"] <- paste0("$\\mathrm{GMPD}_{\\mathrm{lat}}",
+                                      " - ",
+                                      "\\mathrm{GMPD}_{\\mathrm{aug}}$")
+      return(nms)
+    },
     booktabs = TRUE,
     timestamp = NULL
   )
