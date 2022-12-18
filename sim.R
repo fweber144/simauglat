@@ -814,7 +814,7 @@ da_perf_extrdiffexp_abs <- da_perf_indiv(indiv_info = extrdiffexp_info)
 da_perf_maxdiff_rel <- da_perf_indiv(indiv_info = maxdiff_info,
                                      perf_scale = "rel")
 
-da_perf_at_sgg_indiv <- function(indiv_info, perf_scale = "abs") {
+da_perf_at_sgg_indiv <- function(indiv_info, direction, perf_scale = "abs") {
   da_prep <- indiv_info[["da_prep"]]
   indiv_idxs <- indiv_info[["idxs"]]
   indiv_txt <- indiv_info[["txt"]]
@@ -825,22 +825,31 @@ da_perf_at_sgg_indiv <- function(indiv_info, perf_scale = "abs") {
   # Object `indiv_idxs` contains values from column `sim_idx`, so perform the
   # following check before indexing by `sim_idx` instead of by row indices:
   stopifnot(identical(da_prep$sim_idx, seq_len(nrow(da_prep))))
-
   # Restrict the columns:
   col_nms <- c("sim_idx", "refstat", aug_lat_chr,
                paste0("exp", c("refstat", aug_lat_chr)), "diffexp")
-
+  # Restrict the rows:
+  indiv_idxs <- indiv_idxs[grep(paste0("^sim_idx_", direction),
+                                names(indiv_idxs))]
+  # The `data.frame`:
   da_prep <- da_prep[indiv_idxs, col_nms, drop = FALSE]
+  # Adapt `indiv_txt`:
+  indiv_txt <- sub("^extr", direction, indiv_txt)
 
   return(list(da_prep = da_prep, indiv_txt = indiv_txt, eval_scale = eval_scale,
-              perf_scale = perf_scale))
+              direction = direction, perf_scale = perf_scale))
 }
-da_perf_at_sgg_extrdiffexp_abs <- da_perf_at_sgg_indiv(
-  indiv_info = extrdiffexp_info
+da_perf_at_sgg_mindiffexp_abs <- da_perf_at_sgg_indiv(
+  indiv_info = extrdiffexp_info, direction = "min"
+)
+da_perf_at_sgg_maxdiffexp_abs <- da_perf_at_sgg_indiv(
+  indiv_info = extrdiffexp_info, direction = "max"
 )
 cat("\n-----\n")
-cat("Content of `da_perf_at_sgg_extrdiffexp_abs$da_prep`:\n")
-print(da_perf_at_sgg_extrdiffexp_abs$da_prep)
+cat("Content of `da_perf_at_sgg_mindiffexp_abs$da_prep`:\n")
+print(da_perf_at_sgg_mindiffexp_abs$da_prep)
+cat("Content of `da_perf_at_sgg_maxdiffexp_abs$da_prep`:\n")
+print(da_perf_at_sgg_maxdiffexp_abs$da_prep)
 cat("-----\n")
 
 xtab_perf_at_sgg_indiv <- function(da_info) {
@@ -848,8 +857,17 @@ xtab_perf_at_sgg_indiv <- function(da_info) {
   indiv_txt <- da_info[["indiv_txt"]]
   eval_scale <- da_info[["eval_scale"]]
   stopifnot(eval_scale == "response")
+  direction <- da_info[["direction"]]
   perf_scale <- da_info[["perf_scale"]]
   stopifnot(perf_scale == "abs")
+
+  n_indiv_pretty <- nrow(da_prep)
+  if (n_indiv_pretty == 3) {
+    n_indiv_pretty <- "three"
+  } else {
+    n_indiv_pretty <- as.character(n_indiv_pretty)
+  }
+  direction_pretty <- ifelse(direction == "min", "smallest", "largest")
 
   capt_short <- paste(
     "Predictive performance at the minimum of the two suggested sizes for",
@@ -858,16 +876,16 @@ xtab_perf_at_sgg_indiv <- function(da_info) {
   capt_long <- paste(
     "Predictive performance (as well as",
     "$\\mathrm{GMPD}_{\\mathrm{lat}} - \\mathrm{GMPD}_{\\mathrm{aug}}$)",
-    "at size $G_{\\mathrm{min}} = \\min(G_{\\mathrm{aug}},",
-    "G_{\\mathrm{lat}})$ for those simulation iterations where",
-    "$\\mathrm{GMPD}_{\\mathrm{lat}} - \\mathrm{GMPD}_{\\mathrm{aug}}$ at",
-    "size $G_{\\mathrm{min}}$ is either extremely small (top three rows) or",
-    "extremely large (bottom three rows).",
-    "Both blocks of rows are sorted from most extreme (top) to least extreme",
-    "(bottom)."
+    "at size $G_{\\mathrm{min}} = \\min(G_{\\mathrm{aug}}, G_{\\mathrm{lat}})$",
+    "for the", n_indiv_pretty, "simulation iterations with the",
+    direction_pretty, "values for",
+    "$\\mathrm{GMPD}_{\\mathrm{lat}} - \\mathrm{GMPD}_{\\mathrm{aug}}$",
+    "at size $G_{\\mathrm{min}}$.",
+    "Rows are sorted from most extreme (top) to least extreme (bottom)."
   )
+  lab_dir <- paste0("tab:indiv-", indiv_txt)
   xtab_obj <- xtable::xtable(da_prep, caption = c(capt_long, capt_short),
-                             label = "tab:indiv-diffexp", auto = TRUE)
+                             label = lab_dir, auto = TRUE)
   xtable::align(xtab_obj) <- c("l", rep("r", ncol(xtab_obj)))
   fnm_base <- paste("indiv", perf_chr, eval_scale, indiv_txt, perf_scale,
                     sep = "_")
@@ -883,8 +901,11 @@ xtab_perf_at_sgg_indiv <- function(da_info) {
   )
   return(xtab_printed)
 }
-xtab_perf_at_sgg_extrdiffexp_abs <- xtab_perf_at_sgg_indiv(
-  da_info = da_perf_at_sgg_extrdiffexp_abs
+xtab_perf_at_sgg_mindiffexp_abs <- xtab_perf_at_sgg_indiv(
+  da_info = da_perf_at_sgg_mindiffexp_abs
+)
+xtab_perf_at_sgg_maxdiffexp_abs <- xtab_perf_at_sgg_indiv(
+  da_info = da_perf_at_sgg_maxdiffexp_abs
 )
 
 ### Plotting functions ----------------------------------------------------
