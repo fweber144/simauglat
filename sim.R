@@ -455,6 +455,8 @@ if (!use_existing_res) {
 
 # Post-processing ---------------------------------------------------------
 
+ggplot2::theme_set(ggplot2::theme_bw())
+
 if (with_tikz) {
   source("gg_to_tikz/tikzpicture-template.R")
 }
