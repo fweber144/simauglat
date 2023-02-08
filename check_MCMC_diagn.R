@@ -3,20 +3,11 @@
 check_MCMC_diagn <- function(
     C_stanfit,
     n_chains_spec = 4L,
-    C_pars = character(),
-    C_selPars = character(),
-    overview = FALSE,
     HMC_auto = FALSE,
     sampler_pars = FALSE,
     exclude_NAs = FALSE,
-    ESS_classical = FALSE, # Deactivated by default, but often makes sense.
     AC = FALSE,
-    rstan_plots = FALSE,
-    bayesplot_MCMC = FALSE,
-    trace_chain_highlight = 1,
-    bayesplot_HMC = FALSE,
-    bayesplot_parallelCoord = FALSE,
-    new_plots = FALSE, # Deactivated by default, but often makes sense.
+    AC_args = list(),
     ...
 ) {
   ## Preparations -----------------------------------------------------------
@@ -36,13 +27,6 @@ check_MCMC_diagn <- function(
   C_draws_mat <- as.matrix(C_stanfit, ...)
   n_draws <- nrow(C_draws_mat)
   stopifnot(identical(n_draws, n_chains * n_drawsPerChain))
-
-  if (identical(length(C_pars), 0L)) {
-    C_pars <- colnames(C_draws_mat)
-  }
-  if (identical(length(C_selPars), 0L)) {
-    C_selPars <- C_pars # C_selPars <- C_pars[seq_len(min(2, length(C_pars)))]
-  }
 
   # Check that the mode of the resulting "stanfit" object is the "normal" mode
   # (0L), i.e. neither test gradient mode (1L) nor error mode (2L):
@@ -110,11 +94,11 @@ check_MCMC_diagn <- function(
   ### Bulk-ESS --------------------------------------------------------------
   ### (cf. Vehtari et al., 2021, DOI: 10.1214/20-BA1221)
 
-  C_essBulk <- apply(C_draws_arr, MARGIN = 3, FUN = rstan::ess_bulk)
+  C_essBulk <- apply(C_draws_arr, MARGIN = 3, FUN = posterior::ess_bulk)
   if (isTRUE(exclude_NAs)) {
     C_essBulk_OK <- all(C_essBulk > 100 * n_chains)
     if (any(is.na(C_essBulk))) {
-      warning("\"C_essBulk\" contains at least one NA.")
+      warning("`C_essBulk` contains at least one NA.")
       C_essBulk_OK <- all(C_essBulk > 100 * n_chains, na.rm = TRUE)
     }
   } else {
@@ -136,11 +120,11 @@ check_MCMC_diagn <- function(
   ### "New" R-hat -----------------------------------------------------------
   ### (cf. Vehtari et al., 2021, DOI: 10.1214/20-BA1221)
 
-  C_rhat <- apply(C_draws_arr, MARGIN = 3, FUN = rstan::Rhat)
+  C_rhat <- apply(C_draws_arr, MARGIN = 3, FUN = posterior::rhat)
   if (isTRUE(exclude_NAs)) {
     C_rhat_OK <- all(C_rhat < 1.01)
     if (any(is.na(C_rhat))) {
-      warning("\"C_rhat\" contains at least one NA.")
+      warning("`C_rhat` contains at least one NA.")
       C_rhat_OK <- all(C_rhat < 1.01, na.rm = TRUE)
     }
   } else {
@@ -158,11 +142,11 @@ check_MCMC_diagn <- function(
   ### Tail-ESS --------------------------------------------------------------
   ### (cf. Vehtari et al., 2021, DOI: 10.1214/20-BA1221)
 
-  C_essTail <- apply(C_draws_arr, MARGIN = 3, FUN = rstan::ess_tail)
+  C_essTail <- apply(C_draws_arr, MARGIN = 3, FUN = posterior::ess_tail)
   if (isTRUE(exclude_NAs)) {
     C_essTail_OK <- all(C_essTail > 100 * n_chains)
     if (any(is.na(C_essTail))) {
-      warning("\"C_essTail\" contains at least one NA.")
+      warning("`C_essTail` contains at least one NA.")
       C_essTail_OK <- all(C_essTail > 100 * n_chains, na.rm = TRUE)
     }
   } else {
@@ -181,49 +165,11 @@ check_MCMC_diagn <- function(
                      "essTail_OK" = C_essTail_OK,
                      "essTailRatio" = C_essTailRatio))
 
-  ### ESS -------------------------------------------------------------------
-  ### (only necessary if posterior mean is of interest which is not advised for
-  ### heavy-tailed priors with infinite mean, especially if the data is weakly
-  ### identifying)
-
-  if (isTRUE(ESS_classical)) {
-    if (!("rstan" %in% loadedNamespaces() && "rstan" %in% .packages())) {
-      suppressPackageStartupMessages({
-        library(rstan)
-      })
-      on.exit({
-        detach("package:rstan")
-      })
-    }
-    C_smmry <- summary(C_stanfit, pars = C_pars)$summary
-    C_ess <- C_smmry[, "n_eff"]
-    if (isTRUE(exclude_NAs)) {
-      C_ess_OK <- all(C_ess > 100 * n_chains)
-      if (any(is.na(C_ess))) {
-        warning("\"C_ess\" contains at least one NA.")
-        C_ess_OK <- all(C_ess > 100 * n_chains, na.rm = TRUE)
-      }
-    } else {
-      if (any(is.na(C_ess))) {
-        C_ess_OK <- FALSE
-      } else {
-        C_ess_OK <- all(C_ess > 100 * n_chains)
-      }
-    }
-
-    # ESS ratio to total number of (post-warmup) draws:
-    C_essRatio <- C_ess / n_draws
-
-    out_list <- c(out_list,
-                  list("ess" = C_ess,
-                       "ess_OK" = C_ess_OK,
-                       "essRatio" = C_essRatio))
-  }
-
   ### Autocorrelation -------------------------------------------------------
 
   if (isTRUE(AC)) {
-    C_ac_obj <- rstan::stan_ac(C_stanfit, pars = C_pars, ncol = 1, lags = 10) # , separate_chains = TRUE
+    C_ac_obj <- do.call(rstan::stan_ac, args = c(list(object = C_stanfit),
+                                                 AC_args))
     C_ac <- as.data.table(C_ac_obj$data)
     C_ac <- C_ac[lag != 0L, ]
     C_ac_max <- C_ac[, .("ac_max" = max(abs(ac))), parameters]
@@ -256,145 +202,6 @@ check_MCMC_diagn <- function(
             "In general, this indicates that the posterior results should not ",
             "be used. The concerned diagnostic(s) is/are: ",
             paste(names(C_OKs)[!C_OKs], collapse = ", "))
-  }
-
-  ## Overview ---------------------------------------------------------------
-
-  if (isTRUE(overview)) {
-    if (!("rstan" %in% loadedNamespaces() && "rstan" %in% .packages())) {
-      suppressPackageStartupMessages({
-        library(rstan)
-      })
-      on.exit({
-        detach("package:rstan")
-      })
-    }
-
-    ### rstan -----------------------------------------------------------------
-
-    C_smmry <- summary(C_stanfit, pars = C_pars)$summary
-    C_mon_old <- rstan::monitor(C_stanfit)
-
-    ### "New" diagnostics -----------------------------------------------------
-    ### (cf. Vehtari et al., 2021, DOI: 10.1214/20-BA1221)
-
-    devtools::source_url("https://raw.githubusercontent.com/avehtari/rhat_ess/master/code/monitornew.R")
-    devtools::source_url("https://raw.githubusercontent.com/avehtari/rhat_ess/master/code/monitorplot.R")
-
-    C_mon <- monitor(C_stanfit)
-    C_monex <- monitor_extra(C_stanfit)
-
-    out_list <- c(out_list,
-                  list("smmry" = C_smmry,
-                       "mon_old" = C_mon_old,
-                       "mon" = C_mon,
-                       "monex" = C_monex))
-  }
-
-  ## Diagnostic plots -------------------------------------------------------
-
-  ### rstan -----------------------------------------------------------------
-
-  if (isTRUE(rstan_plots)) {
-    # NOTE: As may be seen from rstan:::pairs.stanfit(), for 4 chains, using
-    # "condition = NULL" means to plot chains 1 and 2 in the lower panel and
-    # chains 3 and 4 in the upper panel.
-    print(pairs(C_stanfit, pars = C_selPars, condition = NULL))
-    print(pairs(C_stanfit, pars = C_selPars, condition = "accept_stat__"))
-    print(pairs(C_stanfit, pars = C_selPars, condition = "divergent__"))
-
-    print(rstan::traceplot(C_stanfit, pars = C_selPars, inc_warmup = TRUE,
-                           nrow = 2))
-
-    for (idx in seq_along(C_selPars)) {
-      print(rstan::stan_par(C_stanfit, par = C_selPars[idx], chain = 0))
-    }
-  }
-
-  ### bayesplot -------------------------------------------------------------
-
-  if (isTRUE(bayesplot_MCMC) || isTRUE(bayesplot_HMC) ||
-      isTRUE(bayesplot_parallelCoord)) {
-    bayesplot::color_scheme_set("blue")
-    # Extract log-posterior and NUTS statistics:
-    C_np <- bayesplot::nuts_params(C_stanfit) # , inc_warmup = TRUE
-  }
-
-  #### General MCMC plots ---------------------------------------------------
-
-  if (isTRUE(bayesplot_MCMC)) {
-    print(bayesplot::mcmc_trace(C_stanfit, pars = C_selPars, np = C_np))
-    print(bayesplot::mcmc_trace_highlight(C_stanfit, pars = C_selPars,
-                                          highlight = trace_chain_highlight))
-    print(bayesplot::mcmc_rank_hist(C_stanfit, pars = C_selPars))
-    print(bayesplot::mcmc_rank_overlay(C_stanfit, pars = C_selPars))
-  }
-
-  #### HMC-specific plots ---------------------------------------------------
-
-  if (isTRUE(bayesplot_HMC)) {
-    bayesplot::color_scheme_set("darkgray")
-    C_lp <- log_posterior(C_stanfit) # , inc_warmup = TRUE
-    # available_mcmc(pattern = "_nuts_")
-    print(bayesplot::mcmc_nuts_acceptance(x = C_np, lp = C_lp))
-    print(bayesplot::mcmc_nuts_divergence(x = C_np, lp = C_lp))
-    print(bayesplot::mcmc_nuts_energy(x = C_np)) # , merge_chains = TRUE
-    print(bayesplot::mcmc_nuts_stepsize(x = C_np, lp = C_lp))
-    print(bayesplot::mcmc_nuts_treedepth(x = C_np, lp = C_lp))
-    bayesplot::color_scheme_set("blue")
-  }
-
-  #### Parallel coordinates plot --------------------------------------------
-  #### (useful for "debugging" divergent transitions)
-
-  ### WARNING: Might take long!:
-  if (isTRUE(bayesplot_parallelCoord)) {
-    print(bayesplot::mcmc_parcoord(C_draws_arr, np = C_np))
-  }
-  ###
-
-  ### "New" diagnostic plots ------------------------------------------------
-  ### (cf. Vehtari et al., 2021, DOI: 10.1214/20-BA1221)
-
-  if (isTRUE(new_plots)) {
-    if (!exists("plot_local_ess") ||
-        !exists("plot_quantile_ess") ||
-        !exists("plot_change_ess")) { #  || !exists("mcmc_hist_r_scale")
-      devtools::source_url("https://raw.githubusercontent.com/avehtari/rhat_ess/master/code/monitornew.R")
-      devtools::source_url("https://raw.githubusercontent.com/avehtari/rhat_ess/master/code/monitorplot.R")
-    }
-
-    if (!("rstan" %in% loadedNamespaces() && "rstan" %in% .packages())) {
-      suppressPackageStartupMessages({
-        library(rstan)
-      })
-      on.exit({
-        detach("package:rstan")
-      })
-    }
-    for (selPar_i in C_selPars) {
-      print(
-        plot_local_ess(fit = C_stanfit, par = selPar_i, nalpha = 20) # , rank = FALSE
-      )
-      print(
-        plot_quantile_ess(fit = C_stanfit, par = selPar_i, nalpha = 40) # , rank = FALSE
-      )
-      print(
-        plot_change_ess(fit = C_stanfit, par = selPar_i)
-      )
-      ### Not needed because bayesplot::mcmc_rank_hist() and
-      ### bayesplot::mcmc_rank_overlay() now exist:
-      # print(
-      #   mcmc_hist_r_scale(C_draws_arr[, , selPar_i])
-      # )
-      ###
-    }
-
-    ### Not used, but defined in the file sourced above:
-    # plot_ranknorm()
-    # plot_rhat()
-    # plot_ess()
-    ###
   }
 
   ## Output -----------------------------------------------------------------
