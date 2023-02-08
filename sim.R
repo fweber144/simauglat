@@ -45,9 +45,6 @@ warn_orig_glob <- options(warn = 1)
 # To ensure consistent output width:
 width_orig_glob <- options(width = 140)
 
-# options(projpred.warn_augdat_experimental = FALSE)
-# options(projpred.warn_latent_experimental = FALSE)
-
 ## User options -----------------------------------------------------------
 
 only_init_fit <- F
