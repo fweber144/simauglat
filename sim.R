@@ -327,7 +327,7 @@ run_projpred <- function(refm_fit, dat_indep, latent = FALSE, ...) {
     y = if (latent) rep(NA, nrow(dat_indep)) else dat_indep$Y
   )
   if (latent) {
-    d_indep$yOrig <- dat_indep$Y
+    d_indep$y_oscale <- dat_indep$Y
   }
   time_bef <- Sys.time()
   vs <- projpred::varsel(refm_fit, d_test = d_indep, method = "forward",
@@ -338,30 +338,34 @@ run_projpred <- function(refm_fit, dat_indep, latent = FALSE, ...) {
     soltrms = projpred::solution_terms(vs)
   )
   if (latent) {
-    respOrig_vals <- c(TRUE)
+    resp_oscale_vals <- c(TRUE)
   } else {
-    respOrig_vals <- TRUE
+    resp_oscale_vals <- TRUE
   }
-  respOrig_vals <- setNames(nm = respOrig_vals)
-  names(respOrig_vals) <- paste0("respOrig_", names(respOrig_vals))
-  out_projpred <- c(out_projpred, lapply(respOrig_vals, function(respOrig_val) {
-    # Currently, we need to use the internal projpred function .tabulate_stats()
-    # to obtain the reference model's performance:
-    stats_man <- projpred:::.tabulate_stats(vs, stats = perf_chr,
-                                            respOrig = respOrig_val)
-    refsmms <- vs$summaries$ref
-    if (latent && respOrig_val) refsmms <- refsmms$Orig
-    return(list(
-      refsmms = refsmms,
-      refstat = stats_man$value[stats_man$size == Inf],
-      sgg_size = projpred::suggest_size(vs, stat = perf_chr,
-                                        respOrig = respOrig_val),
-      smmry = summary(vs, deltas = TRUE, stats = perf_chr, type = types_smmry,
-                      respOrig = respOrig_val)$selection,
-      abs_smmry = summary(vs, deltas = FALSE, stats = perf_chr,
-                          type = types_smmry, respOrig = respOrig_val)$selection
-    ))
-  }))
+  resp_oscale_vals <- setNames(nm = resp_oscale_vals)
+  names(resp_oscale_vals) <- paste0("resp_oscale_", names(resp_oscale_vals))
+  out_projpred <- c(
+    out_projpred,
+    lapply(resp_oscale_vals, function(resp_oscale_val) {
+      # Currently, we need to use the internal projpred function
+      # .tabulate_stats() to obtain the reference model's performance:
+      stats_man <- projpred:::.tabulate_stats(vs, stats = perf_chr,
+                                              resp_oscale = resp_oscale_val)
+      refsmms <- vs$summaries$ref
+      if (latent && resp_oscale_val) refsmms <- refsmms$oscale
+      return(list(
+        refsmms = refsmms,
+        refstat = stats_man$value[stats_man$size == Inf],
+        sgg_size = projpred::suggest_size(vs, stat = perf_chr,
+                                          resp_oscale = resp_oscale_val),
+        smmry = summary(vs, deltas = TRUE, stats = perf_chr, type = types_smmry,
+                        resp_oscale = resp_oscale_val)$selection,
+        abs_smmry = summary(vs, deltas = FALSE, stats = perf_chr,
+                            type = types_smmry,
+                            resp_oscale = resp_oscale_val)$selection
+      ))
+    })
+  )
   return(out_projpred)
 }
 
@@ -422,10 +426,10 @@ sim_runner <- function(...) {
            "\"failed.rda\". Use `loaded_objs <- load(\"failed.rda\")` to ",
            "restore it.")
     }
-    stopifnot(all.equal(projpred_aug$respOrig_TRUE$refsmms,
-                        projpred_lat$respOrig_TRUE$refsmms))
-    projpred_aug$respOrig_TRUE$refsmms <- NULL
-    projpred_lat$respOrig_TRUE$refsmms <- NULL
+    stopifnot(all.equal(projpred_aug$resp_oscale_TRUE$refsmms,
+                        projpred_lat$resp_oscale_TRUE$refsmms))
+    projpred_aug$resp_oscale_TRUE$refsmms <- NULL
+    projpred_lat$resp_oscale_TRUE$refsmms <- NULL
     return(list(
       aug = projpred_aug,
       lat = projpred_lat,
@@ -567,26 +571,28 @@ perf_chr_diff <- paste("diff", perf_chr, sep = "_")
 # For secondary y-axes as well as some other analyses:
 stopifnot(identical(perf_chr, "mlpd"))
 
-mk_respOrig_nm <- function(prj_meth, eval_scale = "response") {
+mk_resp_oscale_nm <- function(prj_meth, eval_scale = "response") {
   if (prj_meth == "aug") {
     stopifnot(eval_scale == "response")
-    respOrig_nm <- paste0("respOrig_", TRUE)
+    resp_oscale_nm <- paste0("resp_oscale_", TRUE)
   } else if (prj_meth == "lat") {
-    respOrig_nm <- paste0("respOrig_", eval_scale == "response")
+    resp_oscale_nm <- paste0("resp_oscale_", eval_scale == "response")
   }
-  return(respOrig_nm)
+  return(resp_oscale_nm)
 }
 
 vec_perf_ref <- function(eval_scale = "response") {
   stopifnot(eval_scale == "response")
-  respOrig_nm_aug <- mk_respOrig_nm(prj_meth = "aug", eval_scale = eval_scale)
-  respOrig_nm_lat <- mk_respOrig_nm(prj_meth = "lat", eval_scale = eval_scale)
+  resp_oscale_nm_aug <- mk_resp_oscale_nm(prj_meth = "aug",
+                                          eval_scale = eval_scale)
+  resp_oscale_nm_lat <- mk_resp_oscale_nm(prj_meth = "lat",
+                                          eval_scale = eval_scale)
 
   refstats_aug <- do.call(c, lapply(seq_along(simres), function(sim_idx) {
-    simres[[sim_idx]]$aug[[respOrig_nm_aug]]$refstat
+    simres[[sim_idx]]$aug[[resp_oscale_nm_aug]]$refstat
   }))
   refstats_lat <- do.call(c, lapply(seq_along(simres), function(sim_idx) {
-    simres[[sim_idx]]$lat[[respOrig_nm_lat]]$refstat
+    simres[[sim_idx]]$lat[[resp_oscale_nm_lat]]$refstat
   }))
 
   # Check that the reference model (performance) is the same, so that in
@@ -611,11 +617,12 @@ print(exp(q_refstat))
 cat("-----\n")
 
 da_perf_sep_rel <- function(prj_meth, eval_scale = "response") {
-  respOrig_nm <- mk_respOrig_nm(prj_meth = prj_meth, eval_scale = eval_scale)
+  resp_oscale_nm <- mk_resp_oscale_nm(prj_meth = prj_meth,
+                                      eval_scale = eval_scale)
 
   da_prep <- do.call(rbind, lapply(seq_along(simres), function(sim_idx) {
     cbind(sim_idx = sim_idx,
-          simres[[sim_idx]][[prj_meth]][[respOrig_nm]]$smmry[
+          simres[[sim_idx]][[prj_meth]][[resp_oscale_nm]]$smmry[
             c("size", perf_chr, "se")
           ])
   }))
@@ -626,16 +633,18 @@ da_perf_lat_rel <- da_perf_sep_rel(prj_meth = "lat")
 
 da_perf_diff <- function(eval_scale = "response") {
   stopifnot(eval_scale == "response")
-  respOrig_nm_aug <- mk_respOrig_nm(prj_meth = "aug", eval_scale = eval_scale)
-  respOrig_nm_lat <- mk_respOrig_nm(prj_meth = "lat", eval_scale = eval_scale)
+  resp_oscale_nm_aug <- mk_resp_oscale_nm(prj_meth = "aug",
+                                          eval_scale = eval_scale)
+  resp_oscale_nm_lat <- mk_resp_oscale_nm(prj_meth = "lat",
+                                          eval_scale = eval_scale)
 
   smmry_cols <- c(perf_chr, "se")
   smmry_cols_aug <- setNames(paste(smmry_cols, "aug", sep = "_"), smmry_cols)
   smmry_cols_lat <- setNames(paste(smmry_cols, "lat", sep = "_"), smmry_cols)
 
   da_prep <- do.call(rbind, lapply(seq_along(simres), function(sim_idx) {
-    smmry_aug <- simres[[sim_idx]]$aug[[respOrig_nm_aug]]$smmry
-    smmry_lat <- simres[[sim_idx]]$lat[[respOrig_nm_lat]]$smmry
+    smmry_aug <- simres[[sim_idx]]$aug[[resp_oscale_nm_aug]]$smmry
+    smmry_lat <- simres[[sim_idx]]$lat[[resp_oscale_nm_lat]]$smmry
     stopifnot(identical(smmry_aug["size"], smmry_lat["size"]))
     cbind(sim_idx = sim_idx, smmry_aug["size"],
           setNames(smmry_aug[smmry_cols], smmry_cols_aug),
@@ -691,12 +700,14 @@ cat("-----\n")
 # At the minimum of the 2 suggested sizes:
 da_perf_at_sgg <- function(eval_scale = "response") {
   stopifnot(eval_scale == "response")
-  respOrig_nm_aug <- mk_respOrig_nm(prj_meth = "aug", eval_scale = eval_scale)
-  respOrig_nm_lat <- mk_respOrig_nm(prj_meth = "lat", eval_scale = eval_scale)
+  resp_oscale_nm_aug <- mk_resp_oscale_nm(prj_meth = "aug",
+                                          eval_scale = eval_scale)
+  resp_oscale_nm_lat <- mk_resp_oscale_nm(prj_meth = "lat",
+                                          eval_scale = eval_scale)
 
   da_prep <- do.call(rbind, lapply(seq_along(simres), function(sim_idx) {
-    res_aug <- simres[[sim_idx]]$aug[[respOrig_nm_aug]]
-    res_lat <- simres[[sim_idx]]$lat[[respOrig_nm_lat]]
+    res_aug <- simres[[sim_idx]]$aug[[resp_oscale_nm_aug]]
+    res_lat <- simres[[sim_idx]]$lat[[resp_oscale_nm_lat]]
     sgg_size <- suppressWarnings(
       min(res_aug$sgg_size, res_lat$sgg_size, na.rm = TRUE)
     )
@@ -761,20 +772,22 @@ da_perf_indiv <- function(indiv_info, perf_scale = "abs") {
   indiv_txt <- indiv_info[["txt"]]
   eval_scale <- indiv_info[["eval_scale"]]
   stopifnot(eval_scale == "response")
-  respOrig_nm_aug <- mk_respOrig_nm(prj_meth = "aug", eval_scale = eval_scale)
-  respOrig_nm_lat <- mk_respOrig_nm(prj_meth = "lat", eval_scale = eval_scale)
+  resp_oscale_nm_aug <- mk_resp_oscale_nm(prj_meth = "aug",
+                                          eval_scale = eval_scale)
+  resp_oscale_nm_lat <- mk_resp_oscale_nm(prj_meth = "lat",
+                                          eval_scale = eval_scale)
 
   smmry_cols <- c("size", perf_chr, "lower", "upper")
   if (perf_scale == "abs") {
     one_idx <- function(sim_idx) {
-      refstat_aug <- simres[[sim_idx]]$aug[[respOrig_nm_aug]]$refstat
-      refstat_lat <- simres[[sim_idx]]$lat[[respOrig_nm_lat]]$refstat
+      refstat_aug <- simres[[sim_idx]]$aug[[resp_oscale_nm_aug]]$refstat
+      refstat_lat <- simres[[sim_idx]]$lat[[resp_oscale_nm_lat]]$refstat
       stopifnot(all.equal(refstat_aug, refstat_lat,
                           tolerance = .Machine$double.eps))
       refstat <- refstat_aug
 
-      smmry_aug <- simres[[sim_idx]]$aug[[respOrig_nm_aug]]$abs_smmry
-      smmry_lat <- simres[[sim_idx]]$lat[[respOrig_nm_lat]]$abs_smmry
+      smmry_aug <- simres[[sim_idx]]$aug[[resp_oscale_nm_aug]]$abs_smmry
+      smmry_lat <- simres[[sim_idx]]$lat[[resp_oscale_nm_lat]]$abs_smmry
       pdat <- rbind(cbind(sim_idx = sim_idx, refstat = refstat,
                           `Projection method` = "Augmented-data",
                           smmry_aug[smmry_cols]),
@@ -785,8 +798,8 @@ da_perf_indiv <- function(indiv_info, perf_scale = "abs") {
     }
   } else if (perf_scale == "rel") {
     one_idx <- function(sim_idx) {
-      smmry_aug <- simres[[sim_idx]]$aug[[respOrig_nm_aug]]$smmry
-      smmry_lat <- simres[[sim_idx]]$lat[[respOrig_nm_lat]]$smmry
+      smmry_aug <- simres[[sim_idx]]$aug[[resp_oscale_nm_aug]]$smmry
+      smmry_lat <- simres[[sim_idx]]$lat[[resp_oscale_nm_lat]]$smmry
       pdat <- rbind(cbind(sim_idx = sim_idx,
                           `Projection method` = "Augmented-data",
                           smmry_aug[smmry_cols]),
@@ -1177,13 +1190,13 @@ indiv_maxdiff_rel <- gg_perf_indiv_rel(da_info = da_perf_maxdiff_rel,
 ## Suggested sizes --------------------------------------------------------
 
 sgger_size <- function(sim_idx, eval_scale_lat = "response") {
-  respOrig_nm_aug <- mk_respOrig_nm(prj_meth = "aug",
-                                    eval_scale = "response")
-  respOrig_nm_lat <- mk_respOrig_nm(prj_meth = "lat",
-                                    eval_scale = eval_scale_lat)
+  resp_oscale_nm_aug <- mk_resp_oscale_nm(prj_meth = "aug",
+                                          eval_scale = "response")
+  resp_oscale_nm_lat <- mk_resp_oscale_nm(prj_meth = "lat",
+                                          eval_scale = eval_scale_lat)
   return(c(
-    sgg_size_aug = simres[[sim_idx]]$aug[[respOrig_nm_aug]]$sgg_size,
-    sgg_size_lat = simres[[sim_idx]]$lat[[respOrig_nm_lat]]$sgg_size
+    sgg_size_aug = simres[[sim_idx]]$aug[[resp_oscale_nm_aug]]$sgg_size,
+    sgg_size_lat = simres[[sim_idx]]$lat[[resp_oscale_nm_lat]]$sgg_size
   ))
 }
 
