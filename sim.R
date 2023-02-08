@@ -22,12 +22,12 @@
 ## Installation (only required once) --------------------------------------
 
 ### With more checks:
-# devtools::install_github("fweber144/brms", "projpred_latent")
-# devtools::install_github("fweber144/projpred", "augdat_latent")
+# devtools::install_github("paul-buerkner/brms")
+# devtools::install_github("stan-dev/projpred")
 ###
 ### With less checks:
-# remotes::install_github("fweber144/brms", "projpred_latent")
-# remotes::install_github("fweber144/projpred", "augdat_latent")
+# remotes::install_github("paul-buerkner/brms")
+# remotes::install_github("stan-dev/projpred")
 ###
 
 ## Timestamp --------------------------------------------------------------
