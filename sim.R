@@ -462,7 +462,7 @@ if (with_tikz) {
   source("gg_to_tikz/tikzpicture-template.R")
 }
 ggsave_cust <- function(fname_no_ext, plot = ggplot2::last_plot(),
-                        width = 6, height = width * 0.618,
+                        width = 5, height = width * 0.618,
                         timestamp = FALSE, verbose = FALSE, ...) {
   ggplot2::ggsave(filename = paste0(fname_no_ext, ".pdf"), plot = plot,
                   width = width, height = height)
@@ -536,7 +536,7 @@ gg_time <- ggplot2::ggplot(
   ggplot2::labs(x = "Projection method") +
   ggplot2::coord_cartesian(ylim = c(0, NA))
 ggsave_cust(file.path("figs", "time"),
-            width = 0.5 * 6, height = 0.75 * 6 * 0.618)
+            width = 0.5 * 5, height = 0.75 * 5 * 0.618)
 assign(".Random.seed", Rseed, envir = .GlobalEnv)
 
 ## Solution paths ---------------------------------------------------------
@@ -991,7 +991,7 @@ ylim_lat <- ggplot2::ggplot_build(
 aug_rel <- gg_perf_sep_rel(da_info = da_perf_aug_rel, ylim_full = ylim_lat)
 library(patchwork)
 gg_aug_lat <- aug_rel$ggobj_full / lat_rel$ggobj_full
-ggsave_cust(file.path("figs", "aug_lat"), height = 2 * 6 * 0.618)
+ggsave_cust(file.path("figs", "aug_lat"), height = 2 * 5 * 0.618)
 
 gg_perf_diff <- function(da_info) {
   da_prep <- da_info$da_prep
@@ -1106,7 +1106,7 @@ gg_perf_diff_at_sgg <- function(da_info) {
 }
 diff_at_sgg <- gg_perf_diff_at_sgg(da_info = da_perf_at_sgg_out)
 
-gg_perf_indiv_abs <- function(da_info, width = 6.5, height = width * 0.618) {
+gg_perf_indiv_abs <- function(da_info, width = 5.5, height = width * 0.618) {
   da_prep <- da_info$da_prep
   indiv_txt <- da_info$indiv_txt
   eval_scale <- da_info$eval_scale
@@ -1145,7 +1145,7 @@ gg_perf_indiv_abs <- function(da_info, width = 6.5, height = width * 0.618) {
 indiv_extrdiffexp_abs <- gg_perf_indiv_abs(da_info = da_perf_extrdiffexp_abs,
                                            height = 5 * 0.618)
 
-gg_perf_indiv_rel <- function(da_info, width = 6.5, height = width * 0.618) {
+gg_perf_indiv_rel <- function(da_info, width = 5.5, height = width * 0.618) {
   da_prep <- da_info$da_prep
   indiv_txt <- da_info$indiv_txt
   eval_scale <- da_info$eval_scale
@@ -1185,7 +1185,7 @@ gg_perf_indiv_rel <- function(da_info, width = 6.5, height = width * 0.618) {
   return(list(ggobj = ggobj))
 }
 indiv_maxdiff_rel <- gg_perf_indiv_rel(da_info = da_perf_maxdiff_rel,
-                                       height = 3.25 * 0.618)
+                                       height = 0.5 * 5.5 * 0.618)
 
 ## Suggested sizes --------------------------------------------------------
 
