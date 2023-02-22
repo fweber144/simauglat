@@ -1135,7 +1135,8 @@ gg_perf_indiv_abs <- function(da_info, width = 5.2, height = width * 0.618) {
       y = paste0("$\\mathrm{", toupper(perf_chr), "}$")
     ) +
     ggplot2::theme(legend.position = "top") +
-    ggplot2::facet_wrap(ggplot2::vars(sim_idx), ncol = 3, scales = "free_y")
+    ggplot2::facet_wrap(ggplot2::vars(sim_idx), ncol = 2, scales = "free_y",
+                        dir = "v")
   ggsave_cust(file.path("figs", paste("indiv", perf_chr, eval_scale, indiv_txt,
                                       perf_scale, sep = "_")),
               width = width, height = height)
@@ -1143,7 +1144,7 @@ gg_perf_indiv_abs <- function(da_info, width = 5.2, height = width * 0.618) {
   return(list(ggobj = ggobj))
 }
 indiv_extrdiffexp_abs <- gg_perf_indiv_abs(da_info = da_perf_extrdiffexp_abs,
-                                           height = 5 * 0.618)
+                                           height = (2 * 5 - 0.5) * 0.618)
 
 gg_perf_indiv_rel <- function(da_info, width = 5.2, height = width * 0.618) {
   da_prep <- da_info$da_prep
@@ -1177,7 +1178,8 @@ gg_perf_indiv_rel <- function(da_info, width = 5.2, height = width * 0.618) {
       y = paste0("$\\Delta\\mathrm{", toupper(perf_chr), "}$")
     ) +
     ggplot2::theme(legend.position = "top") +
-    ggplot2::facet_wrap(ggplot2::vars(sim_idx), ncol = 3, scales = "free_y")
+    ggplot2::facet_wrap(ggplot2::vars(sim_idx), ncol = 1, scales = "free_y",
+                        dir = "v")
   ggsave_cust(file.path("figs", paste("indiv", perf_chr, eval_scale, indiv_txt,
                                       perf_scale, sep = "_")),
               width = width, height = height)
@@ -1185,7 +1187,7 @@ gg_perf_indiv_rel <- function(da_info, width = 5.2, height = width * 0.618) {
   return(list(ggobj = ggobj))
 }
 indiv_maxdiff_rel <- gg_perf_indiv_rel(da_info = da_perf_maxdiff_rel,
-                                       height = 3.25 * 0.618)
+                                       height = (2 * 5 + 0.25) * 0.618)
 
 ## Suggested sizes --------------------------------------------------------
 
