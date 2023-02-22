@@ -838,8 +838,7 @@ da_perf_at_sgg_indiv <- function(indiv_info, direction, perf_scale = "abs") {
   # following check before indexing by `sim_idx` instead of by row indices:
   stopifnot(identical(da_prep$sim_idx, seq_len(nrow(da_prep))))
   # Restrict the columns:
-  col_nms <- c("sim_idx", "refstat", aug_lat_chr,
-               paste0("exp", c("refstat", aug_lat_chr)), "diffexp")
+  col_nms <- c("sim_idx", paste0("exp", aug_lat_chr), "diffexp")
   # Restrict the rows:
   indiv_idxs <- indiv_idxs[grep(paste0("^sim_idx_", direction),
                                 names(indiv_idxs))]
@@ -886,15 +885,13 @@ xtab_perf_at_sgg_indiv <- function(da_info) {
     "individual simulation iterations"
   )
   capt_long <- paste(
-    "Predictive performance (as well as",
-    "$\\mathrm{GMPD}_{\\mathrm{lat}} - \\mathrm{GMPD}_{\\mathrm{aug}}$)",
+    "Predictive performance",
     "at size $G_{\\mathrm{min}} = \\min(G_{\\mathrm{aug}}, G_{\\mathrm{lat}})$",
     "for the", n_indiv_pretty, "simulation iterations with the",
     direction_pretty, "values for",
     "$\\mathrm{GMPD}_{\\mathrm{lat}} - \\mathrm{GMPD}_{\\mathrm{aug}}$",
     "at size $G_{\\mathrm{min}}$.",
-    "Rows are sorted from most extreme (top) to least extreme (bottom).",
-    "Column ``Iter.'' is the simulation iteration."
+    "Rows are sorted from most extreme (top) to least extreme (bottom)."
   )
   lab_dir <- paste0("tab:indiv-", indiv_txt)
   xtab_obj <- xtable::xtable(
@@ -917,7 +914,7 @@ xtab_perf_at_sgg_indiv <- function(da_info) {
     include.rownames = FALSE,
     latex.environments = "center",
     sanitize.colnames.function = function(nms) {
-      nms[nms == "sim_idx"] <- "Iter."
+      nms[nms == "sim_idx"] <- "Sim. iter."
       nms[nms == "refstat"] <- paste0("$\\mathrm{", toupper(perf_chr), "}^{*}$")
       nms[nms == "aug"] <- paste0("$\\mathrm{", toupper(perf_chr),
                                   "}_{\\mathrm{aug}}$")
