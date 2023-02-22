@@ -911,6 +911,7 @@ xtab_perf_at_sgg_indiv <- function(da_info) {
     xtab_obj,
     file = file.path("tabs", fnm_base),
     # caption.placement = "top",
+    table.placement = "!tb",
     include.rownames = FALSE,
     latex.environments = "center",
     sanitize.colnames.function = function(nms) {
