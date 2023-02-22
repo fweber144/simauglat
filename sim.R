@@ -988,7 +988,7 @@ ylim_lat <- ggplot2::ggplot_build(
 aug_rel <- gg_perf_sep_rel(da_info = da_perf_aug_rel, ylim_full = ylim_lat)
 library(patchwork)
 gg_aug_lat <- aug_rel$ggobj_full / lat_rel$ggobj_full
-ggsave_cust(file.path("figs", "aug_lat"), height = 2 * 5 * 0.618)
+ggsave_cust(file.path("figs", "aug_lat"), height = (2 * 5 - 0.8) * 0.618)
 
 gg_perf_diff <- function(da_info) {
   da_prep <- da_info$da_prep
