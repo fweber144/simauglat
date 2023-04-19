@@ -8,7 +8,7 @@
  collate  en_US.UTF-8
  ctype    en_US.UTF-8
  tz       Europe/Berlin
- date     2023-04-18
+ date     2023-04-19
  rstudio  2023.03.0+386 Cherry Blossom (desktop)
  pandoc   2.19.2 @ /usr/lib/rstudio/resources/app/bin/quarto/bin/tools/ (via rmarkdown)
 
@@ -27,7 +27,7 @@
  callr            3.7.3    2022-11-02 [3] CRAN (R 4.2.2)
  checkmate        2.1.0    2022-04-21 [3] CRAN (R 4.2.0)
  cli              3.6.1    2023-03-23 [3] CRAN (R 4.2.3)
- cmdstanr       * 0.5.3    2022-08-22 [1] local
+ cmdstanr       * 0.5.3    2022-08-24 [1] local
  coda             0.19-4   2020-09-30 [3] CRAN (R 4.2.0)
  codetools        0.2-19   2023-02-01 [4] CRAN (R 4.2.2)
  colorspace       2.1-0    2023-01-23 [3] CRAN (R 4.2.2)
@@ -93,8 +93,8 @@
  plyr             1.8.8    2022-11-11 [3] CRAN (R 4.2.2)
  posterior        1.4.1    2023-03-14 [3] CRAN (R 4.2.3)
  prettyunits      1.1.1    2020-01-24 [3] CRAN (R 4.0.1)
- processx         3.8.0    2022-10-26 [3] CRAN (R 4.2.1)
- projpred       * 2.4.0    2023-02-12 [1] CRAN (R 4.2.3)
+ processx         3.8.1    2023-04-18 [1] CRAN (R 4.2.3)
+ projpred       * 2.5.0    2023-04-05 [1] CRAN (R 4.2.3)
  promises         1.2.0.1  2021-02-11 [3] CRAN (R 4.1.1)
  ps               1.7.4    2023-04-02 [1] CRAN (R 4.2.3)
  R6               2.5.1    2021-08-19 [3] CRAN (R 4.2.0)
@@ -116,7 +116,7 @@
  shinyjs          2.1.0    2021-12-23 [3] CRAN (R 4.2.0)
  shinystan        2.6.0    2022-03-03 [3] CRAN (R 4.2.0)
  shinythemes      1.2.0    2021-01-25 [3] CRAN (R 4.0.3)
- StanHeaders    * 2.21.0-7 2020-12-17 [1] CRAN (R 4.2.1)
+ StanHeaders    * 2.21.0-7 2020-12-17 [1] CRAN (R 4.2.0)
  stringi          1.7.12   2023-01-11 [3] CRAN (R 4.2.2)
  stringr          1.5.0    2022-12-02 [1] CRAN (R 4.2.2)
  survival         3.5-5    2023-03-12 [1] CRAN (R 4.2.3)
