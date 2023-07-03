@@ -335,7 +335,7 @@ run_projpred <- function(refm_fit, dat_indep, latent = FALSE, ...) {
   time_aft <- Sys.time()
   out_projpred <- list(
     time_vs = as.numeric(time_aft - time_bef, units = "mins"),
-    soltrms = projpred::solution_terms(vs)
+    rk = projpred::ranking(vs)[["fulldata"]]
   )
   if (latent) {
     resp_oscale_vals <- c(TRUE)
@@ -539,26 +539,23 @@ ggsave_cust(file.path("figs", "time"),
             width = 0.5 * 6, height = 0.75 * 6 * 0.618)
 assign(".Random.seed", Rseed, envir = .GlobalEnv)
 
-## Solution paths ---------------------------------------------------------
+## Predictor rankings -----------------------------------------------------
 
-same_solpths <- sapply(simres, function(simres_i) {
-  identical(simres_i$aug$soltrms,
-            simres_i$lat$soltrms)
+same_rks <- sapply(simres, function(simres_i) {
+  identical(simres_i$aug$rk, simres_i$lat$rk)
 })
 cat("\n-----\n")
-cat("Differing solution paths:\n")
-cat("There are", sum(!same_solpths), "simulation iterations with the solution",
-    "path differing between augmented-data and latent projection. The first 10",
-    "(if there are less, then only those) in detail:\n")
-for (sim_idx in head(seq_along(simres)[!same_solpths], 10)) {
+cat("Differing predictor rankings:\n")
+cat("There are", sum(!same_rks), "simulation iterations with the predictor",
+    "ranking differing between augmented-data and latent projection. The first",
+    "10 (if there are less, then only those) in detail:\n")
+for (sim_idx in head(seq_along(simres)[!same_rks], 10)) {
   cat("\n---\n")
   cat("Simulation iteration: ", sim_idx, "\n", sep = "")
-  cat("Solution path of the augmented-data variable selection:\n",
-      paste(simres[[sim_idx]]$aug$soltrms, collapse = ", "),
-      "\n", sep = "")
-  cat("Solution path of the latent variable selection:\n",
-      paste(simres[[sim_idx]]$lat$soltrms, collapse = ", "),
-      "\n", sep = "")
+  cat("Predictor ranking of the augmented-data variable selection:\n",
+      paste(simres[[sim_idx]]$aug$rk, collapse = ", "), "\n", sep = "")
+  cat("Predictor ranking of the latent variable selection:\n",
+      paste(simres[[sim_idx]]$lat$rk, collapse = ", "), "\n", sep = "")
   cat("---\n")
 }
 cat("-----\n")
