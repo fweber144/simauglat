@@ -81,7 +81,7 @@ if (!only_init_fit) {
 
 nobsv <- 100L
 nobsv_indep <- nobsv
-ncat <- 10L
+ncat <- 5L
 yunq <- paste0("ycat", seq_len(ncat))
 link_str <- "probit"
 nthres <- ncat - 1L
@@ -164,7 +164,7 @@ dataconstructor <- function() {
                            par_ratio = p0 / (npreds_cont - p0),
                            sigma_tilde = sigti,
                            N = nobsv,
-                           df_slab = 100, scale_slab = 0.5)
+                           df_slab = 100, scale_slab = 1)
 
   ## Continuous predictors --------------------------------------------------
 
@@ -239,14 +239,14 @@ if (only_init_fit) {
   cat("-----\npar_ratio_sigti:\n")
   print(par_ratio_sigti, digits = 9)
   cat("-----\n")
-  stopifnot(all.equal(par_ratio_sigti, 0.25558946, tolerance = 1e-8))
+  stopifnot(all.equal(par_ratio_sigti, 0.264728344, tolerance = 1e-8))
   ###
   bfit <- brms::brm(
     formula = sim_dat_etc$fml,
     data = sim_dat_etc$dat,
     family = brms::cumulative(link = link_str),
-    prior = brms::prior(horseshoe(df_slab = 100, scale_slab = 0.5,
-                                  par_ratio = 0.25558946)) +
+    prior = brms::prior(horseshoe(df_slab = 100, scale_slab = 1,
+                                  par_ratio = 0.264728344)) +
       brms::prior(normal(0, 2.5), class = "Intercept"),
     ### For backend = "rstan":
     # control = list(adapt_delta = 0.99), # , max_treedepth = 15L
